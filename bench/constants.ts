@@ -6,7 +6,6 @@ export const TIMEOUT_SECONDS = 400;
 
 import { type LanguageModel } from "ai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
-import { openai } from "@ai-sdk/openai";
 
 export type RunnableModel = {
   name: string;
@@ -121,8 +120,28 @@ export const modelsToRun: RunnableModel[] = [
   },
 
   {
-    name: "gpt-5-for-real",
+    name: "gpt-5-minimal",
+    llm: openrouter("openai/gpt-5", {
+      ...defaultProviderOptions,
+      reasoning: {
+        effort: "minimal",
+      },
+    }),
+    reasoning: true,
+  },
+  {
+    name: "gpt-5-default",
     llm: openrouter("openai/gpt-5", defaultProviderOptions),
+    reasoning: true,
+  },
+  {
+    name: "gpt-5-high",
+    llm: openrouter("openai/gpt-5", {
+      ...defaultProviderOptions,
+      reasoning: {
+        effort: "high",
+      },
+    }),
     reasoning: true,
   },
   {
@@ -133,6 +152,62 @@ export const modelsToRun: RunnableModel[] = [
   {
     name: "gpt-5-nano",
     llm: openrouter("openai/gpt-5-nano", defaultProviderOptions),
+    reasoning: true,
+  },
+
+  {
+    name: "gpt-5.1-low",
+    llm: openrouter("openai/gpt-5.1", {
+      ...defaultProviderOptions,
+      reasoning: {
+        effort: "low",
+      },
+    }),
+    reasoning: true,
+  },
+  {
+    name: "gpt-5.1-default",
+    llm: openrouter("openai/gpt-5.1", defaultProviderOptions),
+    reasoning: true,
+  },
+  {
+    name: "gpt-5.1-high",
+    llm: openrouter("openai/gpt-5.1", {
+      ...defaultProviderOptions,
+      reasoning: {
+        effort: "high",
+      },
+    }),
+    reasoning: true,
+  },
+
+  {
+    name: "gpt-5.2-none",
+    llm: openrouter("openai/gpt-5.2", {
+      ...defaultProviderOptions,
+      reasoning: {
+        effort: "none",
+      },
+    }),
+  },
+  {
+    name: "gpt-5.2-high",
+    llm: openrouter("openai/gpt-5.2", {
+      ...defaultProviderOptions,
+      reasoning: {
+        effort: "high",
+      },
+    }),
+    reasoning: true,
+  },
+  {
+    name: "gpt-5.2-xhigh",
+    llm: openrouter("openai/gpt-5.2", {
+      ...defaultProviderOptions,
+      reasoning: {
+        effort: "xhigh",
+      },
+    }),
     reasoning: true,
   },
 
