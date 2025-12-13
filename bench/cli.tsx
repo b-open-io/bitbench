@@ -438,8 +438,6 @@ const App: React.FC = () => {
       totals.durationDenom > 0
         ? totals.durationSumMs / totals.durationDenom / 1000
         : null;
-    const overallAvgCost =
-      totals.costDenom > 0 ? totals.costSum / totals.costDenom : null;
 
     return (
       <Box flexDirection="column">

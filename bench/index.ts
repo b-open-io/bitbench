@@ -79,6 +79,7 @@ export type RunnerErrorEvent = {
 export type RunnerReuseEvent = {
   type: "reuse";
   model: string;
+  duration: number;
   correct: boolean;
   cost: number;
   completionTokens: number;
@@ -670,14 +671,11 @@ export async function testRunner(options: TestRunnerOptions) {
   onEvent?.({ type: "plan", totals: planTotals });
 
   async function processJobQueue(jobQueue: TestRun[]) {
-    let activeJobs = 0;
-
     async function worker(): Promise<void> {
       while (jobQueue.length > 0) {
         const testRun = jobQueue.shift();
         if (!testRun) break;
 
-        activeJobs++;
         const startTime = Date.now();
 
         try {
@@ -731,6 +729,7 @@ export async function testRunner(options: TestRunnerOptions) {
             onEvent?.({
               type: "reuse",
               model: reused.model,
+              duration,
               correct,
               cost: reused.cost || 0,
               completionTokens: reused.completionTokens || 0,
@@ -853,7 +852,6 @@ export async function testRunner(options: TestRunnerOptions) {
               } for ${testRun.model.name}: ${errorMessage}`
             );
         } finally {
-          activeJobs--;
         }
       }
     }
@@ -987,6 +985,7 @@ export async function testRunner(options: TestRunnerOptions) {
         onEvent?.({
           type: "reuse",
           model: r.model,
+          duration,
           correct,
           cost: r.cost || 0,
           completionTokens: r.completionTokens || 0,
