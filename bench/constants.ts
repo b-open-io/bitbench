@@ -1,8 +1,9 @@
 export const OUTPUT_DIRECTORY = "./results";
 
-export const MAX_CONCURRENCY = 30;
+export const MAX_CONCURRENCY = 20;
 export const TEST_RUNS_PER_MODEL = 30;
 export const TIMEOUT_SECONDS = 400;
+export const STAGGER_DELAY_MS = 150;
 
 import { type LanguageModel } from "ai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
@@ -82,6 +83,14 @@ export const modelsToRun: RunnableModel[] = [
   {
     name: "deepseek-v3.2",
     llm: openrouter("deepseek/deepseek-v3.2", defaultProviderOptions),
+    reasoning: false,
+  },
+  {
+    name: "deepseek-v3.2-thinking-high",
+    llm: openrouter("deepseek/deepseek-v3.2", {
+      ...defaultProviderOptions,
+      reasoning: { effort: "high" },
+    }),
     reasoning: true,
   },
 
@@ -136,6 +145,13 @@ export const modelsToRun: RunnableModel[] = [
   {
     name: "claude-4.5-opus",
     llm: openrouter("anthropic/claude-opus-4.5", defaultProviderOptions),
+  },
+  {
+    name: "claude-4.5-opus-thinking-high",
+    llm: openrouter("anthropic/claude-opus-4.5", {
+      ...defaultProviderOptions,
+      reasoning: { effort: "high" },
+    }),
     reasoning: true,
   },
   {
@@ -258,6 +274,16 @@ export const modelsToRun: RunnableModel[] = [
       ...defaultProviderOptions,
       reasoning: {
         effort: "xhigh",
+      },
+    }),
+    reasoning: true,
+  },
+  {
+    name: "gpt-5.2-pro",
+    llm: openrouter("openai/gpt-5.2-pro", {
+      ...defaultProviderOptions,
+      reasoning: {
+        effort: "high",
       },
     }),
     reasoning: true,
