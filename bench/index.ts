@@ -5,6 +5,7 @@ import {
   TEST_RUNS_PER_MODEL,
   TIMEOUT_SECONDS,
   OUTPUT_DIRECTORY,
+  STAGGER_DELAY_MS,
 } from "./constants";
 import { generateText } from "ai";
 import { mkdir, writeFile, readdir, readFile as fsReadFile } from "fs/promises";
@@ -44,6 +45,7 @@ type PreviousResultEntry = {
   correct?: boolean;
   duration?: number;
   cost?: number;
+  completionTokens?: number;
   sourceFile: string;
   systemPrompt?: string;
 };
@@ -64,6 +66,7 @@ export type RunnerDoneEvent = {
   duration: number;
   correct: boolean;
   cost: number;
+  completionTokens: number;
 };
 
 export type RunnerErrorEvent = {
@@ -76,8 +79,10 @@ export type RunnerErrorEvent = {
 export type RunnerReuseEvent = {
   type: "reuse";
   model: string;
+  duration: number;
   correct: boolean;
   cost: number;
+  completionTokens: number;
 };
 
 export type RunnerEvent =
@@ -173,14 +178,14 @@ async function runTest(input: {
 
       temperature: 1.0,
       providerOptions: {
-        openrouter: {
-          reasoning: {
-            max_tokens: 2048,
-          },
-        },
-        xai: {
-          reasoningEffort: "high",
-        },
+        // openrouter: {
+        //   reasoning: {
+        //     max_tokens: 2048,
+        //   },
+        // },
+        // xai: {
+        //   reasoningEffort: "high",
+        // },
       },
     });
 
@@ -193,8 +198,17 @@ async function runTest(input: {
     let cost = 0;
     if (testResult.providerMetadata) {
       const openrouterMeta = testResult.providerMetadata.openrouter as any;
-      if (openrouterMeta?.usage?.cost) {
-        cost = openrouterMeta.usage.cost;
+      if (openrouterMeta?.usage) {
+        // Add upstream cost for when we BYOK
+        if (openrouterMeta.usage.costDetails?.upstreamInferenceCost) {
+          cost += openrouterMeta.usage.costDetails.upstreamInferenceCost;
+        } else if (openrouterMeta.usage.cost) {
+          cost += openrouterMeta.usage.cost;
+        } else {
+          // console.log("No usage data found from OpenRouter", openrouterMeta);
+        }
+      } else {
+        // console.log("USAGE DATA?", testResult.providerMetadata.openrouter);
       }
     }
 
@@ -204,6 +218,7 @@ async function runTest(input: {
       result: testResult,
       correct: correctness,
       cost,
+      completionTokens: testResult.usage?.outputTokens ?? 0,
     };
   }
 
@@ -304,6 +319,7 @@ async function findPreviousResultsForSuite(options: {
           correct: r.result?.correct ?? r.correct,
           duration: r.duration,
           cost: r.cost,
+          completionTokens: r.completionTokens,
           sourceFile: file,
         };
         const list = map.get(signature) || [];
@@ -369,6 +385,7 @@ async function findPreviousResultsForSuite(options: {
         correct: parsed.result?.correct ?? parsed.correct,
         duration: parsed.duration,
         cost: parsed.cost,
+        completionTokens: parsed.completionTokens,
         sourceFile: file,
         systemPrompt,
       };
@@ -409,16 +426,13 @@ function generateMarkdownReport(
   markdown += `**Failed:** ${metadata.failed}\n`;
   markdown += `**Models:** ${metadata.models.join(", ")}\n\n`;
 
-  const testGroups = results.reduce(
-    (acc, result) => {
-      if (!acc[result.testIndex]) {
-        acc[result.testIndex] = [];
-      }
-      acc[result.testIndex].push(result);
-      return acc;
-    },
-    {} as Record<number, typeof results>
-  );
+  const testGroups = results.reduce((acc, result) => {
+    if (!acc[result.testIndex]) {
+      acc[result.testIndex] = [];
+    }
+    acc[result.testIndex].push(result);
+    return acc;
+  }, {} as Record<number, typeof results>);
 
   Object.entries(testGroups)
     .sort(([a], [b]) => parseInt(a) - parseInt(b))
@@ -487,8 +501,8 @@ async function writeCacheEntry(params: {
   negative_answers?: string[];
   duration: number;
   cost: number;
+  completionTokens: number;
   result?: { text?: string; correct?: boolean };
-  error?: string;
 }) {
   const {
     suiteId,
@@ -503,8 +517,8 @@ async function writeCacheEntry(params: {
     negative_answers,
     duration,
     cost,
+    completionTokens,
     result,
-    error,
   } = params;
 
   const signature = computeTestSignature({
@@ -524,7 +538,9 @@ async function writeCacheEntry(params: {
   if (!existsSync(dir)) await mkdir(dir, { recursive: true });
 
   const ts = new Date().toISOString().replace(/[:.]/g, "-");
-  const filename = `${safeFilename(model)}__run${runNumber}__${sigHash}__${ts}.json`;
+  const filename = `${safeFilename(
+    model
+  )}__run${runNumber}__${sigHash}__${ts}.json`;
   const filePath = join(dir, filename);
 
   const payload = {
@@ -542,9 +558,9 @@ async function writeCacheEntry(params: {
     negative_answers,
     duration,
     cost,
+    completionTokens,
     signature,
     result: result ? { text: result.text, correct: result.correct } : undefined,
-    error,
   };
 
   await writeFile(filePath, JSON.stringify(payload, null, 2), "utf-8");
@@ -567,7 +583,9 @@ export async function testRunner(options: TestRunnerOptions) {
     );
   if (!silent)
     console.log(
-      `Concurrency limit: ${MAX_CONCURRENCY}, Timeout: ${TIMEOUT_SECONDS}s, Version: ${version || "(none)"}`
+      `Concurrency limit: ${MAX_CONCURRENCY}, Timeout: ${TIMEOUT_SECONDS}s, Version: ${
+        version || "(none)"
+      }`
     );
 
   const workQueue: WorkItem[] = [];
@@ -614,16 +632,14 @@ export async function testRunner(options: TestRunnerOptions) {
     error?: string;
     duration: number;
     cost: number;
+    completionTokens: number;
   }> = [];
 
-  const itemsByTest = workQueue.reduce(
-    (acc, item) => {
-      const idx = item.originalTestIndex;
-      (acc[idx] ||= []).push(item);
-      return acc;
-    },
-    {} as Record<number, WorkItem[]>
-  );
+  const itemsByTest = workQueue.reduce((acc, item) => {
+    const idx = item.originalTestIndex;
+    (acc[idx] ||= []).push(item);
+    return acc;
+  }, {} as Record<number, WorkItem[]>);
 
   const planTotals: Record<
     string,
@@ -655,14 +671,11 @@ export async function testRunner(options: TestRunnerOptions) {
   onEvent?.({ type: "plan", totals: planTotals });
 
   async function processJobQueue(jobQueue: TestRun[]) {
-    let activeJobs = 0;
-
     async function worker(): Promise<void> {
       while (jobQueue.length > 0) {
         const testRun = jobQueue.shift();
         if (!testRun) break;
 
-        activeJobs++;
         const startTime = Date.now();
 
         try {
@@ -679,9 +692,9 @@ export async function testRunner(options: TestRunnerOptions) {
                   JSON.stringify(testRun.negative_answers || []))
             ) {
               throw new Error(
-                `Cached result mismatch for model ${r.model} test ${testRun.testIndex + 1}.${testRun.runNumber} from ${basename(
-                  r.sourceFile
-                )}`
+                `Cached result mismatch for model ${r.model} test ${
+                  testRun.testIndex + 1
+                }.${testRun.runNumber} from ${basename(r.sourceFile)}`
               );
             }
 
@@ -710,25 +723,30 @@ export async function testRunner(options: TestRunnerOptions) {
               },
               duration,
               cost: reused.cost || 0,
+              completionTokens: reused.completionTokens || 0,
             });
 
             onEvent?.({
               type: "reuse",
               model: reused.model,
+              duration,
               correct,
               cost: reused.cost || 0,
+              completionTokens: reused.completionTokens || 0,
             });
             if (!silent)
               console.log(
-                `↺ Reused result for test ${testRun.testIndex + 1}.${testRun.runNumber} on ${reused.model} from ${basename(
-                  reused.sourceFile
-                )}`
+                `↺ Reused result for test ${testRun.testIndex + 1}.${
+                  testRun.runNumber
+                } on ${reused.model} from ${basename(reused.sourceFile)}`
               );
           } else {
             onEvent?.({ type: "start", model: testRun.model.name });
             if (!silent)
               console.log(
-                `Running test ${testRun.testIndex + 1}.${testRun.runNumber} for ${testRun.model.name}`
+                `Running test ${testRun.testIndex + 1}.${
+                  testRun.runNumber
+                } for ${testRun.model.name}`
               );
             const runResult = await runTest({
               model: testRun.model,
@@ -751,6 +769,7 @@ export async function testRunner(options: TestRunnerOptions) {
               result: runResult,
               duration,
               cost: (runResult as any).cost || 0,
+              completionTokens: (runResult as any).completionTokens || 0,
             });
 
             // Write to per-run cache immediately
@@ -768,6 +787,7 @@ export async function testRunner(options: TestRunnerOptions) {
                 negative_answers: testRun.negative_answers,
                 duration,
                 cost: (runResult as any).cost || 0,
+                completionTokens: (runResult as any).completionTokens || 0,
                 result: {
                   text:
                     (runResult as any).result?.text || (runResult as any).text,
@@ -777,7 +797,9 @@ export async function testRunner(options: TestRunnerOptions) {
             } catch (e) {
               if (!silent)
                 console.warn(
-                  `Failed to write cache for ${testRun.model.name} test ${testRun.testIndex + 1}.${testRun.runNumber}:`,
+                  `Failed to write cache for ${testRun.model.name} test ${
+                    testRun.testIndex + 1
+                  }.${testRun.runNumber}:`,
                   e
                 );
             }
@@ -788,10 +810,13 @@ export async function testRunner(options: TestRunnerOptions) {
               duration,
               correct: (runResult as any).correct ?? false,
               cost: (runResult as any).cost || 0,
+              completionTokens: (runResult as any).completionTokens || 0,
             });
             if (!silent)
               console.log(
-                `✓ Completed test ${testRun.testIndex + 1}.${testRun.runNumber} for ${testRun.model.name} in ${duration}ms`
+                `✓ Completed test ${testRun.testIndex + 1}.${
+                  testRun.runNumber
+                } for ${testRun.model.name} in ${duration}ms`
               );
           }
         } catch (error) {
@@ -809,32 +834,10 @@ export async function testRunner(options: TestRunnerOptions) {
             error: errorMessage,
             duration,
             cost: 0,
+            completionTokens: 0,
           });
 
-          // Even on error, write a cache entry to allow post-mortem and avoid losing progress
-          try {
-            await writeCacheEntry({
-              suiteId,
-              suiteName: suite.name,
-              version,
-              model: testRun.model.name,
-              runNumber: testRun.runNumber,
-              testIndex: testRun.testIndex,
-              system_prompt: testRun.system_prompt,
-              prompt: testRun.prompt,
-              answers: testRun.answers,
-              negative_answers: testRun.negative_answers,
-              duration,
-              cost: 0,
-              error: errorMessage,
-            });
-          } catch (e) {
-            if (!silent)
-              console.warn(
-                `Failed to write cache (error case) for ${testRun.model.name} test ${testRun.testIndex + 1}.${testRun.runNumber}:`,
-                e
-              );
-          }
+          // Note: Errors are NOT cached so they will be retried on next run
 
           onEvent?.({
             type: "error",
@@ -844,17 +847,20 @@ export async function testRunner(options: TestRunnerOptions) {
           });
           if (!silent)
             console.log(
-              `✗ Failed test ${testRun.testIndex + 1}.${testRun.runNumber} for ${testRun.model.name}: ${errorMessage}`
+              `✗ Failed test ${testRun.testIndex + 1}.${
+                testRun.runNumber
+              } for ${testRun.model.name}: ${errorMessage}`
             );
         } finally {
-          activeJobs--;
         }
       }
     }
 
-    const workers = Array.from(
-      { length: Math.min(MAX_CONCURRENCY, jobQueue.length) },
-      () => worker()
+    const workerCount = Math.min(MAX_CONCURRENCY, jobQueue.length);
+    const workers = Array.from({ length: workerCount }, (_, i) =>
+      new Promise<void>((resolve) =>
+        setTimeout(() => resolve(), i * STAGGER_DELAY_MS)
+      ).then(() => worker())
     );
 
     await Promise.all(workers);
@@ -925,7 +931,9 @@ export async function testRunner(options: TestRunnerOptions) {
   if (reuseJobs.length > 0) {
     if (!silent)
       console.log(
-        `Preloading ${reuseJobs.length} cached result${reuseJobs.length === 1 ? "" : "s"}…`
+        `Preloading ${reuseJobs.length} cached result${
+          reuseJobs.length === 1 ? "" : "s"
+        }…`
       );
     for (const testRun of reuseJobs) {
       const startTime = Date.now();
@@ -971,19 +979,22 @@ export async function testRunner(options: TestRunnerOptions) {
           },
           duration,
           cost: r.cost || 0,
+          completionTokens: r.completionTokens || 0,
         });
 
         onEvent?.({
           type: "reuse",
           model: r.model,
+          duration,
           correct,
           cost: r.cost || 0,
+          completionTokens: r.completionTokens || 0,
         });
         if (!silent)
           console.log(
-            `↺ Reused result for test ${
-              testRun.testIndex + 1
-            }.${testRun.runNumber} on ${r.model} from ${basename(r.sourceFile)}`
+            `↺ Reused result for test ${testRun.testIndex + 1}.${
+              testRun.runNumber
+            } on ${r.model} from ${basename(r.sourceFile)}`
           );
       } catch (error) {
         const duration = Date.now() - startTime;
@@ -1000,33 +1011,10 @@ export async function testRunner(options: TestRunnerOptions) {
           error: errorMessage,
           duration,
           cost: 0,
+          completionTokens: 0,
         });
 
-        try {
-          await writeCacheEntry({
-            suiteId,
-            suiteName: suite.name,
-            version,
-            model: testRun.model.name,
-            runNumber: testRun.runNumber,
-            testIndex: testRun.testIndex,
-            system_prompt: testRun.system_prompt,
-            prompt: testRun.prompt,
-            answers: testRun.answers,
-            negative_answers: testRun.negative_answers,
-            duration,
-            cost: 0,
-            error: errorMessage,
-          });
-        } catch (e) {
-          if (!silent)
-            console.warn(
-              `Failed to write cache (error case) for ${testRun.model.name} test ${
-                testRun.testIndex + 1
-              }.${testRun.runNumber}:`,
-              e
-            );
-        }
+        // Note: Errors are NOT cached so they will be retried on next run
 
         onEvent?.({
           type: "error",
@@ -1036,7 +1024,9 @@ export async function testRunner(options: TestRunnerOptions) {
         });
         if (!silent)
           console.log(
-            `✗ Failed test ${testRun.testIndex + 1}.${testRun.runNumber} for ${testRun.model.name}: ${errorMessage}`
+            `✗ Failed test ${testRun.testIndex + 1}.${testRun.runNumber} for ${
+              testRun.model.name
+            }: ${errorMessage}`
           );
       }
     }

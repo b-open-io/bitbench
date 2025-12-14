@@ -67,6 +67,7 @@ type ModelStats = {
   correctCount: number;
   incorrectCount: number;
   costSum: number;
+  completionTokensSum: number;
 };
 
 function ProgressBar({
@@ -164,27 +165,25 @@ const App: React.FC = () => {
               const order = Object.keys(event.totals);
               setModelOrder(order);
               setStats(
-                order.reduce(
-                  (acc, name) => {
-                    const t = event.totals[name];
-                    acc[name] = {
-                      total: t.total,
-                      executeTotal: t.execute,
-                      reuseTotal: t.reuse,
-                      reuseCompleted: 0,
-                      executedStarted: 0,
-                      executedDone: 0,
-                      executedErrors: 0,
-                      executedDurationSumMs: 0,
-                      executedMaxDurationMs: 0,
-                      correctCount: 0,
-                      incorrectCount: 0,
-                      costSum: 0,
-                    };
-                    return acc;
-                  },
-                  {} as Record<string, ModelStats>
-                )
+                order.reduce((acc, name) => {
+                  const t = event.totals[name];
+                  acc[name] = {
+                    total: t.total,
+                    executeTotal: t.execute,
+                    reuseTotal: t.reuse,
+                    reuseCompleted: 0,
+                    executedStarted: 0,
+                    executedDone: 0,
+                    executedErrors: 0,
+                    executedDurationSumMs: 0,
+                    executedMaxDurationMs: 0,
+                    correctCount: 0,
+                    incorrectCount: 0,
+                    costSum: 0,
+                    completionTokensSum: 0,
+                  };
+                  return acc;
+                }, {} as Record<string, ModelStats>)
               );
             } else if (event.type === "start") {
               setStats((prev) => ({
@@ -211,6 +210,9 @@ const App: React.FC = () => {
                   incorrectCount:
                     prev[event.model].incorrectCount + (!event.correct ? 1 : 0),
                   costSum: prev[event.model].costSum + (event.cost || 0),
+                  completionTokensSum:
+                    prev[event.model].completionTokensSum +
+                    (event.completionTokens || 0),
                 },
               }));
             } else if (event.type === "error") {
@@ -233,11 +235,21 @@ const App: React.FC = () => {
                 [event.model]: {
                   ...prev[event.model],
                   reuseCompleted: prev[event.model].reuseCompleted + 1,
+                  executedDurationSumMs:
+                    prev[event.model].executedDurationSumMs +
+                    (event.duration || 0),
+                  executedMaxDurationMs: Math.max(
+                    prev[event.model].executedMaxDurationMs,
+                    event.duration || 0
+                  ),
                   correctCount:
                     prev[event.model].correctCount + (event.correct ? 1 : 0),
                   incorrectCount:
                     prev[event.model].incorrectCount + (!event.correct ? 1 : 0),
                   costSum: prev[event.model].costSum + (event.cost || 0),
+                  completionTokensSum:
+                    prev[event.model].completionTokensSum +
+                    (event.completionTokens || 0),
                 },
               }));
             }
@@ -280,7 +292,9 @@ const App: React.FC = () => {
           items={suites.map((s, idx) => ({
             key: String(idx),
             value: idx,
-            label: `${s.suite.name}${s.suite.description ? ` — ${s.suite.description}` : ""}`,
+            label: `${s.suite.name}${
+              s.suite.description ? ` — ${s.suite.description}` : ""
+            }`,
           }))}
           onSelect={(item: any) => {
             setSelectedIndex(item.value as number);
@@ -323,9 +337,12 @@ const App: React.FC = () => {
         acc.correct += s.correctCount;
         acc.incorrect += s.incorrectCount;
         acc.durationSumMs += s.executedDurationSumMs;
-        acc.durationDenom += s.executedDone + s.executedErrors;
+        acc.durationDenom +=
+          s.reuseCompleted + s.executedDone + s.executedErrors;
         acc.costSum += s.costSum;
         acc.costDenom += s.reuseCompleted + s.executedDone; // cost recorded for completed, not for errors
+        acc.completionTokensSum += s.completionTokensSum;
+        acc.tokensDenom += s.reuseCompleted + s.executedDone;
         return acc;
       },
       {
@@ -339,6 +356,8 @@ const App: React.FC = () => {
         durationDenom: 0,
         costSum: 0,
         costDenom: 0,
+        completionTokensSum: 0,
+        tokensDenom: 0,
       }
     );
 
@@ -349,6 +368,7 @@ const App: React.FC = () => {
       "Errors",
       "Running Tests",
       "Avg Cost",
+      "Avg Tokens",
       "Avg Duration",
       "Slowest",
     ];
@@ -364,7 +384,9 @@ const App: React.FC = () => {
       const answered = s ? s.correctCount + s.incorrectCount : 0;
       const pct =
         answered > 0 ? Math.round((s!.correctCount / answered) * 100) : null;
-      const avgCount = s ? s.executedDone + s.executedErrors : 0;
+      const avgCount = s
+        ? s.reuseCompleted + s.executedDone + s.executedErrors
+        : 0;
       const avgSec =
         avgCount > 0 ? s!.executedDurationSumMs / avgCount / 1000 : null;
       const slowSec =
@@ -373,6 +395,11 @@ const App: React.FC = () => {
           : null;
       const costDenom = s ? s.reuseCompleted + s.executedDone : 0;
       const avgCost = costDenom > 0 ? s!.costSum / costDenom : null;
+      const tokensDenom = s ? s.reuseCompleted + s.executedDone : 0;
+      const avgTokens =
+        tokensDenom > 0
+          ? Math.round(s!.completionTokensSum / tokensDenom)
+          : null;
       return {
         model: name,
         done: `${completed}/${denom}`,
@@ -380,6 +407,7 @@ const App: React.FC = () => {
         err: err === 0 ? "-" : String(err),
         run: run === 0 ? "-" : String(run),
         avgCost: avgCost === null ? "-" : `$${avgCost.toFixed(4)}`,
+        avgTokens: avgTokens === null ? "-" : avgTokens.toLocaleString(),
         avg: avgSec === null ? "-" : `${avgSec.toFixed(2)}s`,
         slow: slowSec === null ? "-" : `${slowSec.toFixed(2)}s`,
         pct,
@@ -393,8 +421,12 @@ const App: React.FC = () => {
       err: Math.max(header[3].length, ...rows.map((r) => r.err.length)),
       run: Math.max(header[4].length, ...rows.map((r) => r.run.length)),
       avgCost: Math.max(header[5].length, ...rows.map((r) => r.avgCost.length)),
-      avg: Math.max(header[6].length, ...rows.map((r) => r.avg.length)),
-      slow: Math.max(header[7].length, ...rows.map((r) => r.slow.length)),
+      avgTokens: Math.max(
+        header[6].length,
+        ...rows.map((r) => r.avgTokens.length)
+      ),
+      avg: Math.max(header[7].length, ...rows.map((r) => r.avg.length)),
+      slow: Math.max(header[8].length, ...rows.map((r) => r.slow.length)),
     };
 
     const overallAnswered = totals.correct + totals.incorrect;
@@ -406,8 +438,6 @@ const App: React.FC = () => {
       totals.durationDenom > 0
         ? totals.durationSumMs / totals.durationDenom / 1000
         : null;
-    const overallAvgCost =
-      totals.costDenom > 0 ? totals.costSum / totals.costDenom : null;
 
     return (
       <Box flexDirection="column">
@@ -443,11 +473,15 @@ const App: React.FC = () => {
             </Text>
             {"  "}
             <Text underline color="whiteBright">
-              {pad(header[6], widths.avg)}
+              {pad(header[6], widths.avgTokens)}
             </Text>
             {"  "}
             <Text underline color="whiteBright">
-              {pad(header[7], widths.slow)}
+              {pad(header[7], widths.avg)}
+            </Text>
+            {"  "}
+            <Text underline color="whiteBright">
+              {pad(header[8], widths.slow)}
             </Text>
           </Text>
           {rows.map((r) => (
@@ -470,6 +504,10 @@ const App: React.FC = () => {
               {"  "}
               <Text color={r.avgCost === "-" ? "gray" : "green"}>
                 {padLeft(r.avgCost, widths.avgCost)}
+              </Text>
+              {"  "}
+              <Text color={r.avgTokens === "-" ? "gray" : "blue"}>
+                {padLeft(r.avgTokens, widths.avgTokens)}
               </Text>
               {"  "}
               <Text color={r.avg === "-" ? "gray" : "cyan"}>
