@@ -269,7 +269,7 @@ export async function syncResultsToWebsite(
     return { success: false, error: "MASTER_WIF not set" };
   }
 
-  const baseUrl = options?.baseUrl || "https://bitbench.dev";
+  const baseUrl = options?.baseUrl || "https://www.bitbench.dev";
   const requestPath = `/api/suites/${data.suiteId}/complete`;
   const body = JSON.stringify(data);
 
