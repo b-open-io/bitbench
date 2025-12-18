@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Wallet, LogOut, Copy, Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 function formatAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -23,8 +23,78 @@ function formatBalance(satoshis: number | null): string {
 }
 
 export function WalletConnect() {
-  const { isConnected, address, balance, connect, disconnect } = useWallet();
+  const wallet = useWallet();
+  const [isConnected, setIsConnected] = useState(false);
+  const [address, setAddress] = useState<string | null>(null);
+  const [balance, setBalance] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const refreshState = useCallback(async () => {
+    if (!wallet?.isReady) return;
+
+    try {
+      const connected = await wallet.isConnected();
+      setIsConnected(connected);
+
+      if (connected) {
+        const [addresses, bal] = await Promise.all([
+          wallet.getAddresses(),
+          wallet.getBalance(),
+        ]);
+        setAddress(addresses?.bsvAddress || null);
+        setBalance(bal?.satoshis ?? null);
+      } else {
+        setAddress(null);
+        setBalance(null);
+      }
+    } catch (error) {
+      console.error("Error refreshing wallet state:", error);
+    }
+  }, [wallet]);
+
+  useEffect(() => {
+    refreshState();
+
+    // Listen for wallet events
+    const handleSwitchAccount = () => refreshState();
+    const handleSignedOut = () => {
+      setIsConnected(false);
+      setAddress(null);
+      setBalance(null);
+    };
+
+    if (wallet?.isReady) {
+      wallet.on("switchAccount", handleSwitchAccount);
+      wallet.on("signedOut", handleSignedOut);
+
+      return () => {
+        wallet.removeListener("switchAccount", handleSwitchAccount);
+        wallet.removeListener("signedOut", handleSignedOut);
+      };
+    }
+  }, [wallet, refreshState]);
+
+  const handleConnect = async () => {
+    if (!wallet?.isReady) return;
+    try {
+      await wallet.connect();
+      await refreshState();
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!wallet?.isReady) return;
+    try {
+      await wallet.disconnect();
+      setIsConnected(false);
+      setAddress(null);
+      setBalance(null);
+    } catch (error) {
+      console.error("Error disconnecting wallet:", error);
+    }
+  };
 
   const copyAddress = async () => {
     if (address) {
@@ -36,11 +106,7 @@ export function WalletConnect() {
 
   if (!isConnected) {
     return (
-      <Button
-        onClick={connect}
-        variant="outline"
-        className="gap-2"
-      >
+      <Button onClick={handleConnect} variant="outline" className="gap-2">
         <Wallet className="h-4 w-4" />
         Connect Wallet
       </Button>
@@ -52,7 +118,9 @@ export function WalletConnect() {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Wallet className="h-4 w-4" />
-          <span className="hidden sm:inline">{formatAddress(address || "")}</span>
+          <span className="hidden sm:inline">
+            {formatAddress(address || "")}
+          </span>
           <span className="text-muted-foreground">{formatBalance(balance)}</span>
         </Button>
       </DropdownMenuTrigger>
@@ -66,7 +134,10 @@ export function WalletConnect() {
           {copied ? "Copied!" : "Copy Address"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={disconnect} className="gap-2 text-destructive">
+        <DropdownMenuItem
+          onClick={handleDisconnect}
+          className="gap-2 text-destructive"
+        >
           <LogOut className="h-4 w-4" />
           Disconnect
         </DropdownMenuItem>

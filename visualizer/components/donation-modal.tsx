@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,12 +31,10 @@ function usdToSats(usd: number): number {
   return Math.ceil((usd / BSV_PRICE_USD) * 100_000_000);
 }
 
-function satsToUsd(sats: number): number {
-  return (sats / 100_000_000) * BSV_PRICE_USD;
-}
-
 export function DonationModal({ suite, open, onClose }: DonationModalProps) {
-  const { isConnected, connect, sendBsv, address } = useWallet();
+  const wallet = useWallet();
+  const [isConnected, setIsConnected] = useState(false);
+  const [address, setAddress] = useState<string | null>(null);
   const [amountUsd, setAmountUsd] = useState("");
   const [status, setStatus] = useState<DonationStatus>("idle");
   const [txid, setTxid] = useState<string | null>(null);
@@ -47,14 +45,54 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
     ? suite.estimatedCostUsd - suite.currentBalanceUsd
     : 0;
 
+  const refreshState = useCallback(async () => {
+    if (!wallet?.isReady) return;
+
+    try {
+      const connected = await wallet.isConnected();
+      setIsConnected(connected);
+
+      if (connected) {
+        const addresses = await wallet.getAddresses();
+        setAddress(addresses?.bsvAddress || null);
+      }
+    } catch (err) {
+      console.error("Error refreshing wallet state:", err);
+    }
+  }, [wallet]);
+
+  useEffect(() => {
+    if (open) {
+      refreshState();
+    }
+  }, [open, refreshState]);
+
+  const handleConnect = async () => {
+    if (!wallet?.isReady) {
+      window.open("https://yours.org", "_blank");
+      return;
+    }
+    try {
+      await wallet.connect();
+      await refreshState();
+    } catch (err) {
+      console.error("Error connecting wallet:", err);
+    }
+  };
+
   const handleDonate = async () => {
-    if (!suite || !amountSats) return;
+    if (!suite || !amountSats || !wallet?.isReady) return;
 
     setStatus("sending");
     setError(null);
 
     try {
-      const result = await sendBsv(suite.donationAddress, amountSats);
+      const result = await wallet.sendBsv([
+        {
+          address: suite.donationAddress,
+          satoshis: amountSats,
+        },
+      ]);
 
       if (result?.txid) {
         setTxid(result.txid);
@@ -127,7 +165,7 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
             <p className="text-center text-muted-foreground">
               Connect your wallet to donate
             </p>
-            <Button onClick={connect} className="gap-2">
+            <Button onClick={handleConnect} className="gap-2">
               <Wallet className="h-4 w-4" />
               Connect Wallet
             </Button>
