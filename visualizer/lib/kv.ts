@@ -140,3 +140,22 @@ export async function clearFundingNotification(suiteId: string): Promise<void> {
 export function isRedisConfigured(): boolean {
   return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 }
+
+// Get all latest runs for completed suites
+export async function getAllLatestRuns(): Promise<
+  Array<{ suiteId: string; run: BenchmarkRun }>
+> {
+  const suites = await getAllSuites();
+  const completedSuites = suites.filter((s) => s.status === "completed");
+
+  const results = await Promise.all(
+    completedSuites.map(async (suite) => {
+      const run = await getLatestRun(suite.id);
+      return { suiteId: suite.id, run };
+    })
+  );
+
+  return results.filter(
+    (r): r is { suiteId: string; run: BenchmarkRun } => r.run !== null
+  );
+}
