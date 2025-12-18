@@ -1,18 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Loader2,
-  Trophy,
-  BarChart3,
-  Clock,
-  Target,
-  DollarSign,
   ArrowLeft,
   ArrowRight,
-  Medal,
+  TrendingUp,
+  Clock,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
 import {
   Card,
@@ -21,7 +28,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { SiteHeader } from "@/components/site-header";
 import { ChainBadge } from "@/components/chain-badge";
 
@@ -41,19 +58,24 @@ interface SuiteRunSummary {
   totalCost: number;
 }
 
+interface LeaderboardEntry {
+  model: string;
+  averageScore: number;
+  suitesParticipated: number;
+  totalCost: number;
+}
+
 interface AggregatedResults {
   totalCompletedSuites: number;
   totalModelsEvaluated: number;
   totalTestsExecuted: number;
   latestRun: SuiteRunSummary | null;
   suiteRuns: SuiteRunSummary[];
-  globalLeaderboard: Array<{
-    model: string;
-    averageScore: number;
-    suitesParticipated: number;
-    totalCost: number;
-  }>;
+  globalLeaderboard: LeaderboardEntry[];
 }
+
+type SortKey = "rank" | "model" | "score" | "cost";
+type SortDir = "asc" | "desc";
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
@@ -70,11 +92,33 @@ function formatRelativeTime(dateString: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function ResultsPage() {
-  const [resultsData, setResultsData] = useState<AggregatedResults | null>(
-    null
+function formatCost(val: number): string {
+  if (val < 0.01) return `$${val.toFixed(4)}`;
+  return `$${val.toFixed(2)}`;
+}
+
+// Custom tooltip for chart
+function ChartTooltip({ active, payload }: any) {
+  if (!active || !payload?.[0]) return null;
+  const data = payload[0].payload;
+  return (
+    <div className="rounded-lg border bg-popover p-2 text-popover-foreground shadow-md">
+      <p className="font-medium text-sm">{data.model}</p>
+      <p className="text-xs text-muted-foreground">
+        Score: <span className="font-mono text-foreground">{data.averageScore.toFixed(1)}%</span>
+      </p>
+      <p className="text-xs text-muted-foreground">
+        Cost: <span className="font-mono text-foreground">{formatCost(data.totalCost)}</span>
+      </p>
+    </div>
   );
+}
+
+export default function ResultsPage() {
+  const [resultsData, setResultsData] = useState<AggregatedResults | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sortKey, setSortKey] = useState<SortKey>("rank");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   useEffect(() => {
     async function fetchResults() {
@@ -93,6 +137,63 @@ export default function ResultsPage() {
     fetchResults();
   }, []);
 
+  // Sorted leaderboard
+  const sortedLeaderboard = useMemo(() => {
+    if (!resultsData) return [];
+    const list = [...resultsData.globalLeaderboard];
+
+    list.sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "model":
+          cmp = a.model.localeCompare(b.model);
+          break;
+        case "score":
+          cmp = b.averageScore - a.averageScore;
+          break;
+        case "cost":
+          cmp = a.totalCost - b.totalCost;
+          break;
+        default: // rank (by score desc)
+          cmp = b.averageScore - a.averageScore;
+      }
+      return sortDir === "desc" ? -cmp : cmp;
+    });
+
+    return list;
+  }, [resultsData, sortKey, sortDir]);
+
+  // Chart data - top 15 for bar chart
+  const chartData = useMemo(() => {
+    if (!resultsData) return [];
+    return resultsData.globalLeaderboard
+      .slice(0, 15)
+      .map((m) => ({
+        model: m.model.length > 12 ? m.model.slice(0, 12) + "…" : m.model,
+        fullModel: m.model,
+        averageScore: m.averageScore,
+        totalCost: m.totalCost,
+      }));
+  }, [resultsData]);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir(key === "model" ? "asc" : "desc");
+    }
+  };
+
+  const SortIcon = ({ column }: { column: SortKey }) => {
+    if (sortKey !== column) return null;
+    return sortDir === "asc" ? (
+      <ChevronUp className="h-3 w-3" />
+    ) : (
+      <ChevronDown className="h-3 w-3" />
+    );
+  };
+
   if (loading) {
     return (
       <div className="relative min-h-screen bg-background text-foreground">
@@ -104,253 +205,22 @@ export default function ResultsPage() {
     );
   }
 
-  return (
-    <div className="relative min-h-screen bg-background text-foreground">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,oklch(from_var(--primary)_l_c_h/0.12),transparent)]" />
-
-      <SiteHeader modelCount={44} />
-
-      <main className="relative mx-auto max-w-7xl px-4 py-8">
-        {/* Back link */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Funding
-        </Link>
-
-        <h1 className="text-3xl font-bold tracking-tight mb-2">
-          Benchmark Results
-        </h1>
-        <p className="text-lg text-muted-foreground mb-8">
-          AI model performance across all completed benchmark suites.
-        </p>
-
-        {resultsData && resultsData.totalCompletedSuites > 0 ? (
-          <div className="space-y-8">
-            {/* Hero Stats */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Card className="relative overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardDescription>Completed Benchmarks</CardDescription>
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                      <Trophy className="h-4 w-4" />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">
-                    {resultsData.totalCompletedSuites}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Test suites completed
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="relative overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardDescription>Models Evaluated</CardDescription>
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                      <BarChart3 className="h-4 w-4" />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">
-                    {resultsData.totalModelsEvaluated}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    AI models tested
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="relative overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardDescription>Tests Executed</CardDescription>
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                      <Target className="h-4 w-4" />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">
-                    {resultsData.totalTestsExecuted.toLocaleString()}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Questions answered
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="relative overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardDescription>Latest Run</CardDescription>
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                      <Clock className="h-4 w-4" />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">
-                    {resultsData.latestRun
-                      ? formatRelativeTime(resultsData.latestRun.timestamp)
-                      : "—"}
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {resultsData.latestRun?.suiteName || "No runs yet"}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Global Leaderboard */}
-            {resultsData.globalLeaderboard.length > 0 && (
-              <Card className="relative overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-xl">Top Performers</CardTitle>
-                      <CardDescription>
-                        Models ranked by average accuracy across all completed
-                        benchmarks
-                      </CardDescription>
-                    </div>
-                    <div className="rounded-lg bg-chart-4/10 p-2 text-chart-4">
-                      <Medal className="h-5 w-5" />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {resultsData.globalLeaderboard
-                      .slice(0, 10)
-                      .map((entry, index) => (
-                        <div
-                          key={entry.model}
-                          className="flex items-center gap-4 rounded-lg border border-border/50 bg-muted/30 p-3"
-                        >
-                          <div
-                            className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
-                              index === 0
-                                ? "bg-chart-4/20 text-chart-4"
-                                : index === 1
-                                  ? "bg-muted-foreground/20 text-muted-foreground"
-                                  : index === 2
-                                    ? "bg-chart-5/20 text-chart-5"
-                                    : "bg-muted text-muted-foreground"
-                            }`}
-                          >
-                            {index + 1}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">
-                              {entry.model}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {entry.suitesParticipated} suite
-                              {entry.suitesParticipated !== 1 ? "s" : ""}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono font-bold text-primary">
-                              {entry.averageScore.toFixed(1)}%
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              avg accuracy
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Completed Suites Grid */}
-            <div>
-              <h2 className="text-xl font-semibold mb-2">Results by Suite</h2>
-              <p className="text-muted-foreground mb-4">
-                View detailed results for each completed benchmark suite.
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {resultsData.suiteRuns.map((run) => (
-                  <Card
-                    key={run.suiteId}
-                    className="flex flex-col border-primary/30 bg-primary/5 transition-all hover:border-primary/50"
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg">
-                            {run.suiteName}
-                          </CardTitle>
-                        </div>
-                        <ChainBadge chain={run.chain} size="sm" />
-                      </div>
-                      <CardDescription className="line-clamp-2">
-                        {run.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-1 flex flex-col gap-3">
-                      {/* Top Performer Preview */}
-                      {run.topPerformer && (
-                        <div className="rounded-lg bg-muted/50 p-3">
-                          <div className="text-xs text-muted-foreground mb-1">
-                            Top Performer
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium truncate">
-                              {run.topPerformer.model}
-                            </span>
-                            <span className="font-mono font-bold text-primary">
-                              {run.topPerformer.score.toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Quick Stats */}
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <BarChart3 className="h-3 w-3" />
-                          {run.totalModels} models
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {formatRelativeTime(run.timestamp)}
-                        </span>
-                      </div>
-
-                      <Button asChild className="w-full mt-auto">
-                        <Link href={`/suite/${run.suiteId}`}>
-                          View Full Results
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
+  if (!resultsData || resultsData.totalCompletedSuites === 0) {
+    return (
+      <div className="relative min-h-screen bg-background text-foreground">
+        <SiteHeader modelCount={44} />
+        <main className="mx-auto max-w-7xl px-4 py-8">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Funding
+          </Link>
           <div className="rounded-lg border border-border bg-muted/30 p-12 text-center">
             <h2 className="text-xl font-semibold mb-2">No Results Yet</h2>
             <p className="text-muted-foreground mb-4">
-              No benchmarks have been completed yet. Fund a benchmark suite to
-              trigger testing.
+              No benchmarks have been completed yet. Fund a benchmark suite to trigger testing.
             </p>
             <Button asChild>
               <Link href="/">
@@ -359,7 +229,223 @@ export default function ResultsPage() {
               </Link>
             </Button>
           </div>
-        )}
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative min-h-screen bg-background text-foreground">
+      <SiteHeader modelCount={44} />
+
+      <main className="mx-auto max-w-7xl px-4 py-4">
+        {/* Compact Header with Stats */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Link>
+            <h1 className="text-xl font-bold tracking-tight">Benchmark Results</h1>
+          </div>
+
+          {/* Inline Stats */}
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Suites:</span>
+              <span className="font-mono font-medium">{resultsData.totalCompletedSuites}</span>
+            </div>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Models:</span>
+              <span className="font-mono font-medium">{resultsData.totalModelsEvaluated}</span>
+            </div>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Tests:</span>
+              <span className="font-mono font-medium">{resultsData.totalTestsExecuted.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Dashboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* LEFT: Leaderboard Table */}
+          <Card className="lg:col-span-8 flex flex-col overflow-hidden">
+            <CardHeader className="py-3 px-4 border-b bg-muted/30">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold">Global Leaderboard</CardTitle>
+                <Badge variant="outline" className="text-xs font-normal">
+                  {sortedLeaderboard.length} models
+                </Badge>
+              </div>
+            </CardHeader>
+
+            <ScrollArea className="h-[500px]">
+              <Table>
+                <TableHeader className="sticky top-0 bg-card z-10">
+                  <TableRow className="hover:bg-transparent border-b">
+                    <TableHead
+                      className="w-12 text-center cursor-pointer hover:text-foreground"
+                      onClick={() => handleSort("rank")}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        # <SortIcon column="rank" />
+                      </span>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:text-foreground"
+                      onClick={() => handleSort("model")}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        Model <SortIcon column="model" />
+                      </span>
+                    </TableHead>
+                    <TableHead
+                      className="w-[280px] cursor-pointer hover:text-foreground"
+                      onClick={() => handleSort("score")}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        Accuracy <SortIcon column="score" />
+                      </span>
+                    </TableHead>
+                    <TableHead
+                      className="text-right cursor-pointer hover:text-foreground"
+                      onClick={() => handleSort("cost")}
+                    >
+                      <span className="inline-flex items-center gap-1 justify-end">
+                        Cost <SortIcon column="cost" />
+                      </span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedLeaderboard.map((entry, idx) => {
+                    // Get original rank for display
+                    const originalRank =
+                      resultsData.globalLeaderboard.findIndex(
+                        (e) => e.model === entry.model
+                      ) + 1;
+
+                    return (
+                      <TableRow key={entry.model} className="h-10 hover:bg-muted/50">
+                        <TableCell className="text-center font-mono text-xs text-muted-foreground">
+                          {originalRank}
+                        </TableCell>
+                        <TableCell className="font-medium text-sm">{entry.model}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-xs w-12 text-right">
+                              {entry.averageScore.toFixed(1)}%
+                            </span>
+                            <div className="h-2 flex-1 bg-secondary rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-primary transition-all"
+                                style={{ width: `${entry.averageScore}%` }}
+                              />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-xs text-muted-foreground">
+                          {formatCost(entry.totalCost)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </Card>
+
+          {/* RIGHT: Chart + Recent Suites */}
+          <div className="lg:col-span-4 flex flex-col gap-4">
+            {/* Bar Chart */}
+            <Card className="flex-1">
+              <CardHeader className="py-3 px-4 border-b">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-sm">Top 15 Models</CardTitle>
+                </div>
+                <CardDescription className="text-xs">Accuracy comparison</CardDescription>
+              </CardHeader>
+              <CardContent className="p-2 h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    layout="vertical"
+                    margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                  >
+                    <XAxis
+                      type="number"
+                      domain={[0, 100]}
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(v) => `${v}%`}
+                      stroke="hsl(var(--muted-foreground))"
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="model"
+                      width={90}
+                      tick={{ fontSize: 9 }}
+                      stroke="hsl(var(--muted-foreground))"
+                    />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Bar dataKey="averageScore" radius={[0, 4, 4, 0]}>
+                      {chartData.map((_, index) => (
+                        <Cell
+                          key={index}
+                          fill={index === 0 ? "hsl(var(--chart-4))" : "hsl(var(--primary))"}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Recent Suites */}
+            <Card>
+              <CardHeader className="py-3 px-4 border-b bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm">Completed Suites</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-border">
+                  {resultsData.suiteRuns.map((run) => (
+                    <Link
+                      key={run.suiteId}
+                      href={`/suite/${run.suiteId}`}
+                      className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm truncate">{run.suiteName}</span>
+                          <ChainBadge chain={run.chain} size="sm" />
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {run.topPerformer && (
+                            <span>
+                              Top: {run.topPerformer.model} ({run.topPerformer.score.toFixed(0)}%)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <span className="text-xs">{formatRelativeTime(run.timestamp)}</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
     </div>
   );

@@ -129,8 +129,7 @@ export async function GET() {
         suitesParticipated: data.count,
         totalCost: data.totalCost,
       }))
-      .sort((a, b) => b.averageScore - a.averageScore)
-      .slice(0, 10); // Top 10 models
+      .sort((a, b) => b.averageScore - a.averageScore); // Return ALL models
 
     // Calculate totals
     const uniqueModels = new Set<string>();
