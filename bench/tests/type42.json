@@ -1,0 +1,27 @@
+{
+  "name": "Type 42 Key Derivation",
+  "description": "Tests knowledge of Type 42 key derivation and backup formats.",
+  "system_prompt": "You are a Bitcoin SV developer expert in Type 42 key derivation and the bitcoin-backup library. Provide technical answers about key derivation and serialization.",
+  "tests": [
+    {
+      "prompt": "In the context of the `@bsv/sdk`, what method is used by a master private key to derive a Type 42 child key for a specific invoice number and counterparty public key?",
+      "answers": ["deriveChild", "deriveChild()"]
+    },
+    {
+      "prompt": "When Alice wants to derive a public key for Bob using Type 42 derivation, she uses Bob's public key and her own master private key. What is the method call on Bob's public key object in `@bsv/sdk`?",
+      "answers": ["deriveChild"]
+    },
+    {
+      "prompt": "In the `BapMasterBackup` interface from the `bitcoin-backup` library, what specific field name indicates that the backup is in the modern Type 42 format rather than the legacy BIP32 format?",
+      "answers": ["rootPk"]
+    },
+    {
+      "prompt": "Unlike BIP32, Type 42 key derivation allows for 'unlimited invoice numbering space'. What data type is typically used for the 'invoice' or 'purpose' parameter in the `deriveChild` method?",
+      "answers": ["string", "string identifier"]
+    },
+    {
+      "prompt": "What are the two key components combined to derive a shared child key in Type 42 derivation, ensuring that both parties can arrive at the same key universe without sharing master secrets?",
+      "answers": ["Private Key", "Public Key", "invoice", "invoice number"]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Bitcoin Parsing & Code",
+  "description": "Tests the ability to parse hex data and write code using Bitcoin libraries.",
+  "system_prompt": "You are an expert Bitcoin developer. Provide precise code snippets and technical explanations.",
+  "tests": [
+    {
+      "prompt": "Write a `@bsv/sdk` snippet to create a new P2PKH unlocking script template using a private key.",
+      "answers": ["P2PKH", "unlock", "new P2PKH().unlock"]
+    },
+    {
+      "prompt": "What is the 1-byte version prefix for a Mainnet P2PKH address in hex?",
+      "answers": ["0x00", "00"]
+    },
+    {
+      "prompt": "In a raw Bitcoin transaction hex, what are the first 4 bytes usually representing?",
+      "answers": ["version", "nVersion"]
+    },
+    {
+      "prompt": "Explain what happens when an LLM encounters a large Bitcoin transaction hex with 50+ inputs in terms of token limits and context.",
+      "answers": ["context window", "token limit", "truncation"]
+    }
+  ]
+}

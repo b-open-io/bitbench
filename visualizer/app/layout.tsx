@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { WalletProvider } from "@/components/wallet-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SkateBench - Ranking Models By Skateboarding Knowledge",
+  title: "Bitbench.org - Bitcoin LLM Benchmark",
   description:
-    "A fun benchmark of LLMs by how well they can name skateboarding tricks",
+    "An interactive benchmark for comparing AI models on Bitcoin-related tasks, libraries, and protocols.",
 };
 
 export default function RootLayout({
@@ -15,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <style>{`
 html {
@@ -25,7 +26,9 @@ html {
 }
         `}</style>
       </head>
-      <body>{children}</body>
+      <body>
+        <WalletProvider>{children}</WalletProvider>
+      </body>
     </html>
   );
 }

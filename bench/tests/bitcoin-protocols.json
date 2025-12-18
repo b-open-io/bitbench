@@ -1,0 +1,29 @@
+{
+  "name": "Bitcoin SPV & Data Protocols",
+  "description": "Tests awareness of OP_RETURN, Ordinals, Runes, and BRC-20 protocols.",
+  "system_prompt": "You are a Bitcoin protocol expert. Provide concise and accurate answers to technical questions about Bitcoin data protocols. If asked for a name or code snippet, provide just that.",
+  "tests": [
+    {
+      "prompt": "What is the 4-byte hex prefix used in OP_RETURN outputs for the Omni Layer protocol?",
+      "answers": ["6f6d6e69", "omni"]
+    },
+    {
+      "prompt": "Describe the 'envelope' structure used in Ordinals inscriptions to wrap data in the witness script.",
+      "answers": ["OP_FALSE OP_IF", "OP_0 OP_IF"],
+      "negative_answers": ["OP_RETURN"]
+    },
+    {
+      "prompt": "In the Runes protocol, which OP_CODE is used to denote a Rune transfer or issuance in an OP_RETURN output?",
+      "answers": ["OP_13", "13"],
+      "negative_answers": ["OP_1", "OP_PUSH"]
+    },
+    {
+      "prompt": "What is the standard JSON field name used in BRC-20 inscriptions to specify the operation type (e.g., deploy, mint, transfer)?",
+      "answers": ["op"]
+    },
+    {
+      "prompt": "What is the name of the protocol that uses 'Edicts' to manage token transfers via UTXOs?",
+      "answers": ["Runes"]
+    }
+  ]
+}

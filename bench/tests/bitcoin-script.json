@@ -1,0 +1,28 @@
+{
+  "name": "Bitcoin Script & Transactions",
+  "description": "Tests understanding of Bitcoin Script, SegWit, and Taproot.",
+  "system_prompt": "You are a Bitcoin protocol engineer specializing in Script and Taproot. Answer technical questions about transaction structures and opcodes.",
+  "tests": [
+    {
+      "prompt": "What opcode was introduced in Tapscript to verify Schnorr signatures?",
+      "answers": ["OP_CHECKSIGADD", "OP_CHECKSIG"],
+      "negative_answers": ["OP_CHECKSIGVERIFY"]
+    },
+    {
+      "prompt": "What is the Bech32m checksum used for in Taproot addresses, as opposed to the original Bech32?",
+      "answers": ["BIP350", "constant 0x2be810b1"]
+    },
+    {
+      "prompt": "What is the maximum size of an OP_RETURN data payload allowed by default in Bitcoin Core?",
+      "answers": ["80 bytes", "83 bytes"]
+    },
+    {
+      "prompt": "What is the weight (in weight units) of a single witness byte in a SegWit transaction?",
+      "answers": ["1", "1 WU"]
+    },
+    {
+      "prompt": "Which BIP defined Taproot (BIP341) and Tapscript (BIP342)?",
+      "answers": ["BIP 341", "BIP 342"]
+    }
+  ]
+}

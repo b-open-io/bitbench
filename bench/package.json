@@ -1,5 +1,5 @@
 {
-  "name": "skatebench",
+  "name": "bitbench",
   "module": "index.ts",
   "type": "module",
   "scripts": {
