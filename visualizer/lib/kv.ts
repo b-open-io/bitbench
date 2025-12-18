@@ -6,10 +6,10 @@ import type {
   SuiteWithBalance,
 } from "./types";
 
-// Initialize Redis client
+// Initialize Redis client (Vercel KV uses these env var names)
 export const redis = new Redis({
-  url: process.env.REDIS_URL!,
-  token: process.env.REDIS_TOKEN!,
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
 });
 
 // Key patterns
@@ -119,5 +119,5 @@ export async function clearDonations(suiteId: string): Promise<void> {
 
 // Utility to check if Redis is configured
 export function isRedisConfigured(): boolean {
-  return !!(process.env.REDIS_URL && process.env.REDIS_TOKEN);
+  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 }
