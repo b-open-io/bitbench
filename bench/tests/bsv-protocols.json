@@ -38,7 +38,7 @@
       ]
     },
     {
-      "prompt": "What is the 4-byte hex prefix for the Sigma protocol (signatures) in an OP_RETURN script?",
+      "prompt": "What is the 5-byte hex prefix for the Sigma protocol (signatures) in an OP_RETURN script?",
       "answers": [
         "5349474d41",
         "SIGMA"
