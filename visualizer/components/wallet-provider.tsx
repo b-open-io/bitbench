@@ -61,17 +61,8 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
             | Record<string, string>
             | undefined;
 
-          // Theme tokens have app: "theme-token" and type: "theme"
-          if (mapData?.app === "theme-token" && mapData?.type === "theme") {
-            const content = ordinal?.origin?.data?.insc?.file?.json;
-            if (content && typeof content === "object") {
-              const result = validateThemeToken(content);
-              if (result.valid) {
-                tokens.push(result.theme);
-              }
-            }
-          } else {
-            // Also check if it's a valid theme without MAP metadata (legacy)
+          // Theme tokens have type: "theme" in MAP metadata
+          if (mapData?.type === "theme") {
             const content = ordinal?.origin?.data?.insc?.file?.json;
             if (content && typeof content === "object") {
               const result = validateThemeToken(content);

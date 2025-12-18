@@ -13,7 +13,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Wallet, LogOut, Copy, Check, Palette, Loader2, RotateCcw } from "lucide-react";
+import { WalletMinimal, Power, Files, CircleCheck, PaintBucket, LoaderCircle, History } from "lucide-react";
 import { useState, useEffect, useCallback, type MouseEvent } from "react";
 import type { ThemeToken } from "@theme-token/sdk";
 
@@ -152,7 +152,7 @@ export function WalletConnect() {
   if (!isConnected) {
     return (
       <Button onClick={handleConnect} variant="outline" className="gap-2">
-        <Wallet className="h-4 w-4" />
+        <WalletMinimal className="h-4 w-4 fill-current" />
         Connect Wallet
       </Button>
     );
@@ -162,7 +162,7 @@ export function WalletConnect() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="gap-2">
-          <Wallet className="h-4 w-4" />
+          <WalletMinimal className="h-4 w-4 fill-current" />
           <span className="hidden sm:inline">
             {formatAddress(address || "")}
           </span>
@@ -175,10 +175,10 @@ export function WalletConnect() {
           <>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="gap-2">
-                <Palette className="h-4 w-4" />
+                <PaintBucket className="h-4 w-4 fill-current" />
                 <span>Themes</span>
                 {isLoadingThemes && (
-                  <Loader2 className="h-3 w-3 animate-spin ml-auto" />
+                  <LoaderCircle className="h-3 w-3 animate-spin ml-auto" />
                 )}
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="max-h-64 overflow-y-auto">
@@ -191,7 +191,7 @@ export function WalletConnect() {
                     <ThemeStripes styles={theme.styles} mode={themeState.mode} />
                     <span className="flex-1 truncate">{theme.name}</span>
                     {themeState.activeTheme?.name === theme.name && (
-                      <Check className="h-4 w-4 text-primary" />
+                      <CircleCheck className="h-4 w-4 text-primary fill-current" />
                     )}
                   </DropdownMenuItem>
                 ))}
@@ -200,7 +200,7 @@ export function WalletConnect() {
                   onClick={handleResetTheme}
                   className="gap-2 cursor-pointer"
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  <History className="h-4 w-4 fill-current" />
                   Reset to default
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
@@ -211,9 +211,9 @@ export function WalletConnect() {
 
         <DropdownMenuItem onClick={copyAddress} className="gap-2">
           {copied ? (
-            <Check className="h-4 w-4" />
+            <CircleCheck className="h-4 w-4 fill-current" />
           ) : (
-            <Copy className="h-4 w-4" />
+            <Files className="h-4 w-4 fill-current" />
           )}
           {copied ? "Copied!" : "Copy Address"}
         </DropdownMenuItem>
@@ -222,7 +222,7 @@ export function WalletConnect() {
           onClick={handleDisconnect}
           className="gap-2 text-destructive"
         >
-          <LogOut className="h-4 w-4" />
+          <Power className="h-4 w-4 fill-current" />
           Disconnect
         </DropdownMenuItem>
       </DropdownMenuContent>
