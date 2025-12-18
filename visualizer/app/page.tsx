@@ -66,7 +66,7 @@ export default function BenchmarkVisualizer() {
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       {/* Subtle gradient background using primary color */}
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,oklch(0.70_0.18_155/0.12),transparent)]" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,oklch(from_var(--primary)_l_c_h/0.12),transparent)]" />
 
       <SiteHeader modelCount={modelCount} />
 

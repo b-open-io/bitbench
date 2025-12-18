@@ -3,6 +3,7 @@
 import type { ComponentPropsWithoutRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { WalletConnect } from "@/components/wallet-connect";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const BitcoinSVG = ({
   className,
@@ -49,6 +50,7 @@ export function SiteHeader({ modelCount }: SiteHeaderProps) {
             <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             {modelCount} models
           </Badge>
+          <ThemeToggle />
           <WalletConnect />
         </div>
       </div>
