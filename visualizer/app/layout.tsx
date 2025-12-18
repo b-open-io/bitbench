@@ -6,14 +6,14 @@ import { WalletProvider } from "@/components/wallet-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Bitbench - Bitcoin AI Benchmark Platform",
+  title: "Bitbench - Blockchain AI Benchmark Platform",
   description:
-    "A donation-funded benchmark platform for comparing 40+ AI models on Bitcoin-related tasks, libraries, and protocols.",
+    "A donation-funded benchmark platform for comparing 40+ AI models on blockchain development tasks, libraries, and protocols.",
   metadataBase: new URL("https://bitbench.org"),
   openGraph: {
-    title: "Bitbench - Bitcoin AI Benchmark Platform",
+    title: "Bitbench - Blockchain AI Benchmark Platform",
     description:
-      "Compare AI model performance on Bitcoin development tasks. Donation-funded, open source benchmarking.",
+      "Compare 40+ AI models on blockchain development tasks. Donation-funded, open source benchmarking.",
     url: "https://bitbench.org",
     siteName: "Bitbench",
     images: [
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Bitbench - AI Benchmark Platform for Bitcoin/BSV",
+        alt: "Bitbench - Blockchain AI Benchmark Platform",
       },
     ],
     locale: "en_US",
@@ -29,9 +29,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bitbench - Bitcoin AI Benchmark Platform",
+    title: "Bitbench - Blockchain AI Benchmark Platform",
     description:
-      "Compare AI model performance on Bitcoin development tasks. Donation-funded, open source benchmarking.",
+      "Compare 40+ AI models on blockchain development tasks. Donation-funded, open source benchmarking.",
     images: ["/og-image.jpg"],
   },
   icons: {
