@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -137,28 +138,31 @@ export function DonationCard({ suite, onDonate }: DonationCardProps) {
         )}
 
         {/* Action Button */}
-        <Button
-          onClick={() => onDonate(suite)}
-          className={cn(
-            "mt-auto w-full",
-            isPending && "bg-amber-500 hover:bg-amber-600 text-white"
-          )}
-          variant={isCompleted ? "default" : isPending ? "default" : "default"}
-          disabled={isPending}
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Awaiting Benchmark Run
-            </>
-          ) : isCompleted ? (
-            "View Results"
-          ) : progressPercent >= 100 ? (
-            "Fully Funded"
-          ) : (
-            "Fund This Benchmark"
-          )}
-        </Button>
+        {isCompleted ? (
+          <Button asChild className="mt-auto w-full">
+            <Link href={`/suite/${suite.id}`}>View Results</Link>
+          </Button>
+        ) : (
+          <Button
+            onClick={() => onDonate(suite)}
+            className={cn(
+              "mt-auto w-full",
+              isPending && "bg-amber-500 hover:bg-amber-600 text-white"
+            )}
+            disabled={isPending}
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Awaiting Benchmark Run
+              </>
+            ) : progressPercent >= 100 ? (
+              "Fully Funded"
+            ) : (
+              "Fund This Benchmark"
+            )}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
