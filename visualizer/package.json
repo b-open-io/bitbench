@@ -40,6 +40,7 @@
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "1.1.6",
     "@tailwindcss/postcss": "^4.1.18",
+    "@theme-token/sdk": "^0.0.12",
     "@upstash/redis": "^1.35.8",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",

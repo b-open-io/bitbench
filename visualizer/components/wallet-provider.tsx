@@ -10,12 +10,16 @@ import {
 } from "react";
 import { YoursProvider, useYoursWallet } from "yours-wallet-provider";
 import type { Addresses, Balance } from "yours-wallet-provider";
+import { type ThemeToken, validateThemeToken } from "@theme-token/sdk";
+import { useThemeToken } from "./theme-provider";
 
 interface WalletState {
   isReady: boolean;
   isConnected: boolean;
   addresses: Addresses | null;
   balance: Balance | null;
+  themeTokens: ThemeToken[];
+  isLoadingThemes: boolean;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   refreshState: () => Promise<void>;
@@ -30,6 +34,65 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [addresses, setAddresses] = useState<Addresses | null>(null);
   const [balance, setBalance] = useState<Balance | null>(null);
+  const [themeTokens, setThemeTokens] = useState<ThemeToken[]>([]);
+  const [isLoadingThemes, setIsLoadingThemes] = useState(false);
+
+  // Get theme context to set available themes
+  const themeContext = useThemeToken();
+
+  // Fetch theme tokens from wallet ordinals
+  const fetchThemeTokens = useCallback(async () => {
+    if (!wallet?.isReady || typeof wallet.getOrdinals !== "function") return;
+
+    setIsLoadingThemes(true);
+
+    try {
+      const response = await wallet.getOrdinals({ limit: 100 });
+      const tokens: ThemeToken[] = [];
+
+      const ordinals = Array.isArray(response)
+        ? response
+        : (response?.ordinals ?? []);
+
+      for (const ordinal of ordinals) {
+        try {
+          // Check if it's a theme token by looking at MAP metadata
+          const mapData = ordinal?.origin?.data?.map as
+            | Record<string, string>
+            | undefined;
+
+          // Theme tokens have app: "theme-token" and type: "theme"
+          if (mapData?.app === "theme-token" && mapData?.type === "theme") {
+            const content = ordinal?.origin?.data?.insc?.file?.json;
+            if (content && typeof content === "object") {
+              const result = validateThemeToken(content);
+              if (result.valid) {
+                tokens.push(result.theme);
+              }
+            }
+          } else {
+            // Also check if it's a valid theme without MAP metadata (legacy)
+            const content = ordinal?.origin?.data?.insc?.file?.json;
+            if (content && typeof content === "object") {
+              const result = validateThemeToken(content);
+              if (result.valid) {
+                tokens.push(result.theme);
+              }
+            }
+          }
+        } catch {
+          // Skip invalid ordinals
+        }
+      }
+
+      setThemeTokens(tokens);
+      themeContext.setAvailableThemes(tokens);
+    } catch (err) {
+      console.error("Error fetching theme tokens:", err);
+    } finally {
+      setIsLoadingThemes(false);
+    }
+  }, [wallet, themeContext]);
 
   const refreshState = useCallback(async () => {
     // Check both isReady flag AND that methods exist (wallet is fully loaded)
@@ -51,9 +114,14 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
         ]);
         setAddresses(addrs || null);
         setBalance(bal || null);
+
+        // Fetch theme tokens when connected
+        await fetchThemeTokens();
       } else {
         setAddresses(null);
         setBalance(null);
+        setThemeTokens([]);
+        themeContext.setAvailableThemes([]);
       }
     } catch (err) {
       console.error("Error refreshing wallet state:", err);
@@ -61,7 +129,7 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
       setAddresses(null);
       setBalance(null);
     }
-  }, [wallet]);
+  }, [wallet, fetchThemeTokens, themeContext]);
 
   // Set up event listeners for wallet state changes
   useEffect(() => {
@@ -73,6 +141,9 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
       setIsConnected(false);
       setAddresses(null);
       setBalance(null);
+      setThemeTokens([]);
+      themeContext.setAvailableThemes([]);
+      themeContext.resetTheme();
     };
 
     const handleSwitchAccount = () => {
@@ -95,7 +166,7 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
         wallet.removeListener("switchAccount", handleSwitchAccount);
       }
     };
-  }, [wallet, wallet?.isReady, refreshState]);
+  }, [wallet, wallet?.isReady, refreshState, themeContext]);
 
   const connect = useCallback(async () => {
     // Check wallet is fully loaded
@@ -121,16 +192,21 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
       setIsConnected(false);
       setAddresses(null);
       setBalance(null);
+      setThemeTokens([]);
+      themeContext.setAvailableThemes([]);
+      themeContext.resetTheme();
     } catch (err) {
       console.error("Error disconnecting wallet:", err);
     }
-  }, [wallet]);
+  }, [wallet, themeContext]);
 
   const state: WalletState = {
     isReady: wallet?.isReady ?? false,
     isConnected,
     addresses,
     balance,
+    themeTokens,
+    isLoadingThemes,
     connect,
     disconnect,
     refreshState,

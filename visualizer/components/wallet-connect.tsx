@@ -1,6 +1,7 @@
 "use client";
 
 import { useWallet } from "./wallet-provider";
+import { useThemeToken } from "./theme-provider";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,9 +9,13 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Wallet, LogOut, Copy, Check } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { Wallet, LogOut, Copy, Check, Palette, Loader2, RotateCcw } from "lucide-react";
+import { useState, useEffect, useCallback, type MouseEvent } from "react";
+import type { ThemeToken } from "@theme-token/sdk";
 
 function formatAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -22,8 +27,33 @@ function formatBalance(satoshis: number | null): string {
   return `${bsv.toFixed(4)} BSV`;
 }
 
+// Visual representation of theme colors
+function ThemeStripes({
+  styles,
+  mode,
+}: {
+  styles: { light: Record<string, string>; dark: Record<string, string> };
+  mode: "light" | "dark";
+}) {
+  const colors = [
+    styles[mode].primary,
+    styles[mode].secondary,
+    styles[mode].accent,
+    styles[mode].background,
+  ];
+
+  return (
+    <div className="flex h-4 w-8 overflow-hidden rounded border border-border">
+      {colors.map((color, i) => (
+        <div key={i} className="flex-1" style={{ backgroundColor: color }} />
+      ))}
+    </div>
+  );
+}
+
 export function WalletConnect() {
   const walletState = useWallet();
+  const themeState = useThemeToken();
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
@@ -31,6 +61,8 @@ export function WalletConnect() {
 
   // Get the raw wallet from state (if available)
   const wallet = walletState?.wallet;
+  const themeTokens = walletState?.themeTokens ?? [];
+  const isLoadingThemes = walletState?.isLoadingThemes ?? false;
 
   const refreshState = useCallback(async () => {
     if (!wallet?.isReady || typeof wallet.isConnected !== "function") return;
@@ -109,6 +141,14 @@ export function WalletConnect() {
     }
   };
 
+  const handleSelectTheme = (theme: ThemeToken, e: MouseEvent) => {
+    themeState.applyThemeAnimated(theme, e);
+  };
+
+  const handleResetTheme = () => {
+    themeState.resetTheme();
+  };
+
   if (!isConnected) {
     return (
       <Button onClick={handleConnect} variant="outline" className="gap-2">
@@ -130,6 +170,45 @@ export function WalletConnect() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
+        {/* Theme selector submenu */}
+        {themeTokens.length > 0 && (
+          <>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger className="gap-2">
+                <Palette className="h-4 w-4" />
+                <span>Themes</span>
+                {isLoadingThemes && (
+                  <Loader2 className="h-3 w-3 animate-spin ml-auto" />
+                )}
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="max-h-64 overflow-y-auto">
+                {themeTokens.map((theme) => (
+                  <DropdownMenuItem
+                    key={theme.name}
+                    onClick={(e) => handleSelectTheme(theme, e)}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <ThemeStripes styles={theme.styles} mode={themeState.mode} />
+                    <span className="flex-1 truncate">{theme.name}</span>
+                    {themeState.activeTheme?.name === theme.name && (
+                      <Check className="h-4 w-4 text-primary" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleResetTheme}
+                  className="gap-2 cursor-pointer"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reset to default
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSeparator />
+          </>
+        )}
+
         <DropdownMenuItem onClick={copyAddress} className="gap-2">
           {copied ? (
             <Check className="h-4 w-4" />
