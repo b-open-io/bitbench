@@ -19,17 +19,17 @@ export type SuiteStatus = "funding" | "pending" | "completed";
 // Supported blockchain chains
 export type Chain = "bsv" | "btc" | "eth" | "sol" | "bch" | "ltc";
 
-// Chain metadata for display
+// Chain metadata for display - using theme colors
 export const CHAIN_INFO: Record<
   Chain,
   { name: string; color: string; bgColor: string }
 > = {
-  bsv: { name: "BSV", color: "text-orange-500", bgColor: "bg-orange-500/10" },
-  btc: { name: "BTC", color: "text-amber-500", bgColor: "bg-amber-500/10" },
-  eth: { name: "ETH", color: "text-indigo-500", bgColor: "bg-indigo-500/10" },
-  sol: { name: "SOL", color: "text-purple-500", bgColor: "bg-purple-500/10" },
-  bch: { name: "BCH", color: "text-green-500", bgColor: "bg-green-500/10" },
-  ltc: { name: "LTC", color: "text-slate-400", bgColor: "bg-slate-400/10" },
+  bsv: { name: "BSV", color: "text-chart-1", bgColor: "bg-chart-1/10" },
+  btc: { name: "BTC", color: "text-chart-4", bgColor: "bg-chart-4/10" },
+  eth: { name: "ETH", color: "text-chart-3", bgColor: "bg-chart-3/10" },
+  sol: { name: "SOL", color: "text-chart-5", bgColor: "bg-chart-5/10" },
+  bch: { name: "BCH", color: "text-chart-2", bgColor: "bg-chart-2/10" },
+  ltc: { name: "LTC", color: "text-muted-foreground", bgColor: "bg-muted/50" },
 };
 
 // Database types for donation tracking

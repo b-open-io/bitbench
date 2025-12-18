@@ -240,11 +240,11 @@ function BenchmarkVisualizerContent() {
                 {/* Hero Stats */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <Card className="relative overflow-hidden">
-                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-green-500/50 to-transparent" />
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <CardDescription>Completed Benchmarks</CardDescription>
-                        <div className="rounded-lg bg-green-500/10 p-2 text-green-500">
+                        <div className="rounded-lg bg-primary/10 p-2 text-primary">
                           <Trophy className="h-4 w-4" />
                         </div>
                       </div>
@@ -337,7 +337,7 @@ function BenchmarkVisualizerContent() {
                             completed benchmarks
                           </CardDescription>
                         </div>
-                        <div className="rounded-lg bg-amber-500/10 p-2 text-amber-500">
+                        <div className="rounded-lg bg-chart-4/10 p-2 text-chart-4">
                           <Medal className="h-5 w-5" />
                         </div>
                       </div>
@@ -354,11 +354,11 @@ function BenchmarkVisualizerContent() {
                               <div
                                 className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
                                   index === 0
-                                    ? "bg-amber-500/20 text-amber-500"
+                                    ? "bg-chart-4/20 text-chart-4"
                                     : index === 1
-                                      ? "bg-zinc-400/20 text-zinc-400"
+                                      ? "bg-muted-foreground/20 text-muted-foreground"
                                       : index === 2
-                                        ? "bg-amber-700/20 text-amber-700"
+                                        ? "bg-chart-5/20 text-chart-5"
                                         : "bg-muted text-muted-foreground"
                                 }`}
                               >
@@ -400,13 +400,13 @@ function BenchmarkVisualizerContent() {
                     {resultsData.suiteRuns.map((run) => (
                       <Card
                         key={run.suiteId}
-                        className="flex flex-col border-green-500/30 bg-green-500/5 transition-all hover:border-green-500/50"
+                        className="flex flex-col border-primary/30 bg-primary/5 transition-all hover:border-primary/50"
                       >
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-500 ring-1 ring-inset ring-green-500/20">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
                                   <Trophy className="h-3 w-3" />
                                   Results Ready
                                 </span>
@@ -432,7 +432,7 @@ function BenchmarkVisualizerContent() {
                                 <span className="font-medium truncate">
                                   {run.topPerformer.model}
                                 </span>
-                                <span className="font-mono font-bold text-green-500">
+                                <span className="font-mono font-bold text-primary">
                                   {run.topPerformer.score.toFixed(1)}%
                                 </span>
                               </div>
@@ -476,13 +476,13 @@ function BenchmarkVisualizerContent() {
                   {completedSuites.map((suite) => (
                     <Card
                       key={suite.id}
-                      className="flex flex-col border-green-500/30 bg-green-500/5"
+                      className="flex flex-col border-primary/30 bg-primary/5"
                     >
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-500 ring-1 ring-inset ring-green-500/20">
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
                                 <Trophy className="h-3 w-3" />
                                 Results Ready
                               </span>

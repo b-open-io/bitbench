@@ -152,7 +152,7 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
               {/* Connected wallet info */}
               {addresses?.bsvAddress && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
+                  <div className="h-2 w-2 rounded-full bg-primary" />
                   <span className="truncate">{addresses.bsvAddress}</span>
                 </div>
               )}

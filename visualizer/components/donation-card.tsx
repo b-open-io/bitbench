@@ -28,11 +28,11 @@ function formatUsd(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-// Status badge component
+// Status badge component - using theme colors
 function StatusBadge({ status }: { status: string }) {
   if (status === "pending") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-500 ring-1 ring-inset ring-amber-500/20">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-chart-4/10 px-2.5 py-1 text-xs font-medium text-chart-4 ring-1 ring-inset ring-chart-4/20">
         <Loader2 className="h-3 w-3 animate-spin" />
         Queued
       </span>
@@ -40,7 +40,7 @@ function StatusBadge({ status }: { status: string }) {
   }
   if (status === "completed") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-500 ring-1 ring-inset ring-green-500/20">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
         <Trophy className="h-3 w-3" />
         Results Ready
       </span>
@@ -58,8 +58,8 @@ export function DonationCard({ suite, onDonate }: DonationCardProps) {
     <Card
       className={cn(
         "flex flex-col transition-colors",
-        isPending && "border-amber-500/30 bg-amber-500/5",
-        isCompleted && "border-green-500/30 bg-green-500/5"
+        isPending && "border-chart-4/30 bg-chart-4/5",
+        isCompleted && "border-primary/30 bg-primary/5"
       )}
     >
       <CardHeader className="pb-2">
@@ -79,8 +79,8 @@ export function DonationCard({ suite, onDonate }: DonationCardProps) {
       <CardContent className="flex-1 flex flex-col gap-4">
         {/* Funding Progress - different display for pending/completed */}
         {isPending ? (
-          <div className="rounded-lg bg-amber-500/10 p-3 text-center">
-            <div className="flex items-center justify-center gap-2 text-amber-500">
+          <div className="rounded-lg bg-chart-4/10 p-3 text-center">
+            <div className="flex items-center justify-center gap-2 text-chart-4">
               <CheckCircle2 className="h-5 w-5" />
               <span className="font-semibold">Fully Funded</span>
             </div>
@@ -89,8 +89,8 @@ export function DonationCard({ suite, onDonate }: DonationCardProps) {
             </p>
           </div>
         ) : isCompleted ? (
-          <div className="rounded-lg bg-green-500/10 p-3 text-center">
-            <div className="flex items-center justify-center gap-2 text-green-500">
+          <div className="rounded-lg bg-primary/10 p-3 text-center">
+            <div className="flex items-center justify-center gap-2 text-primary">
               <Trophy className="h-5 w-5" />
               <span className="font-semibold">Benchmark Complete</span>
             </div>
@@ -147,7 +147,7 @@ export function DonationCard({ suite, onDonate }: DonationCardProps) {
             onClick={() => onDonate(suite)}
             className={cn(
               "mt-auto w-full",
-              isPending && "bg-amber-500 hover:bg-amber-600 text-white"
+              isPending && "bg-chart-4 hover:bg-chart-4/90 text-primary-foreground"
             )}
             disabled={isPending}
           >
