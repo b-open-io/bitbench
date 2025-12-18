@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,9 +32,9 @@ function usdToSats(usd: number): number {
 }
 
 export function DonationModal({ suite, open, onClose }: DonationModalProps) {
-  const wallet = useWallet();
-  const [isConnected, setIsConnected] = useState(false);
-  const [address, setAddress] = useState<string | null>(null);
+  // Use reactive wallet state - automatically updates on signedOut/switchAccount events
+  const { isReady, isConnected, addresses, connect, wallet } = useWallet();
+
   const [amountUsd, setAmountUsd] = useState("");
   const [status, setStatus] = useState<DonationStatus>("idle");
   const [txid, setTxid] = useState<string | null>(null);
@@ -45,39 +45,8 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
     ? suite.estimatedCostUsd - suite.currentBalanceUsd
     : 0;
 
-  const refreshState = useCallback(async () => {
-    if (!wallet?.isReady) return;
-
-    try {
-      const connected = await wallet.isConnected();
-      setIsConnected(connected);
-
-      if (connected) {
-        const addresses = await wallet.getAddresses();
-        setAddress(addresses?.bsvAddress || null);
-      }
-    } catch (err) {
-      console.error("Error refreshing wallet state:", err);
-    }
-  }, [wallet]);
-
-  useEffect(() => {
-    if (open) {
-      refreshState();
-    }
-  }, [open, refreshState]);
-
   const handleConnect = async () => {
-    if (!wallet?.isReady) {
-      window.open("https://yours.org", "_blank");
-      return;
-    }
-    try {
-      await wallet.connect();
-      await refreshState();
-    } catch (err) {
-      console.error("Error connecting wallet:", err);
-    }
+    await connect();
   };
 
   const handleDonate = async () => {
@@ -105,7 +74,7 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
           body: JSON.stringify({
             txid: result.txid,
             amountSats,
-            fromAddress: address,
+            fromAddress: addresses?.bsvAddress,
           }),
         });
       }
@@ -163,16 +132,26 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
           <div className="flex flex-col items-center gap-4 py-6">
             <Wallet className="h-12 w-12 text-muted-foreground" />
             <p className="text-center text-muted-foreground">
-              Connect your wallet to donate
+              {isReady
+                ? "Connect your wallet to donate"
+                : "Install Yours Wallet to donate"}
             </p>
             <Button onClick={handleConnect} className="gap-2">
               <Wallet className="h-4 w-4" />
-              Connect Wallet
+              {isReady ? "Connect Wallet" : "Get Yours Wallet"}
             </Button>
           </div>
         ) : (
           <>
             <div className="space-y-4">
+              {/* Connected wallet info */}
+              {addresses?.bsvAddress && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="h-2 w-2 rounded-full bg-green-500" />
+                  <span className="truncate">{addresses.bsvAddress}</span>
+                </div>
+              )}
+
               {/* Funding info */}
               <div className="rounded-lg bg-muted p-3 text-sm">
                 <div className="flex justify-between">
