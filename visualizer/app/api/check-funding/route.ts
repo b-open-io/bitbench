@@ -4,7 +4,7 @@ import {
   isRedisConfigured,
   wasFundingNotificationSent,
   markFundingNotificationSent,
-  setSuite,
+  setSuiteState,
 } from "@/lib/kv";
 import {
   sendFundingNotification,
@@ -77,13 +77,12 @@ export async function GET(request: Request) {
           goalUsd: suite.estimatedCostUsd,
         });
 
-        // Mark as notified
+        // Mark as notified and update status
         if (isRedisConfigured()) {
           await markFundingNotificationSent(suite.id);
-
-          // Update suite status to pending
-          await setSuite({
-            ...suite,
+          await setSuiteState(suite.id, {
+            lastRunAt: suite.lastRunAt,
+            lastRunVersion: suite.lastRunVersion,
             status: "pending",
           });
         }

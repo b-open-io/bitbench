@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChainBadge } from "@/components/chain-badge";
 import { SuiteSwitcher } from "@/components/suite-switcher";
 import { BenchmarkCharts } from "@/components/benchmark-charts";
+import { QuestionBreakdownCard } from "@/components/question-breakdown";
 import { SiteHeader } from "@/components/site-header";
 import { getSuiteWithBalance, getAllSuites } from "@/lib/suites";
 import { getLatestRun } from "@/lib/kv";
@@ -121,7 +122,10 @@ export default async function SuiteResultsPage({ params }: PageProps) {
 
         {/* Results */}
         {hasResults ? (
-          <BenchmarkCharts rankings={transformRankings(latestRun.rankings)} />
+          <div className="space-y-8">
+            <BenchmarkCharts rankings={transformRankings(latestRun.rankings)} />
+            <QuestionBreakdownCard suiteId={id} />
+          </div>
         ) : (
           <div className="rounded-lg border border-border bg-muted/30 p-12 text-center">
             <h2 className="text-xl font-semibold mb-2">No Results Yet</h2>

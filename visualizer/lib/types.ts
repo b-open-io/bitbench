@@ -5,10 +5,14 @@ export interface TestQuestion {
   negative_answers?: string[];
 }
 
+// JSON file schema - this is the source of truth
 export interface TestSuiteFile {
+  id: string;
+  chain: Chain;
   name: string;
   description: string;
-  version: string; // Semantic version (e.g., "1.0.0")
+  version: string;
+  estimatedCostUsd: number;
   system_prompt: string;
   tests: TestQuestion[];
 }
@@ -32,20 +36,27 @@ export const CHAIN_INFO: Record<
   ltc: { name: "LTC", color: "text-muted-foreground", bgColor: "bg-muted/50" },
 };
 
-// Database types for donation tracking
+// Runtime state stored in KV (not in JSON files)
+export interface SuiteRuntimeState {
+  lastRunAt: string | null;
+  lastRunVersion: string | null;
+  status: SuiteStatus;
+}
+
+// Combined suite with all data for API responses
 export interface TestSuite {
   id: string;
   name: string;
   description: string;
-  version: string; // Current test suite version (e.g., "1.0.0")
+  version: string;
   testCount: number;
   modelCount: number;
   estimatedCostUsd: number;
   donationAddress: string;
   lastRunAt: string | null;
-  lastRunVersion: string | null; // Version of tests used in last benchmark run
+  lastRunVersion: string | null;
   status: SuiteStatus;
-  chain: Chain; // Primary chain this suite tests
+  chain: Chain;
 }
 
 export interface Donation {
@@ -83,4 +94,56 @@ export interface SuiteWithBalance extends TestSuite {
   currentBalanceSats: number;
   currentBalanceUsd: number;
   fundingProgress: number;
+}
+
+// Detailed question-level results from cache files
+export interface CachedTestResult {
+  cacheVersion: number;
+  timestamp: string;
+  suiteId: string;
+  suiteName: string;
+  version: string;
+  model: string;
+  runNumber: number;
+  testIndex: number;
+  system_prompt: string;
+  prompt: string;
+  answers: string[];
+  negative_answers?: string[];
+  duration: number;
+  cost: number;
+  completionTokens: number;
+  signature: string;
+  result: {
+    text: string;
+    correct: boolean;
+  };
+}
+
+// Aggregated question performance across models
+export interface QuestionBreakdown {
+  testIndex: number;
+  prompt: string;
+  answers: string[];
+  totalModels: number;
+  correctCount: number;
+  successRate: number;
+  modelResults: QuestionModelResult[];
+}
+
+export interface QuestionModelResult {
+  model: string;
+  correct: boolean;
+  response: string;
+  duration: number;
+  cost: number;
+}
+
+// Suite question breakdown response
+export interface SuiteQuestionBreakdown {
+  suiteId: string;
+  version: string;
+  totalQuestions: number;
+  totalModels: number;
+  questions: QuestionBreakdown[];
 }

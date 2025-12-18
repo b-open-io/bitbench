@@ -38,14 +38,14 @@ Each test suite has a unique donation address derived using Type 42 key derivati
 
 | Suite | Description | Est. Cost |
 |-------|-------------|-----------|
-| Bitcoin SPV & Data Protocols | OP_RETURN, Ordinals, Runes, BRC-20 | $2.50 |
-| Bitcoin Script & Transactions | Bitcoin Script, SegWit, Taproot | $2.50 |
-| Bitcoin Libraries | @bsv/sdk, bitcoinjs-lib, etc. | $2.50 |
-| Bitcoin Parsing | Transaction and block parsing | $2.50 |
-| Protocol Parsing | MAP, AIP, B protocol parsing | $2.50 |
-| sCrypt Smart Contracts | sCrypt language and tooling | $2.50 |
-| Stratum Mining Protocol | Mining pool protocol | $2.50 |
-| Type 42 Key Derivation | BIP-42 style key derivation | $2.50 |
+| Bitcoin SPV & Data Protocols | OP_RETURN, Ordinals, Runes, BRC-20 | ~$30 |
+| Bitcoin Script & Transactions | Bitcoin Script, SegWit, Taproot | ~$30 |
+| Bitcoin Libraries | @bsv/sdk, bitcoinjs-lib, etc. | ~$30 |
+| Bitcoin Parsing | Transaction and block parsing | ~$30 |
+| Protocol Parsing | MAP, AIP, B protocol parsing | ~$35 |
+| sCrypt Smart Contracts | sCrypt language and tooling | ~$30 |
+| Stratum Mining Protocol | Mining pool protocol | ~$30 |
+| Type 42 Key Derivation | BIP-42 style key derivation | ~$30 |
 
 ## Getting Started
 

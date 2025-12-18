@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getAllLatestRuns, getAllSuites, isRedisConfigured } from "@/lib/kv";
-import type { BenchmarkRun, ModelResult, TestSuite } from "@/lib/types";
+import { getLatestRun, isRedisConfigured } from "@/lib/kv";
+import { getAllSuites } from "@/lib/suites";
+import type { TestSuite } from "@/lib/types";
 
 interface SuiteRunSummary {
   suiteId: string;
@@ -46,16 +47,27 @@ export async function GET() {
   }
 
   try {
-    const [allSuites, allLatestRuns] = await Promise.all([
-      getAllSuites(),
-      getAllLatestRuns(),
-    ]);
+    const allSuites = await getAllSuites();
 
     // Create a map of suite ID to suite data
     const suiteMap = new Map<string, TestSuite>();
     for (const suite of allSuites) {
       suiteMap.set(suite.id, suite);
     }
+
+    // Get latest runs for completed suites
+    const completedSuites = allSuites.filter((s) => s.status === "completed");
+    const runsWithSuites = await Promise.all(
+      completedSuites.map(async (suite) => {
+        const run = await getLatestRun(suite.id);
+        return { suiteId: suite.id, run };
+      })
+    );
+
+    const allLatestRuns = runsWithSuites.filter(
+      (r): r is { suiteId: string; run: NonNullable<typeof r.run> } =>
+        r.run !== null
+    );
 
     // Transform runs into summaries
     const suiteRuns: SuiteRunSummary[] = allLatestRuns

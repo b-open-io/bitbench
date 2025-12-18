@@ -35,7 +35,7 @@ export default async function AboutPage() {
           <div className="prose prose-neutral dark:prose-invert max-w-none">
             <p>
               Each test suite has its own BSV donation address. When a suite
-              reaches its funding goal (typically $2.50 to cover API costs), the
+              reaches its funding goal (typically $25-35 to cover API costs for all models), the
               benchmark runs automatically against 40+ AI models.
             </p>
             <p>

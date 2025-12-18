@@ -622,29 +622,43 @@ const App: React.FC = () => {
       );
     }
 
+    const suiteItems = suites.map((s, idx) => {
+      const funding = fundingStatuses.find((f) => f.suiteId === s.id);
+      const isFunded = funding?.isFunded ?? false;
+      const progress = funding
+        ? Math.round(funding.fundingProgress * 100)
+        : 0;
+      const statusIcon = isFunded ? "✓" : "✗";
+
+      return {
+        key: String(idx),
+        value: { type: "suite" as const, idx },
+        label: `[${statusIcon} ${progress}%] ${s.suite.name}${
+          s.suite.description ? ` — ${s.suite.description}` : ""
+        }`,
+      };
+    });
+
+    // Add back option at the end
+    const items = [
+      ...suiteItems,
+      { key: "back", value: { type: "back" as const, idx: -1 }, label: "← Back to Menu" },
+    ];
+
     return (
       <Box flexDirection="column">
         <Text>Select a test suite:</Text>
         <SelectInput
-          items={suites.map((s, idx) => {
-            const funding = fundingStatuses.find((f) => f.suiteId === s.id);
-            const isFunded = funding?.isFunded ?? false;
-            const progress = funding
-              ? Math.round(funding.fundingProgress * 100)
-              : 0;
-            const statusIcon = isFunded ? "✓" : "✗";
-            const statusColor = isFunded ? "green" : "red";
-
-            return {
-              key: String(idx),
-              value: idx,
-              label: `[${statusIcon} ${progress}%] ${s.suite.name}${
-                s.suite.description ? ` — ${s.suite.description}` : ""
-              }`,
-            };
-          })}
+          items={items}
           onSelect={(item: any) => {
-            const idx = item.value as number;
+            const selection = item.value as { type: "suite" | "back"; idx: number };
+
+            if (selection.type === "back") {
+              setStage("menu");
+              return;
+            }
+
+            const idx = selection.idx;
             setSelectedIndex(idx);
 
             const funding = fundingStatuses.find(
@@ -714,6 +728,17 @@ const App: React.FC = () => {
     );
   }
 
+  // Version input keyboard handling (for escape to go back)
+  useInput(
+    (input, key) => {
+      if (stage !== "version") return;
+      if (key.escape) {
+        setStage("pickSuite");
+      }
+    },
+    { isActive: stage === "version" }
+  );
+
   // Version input
   if (stage === "version") {
     return (
@@ -725,6 +750,9 @@ const App: React.FC = () => {
             onChange={setVersion}
             onSubmit={() => setStage("selectModels")}
           />
+        </Box>
+        <Box marginTop={1}>
+          <Text color="gray">[Esc] go back</Text>
         </Box>
       </Box>
     );

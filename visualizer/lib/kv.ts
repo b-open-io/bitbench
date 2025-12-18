@@ -2,8 +2,7 @@ import { Redis } from "@upstash/redis";
 import type {
   BenchmarkRun,
   Donation,
-  TestSuite,
-  SuiteWithBalance,
+  SuiteRuntimeState,
 } from "./types";
 
 // Initialize Redis client (Vercel KV uses these env var names)
@@ -14,46 +13,39 @@ export const redis = new Redis({
 
 // Key patterns
 const KEYS = {
-  suites: "suites",
-  suite: (id: string) => `suite:${id}`,
+  suiteState: (id: string) => `suite:${id}:state`,
   suiteDonations: (id: string) => `suite:${id}:donations`,
   suiteRuns: (id: string) => `suite:${id}:runs`,
   suiteLatest: (id: string) => `suite:${id}:latest`,
-  suiteNotified: (id: string) => `suite:${id}:notified`, // Tracks if funding notification was sent
+  suiteNotified: (id: string) => `suite:${id}:notified`,
   addressToSuite: (address: string) => `address:${address}`,
 };
 
-// Suite operations
-export async function getAllSuiteIds(): Promise<string[]> {
-  const ids = await redis.smembers(KEYS.suites);
-  return ids;
+// Suite runtime state operations (JSON files are source of truth for static data)
+export async function getSuiteState(
+  id: string
+): Promise<SuiteRuntimeState | null> {
+  return redis.get<SuiteRuntimeState>(KEYS.suiteState(id));
 }
 
-export async function getSuite(id: string): Promise<TestSuite | null> {
-  return redis.get<TestSuite>(KEYS.suite(id));
+export async function setSuiteState(
+  id: string,
+  state: SuiteRuntimeState
+): Promise<void> {
+  await redis.set(KEYS.suiteState(id), state);
 }
 
-export async function getAllSuites(): Promise<TestSuite[]> {
-  const ids = await getAllSuiteIds();
-  if (ids.length === 0) return [];
-
-  const suites = await Promise.all(ids.map((id) => getSuite(id)));
-  return suites.filter((s): s is TestSuite => s !== null);
-}
-
-export async function setSuite(suite: TestSuite): Promise<void> {
-  await redis.set(KEYS.suite(suite.id), suite);
-  await redis.sadd(KEYS.suites, suite.id);
-  // Also create reverse lookup from address to suite
-  await redis.set(KEYS.addressToSuite(suite.donationAddress), suite.id);
-}
-
-export async function getSuiteByAddress(
+export async function getSuiteIdByAddress(
   address: string
-): Promise<TestSuite | null> {
-  const suiteId = await redis.get<string>(KEYS.addressToSuite(address));
-  if (!suiteId) return null;
-  return getSuite(suiteId);
+): Promise<string | null> {
+  return redis.get<string>(KEYS.addressToSuite(address));
+}
+
+export async function setAddressToSuite(
+  address: string,
+  suiteId: string
+): Promise<void> {
+  await redis.set(KEYS.addressToSuite(address), suiteId);
 }
 
 // Donation operations
@@ -141,21 +133,9 @@ export function isRedisConfigured(): boolean {
   return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 }
 
-// Get all latest runs for completed suites
-export async function getAllLatestRuns(): Promise<
-  Array<{ suiteId: string; run: BenchmarkRun }>
-> {
-  const suites = await getAllSuites();
-  const completedSuites = suites.filter((s) => s.status === "completed");
-
-  const results = await Promise.all(
-    completedSuites.map(async (suite) => {
-      const run = await getLatestRun(suite.id);
-      return { suiteId: suite.id, run };
-    })
-  );
-
-  return results.filter(
-    (r): r is { suiteId: string; run: BenchmarkRun } => r.run !== null
-  );
+// Get latest run for a specific suite
+export async function getLatestRunForSuite(
+  suiteId: string
+): Promise<BenchmarkRun | null> {
+  return getLatestRun(suiteId);
 }
