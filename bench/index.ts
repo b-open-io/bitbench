@@ -17,8 +17,10 @@ import { createHash } from "crypto";
 export {
   publishResults,
   isPublishingConfigured,
+  syncResultsToWebsite,
   type BenchmarkResultData,
   type PublishResult,
+  type SyncResult,
 } from "./publish";
 
 // Re-export models for CLI

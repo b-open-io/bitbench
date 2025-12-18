@@ -9,6 +9,7 @@ import {
   SatoshisPerKilobyte,
   Script,
 } from "@bsv/sdk";
+import { getAuthToken } from "bitcoin-auth";
 
 // B protocol prefix for data
 const B_PREFIX = "19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut";
@@ -248,4 +249,70 @@ export async function publishResults(
  */
 export function isPublishingConfigured(): boolean {
   return !!process.env.MASTER_WIF;
+}
+
+/**
+ * Sync benchmark results to the website's KV store
+ */
+export interface SyncResult {
+  success: boolean;
+  runId?: string;
+  error?: string;
+}
+
+export async function syncResultsToWebsite(
+  data: BenchmarkResultData,
+  options?: { baseUrl?: string; silent?: boolean }
+): Promise<SyncResult> {
+  const wif = process.env.MASTER_WIF;
+  if (!wif) {
+    return { success: false, error: "MASTER_WIF not set" };
+  }
+
+  const baseUrl = options?.baseUrl || "https://bitbench.dev";
+  const requestPath = `/api/suites/${data.suiteId}/complete`;
+  const body = JSON.stringify(data);
+
+  // Generate bitcoin-auth token
+  const authToken = getAuthToken({
+    privateKeyWif: wif,
+    requestPath,
+    body,
+    scheme: "brc77",
+  });
+
+  try {
+    const response = await fetch(`${baseUrl}${requestPath}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Bitcoin-Auth-Token": authToken,
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        error: errorData.error || `HTTP ${response.status}`,
+      };
+    }
+
+    const result = await response.json();
+
+    if (!options?.silent) {
+      console.log(`✓ Synced results to website: ${result.runId}`);
+    }
+
+    return {
+      success: true,
+      runId: result.runId,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 }

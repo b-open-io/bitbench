@@ -11,6 +11,7 @@ import {
   testRunner,
   publishResults,
   isPublishingConfigured,
+  syncResultsToWebsite,
   modelsToRun,
   estimateBenchmarkCost,
   TEST_RUNS_PER_MODEL,
@@ -20,6 +21,7 @@ import {
   type BenchmarkResultData,
   type RunnableModel,
   type CacheStatus,
+  type SyncResult,
 } from "./index";
 import {
   getAllFundingStatus,
@@ -290,6 +292,10 @@ const App: React.FC = () => {
   const [benchmarkResults, setBenchmarkResults] = useState<BenchmarkResultData | null>(null);
   const [publishedOutpoint, setPublishedOutpoint] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
+
+  // Website sync state
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  const [syncInProgress, setSyncInProgress] = useState(false);
 
   // Model selection - all models enabled by default
   const [selectedModels, setSelectedModels] = useState<Set<string>>(
@@ -630,6 +636,30 @@ const App: React.FC = () => {
       }
     })();
   }, [stage, benchmarkResults, publishedOutpoint, publishError, suites, selectedIndex, version]);
+
+  // Auto-sync results to website when benchmark completes
+  useEffect(() => {
+    if (stage !== "completed" || !benchmarkResults || syncResult || syncInProgress) {
+      return;
+    }
+
+    // Only sync if MASTER_WIF is configured
+    if (!isPublishingConfigured()) {
+      return;
+    }
+
+    setSyncInProgress(true);
+    (async () => {
+      try {
+        const result = await syncResultsToWebsite(benchmarkResults, { silent: true });
+        setSyncResult(result);
+      } catch (e) {
+        setSyncResult({ success: false, error: (e as Error).message });
+      } finally {
+        setSyncInProgress(false);
+      }
+    })();
+  }, [stage, benchmarkResults, syncResult, syncInProgress]);
 
   if (loading) {
     return (
@@ -1248,6 +1278,21 @@ const App: React.FC = () => {
             </Text>
           </Box>
         )}
+
+        {/* Website Sync Status */}
+        <Box marginTop={1}>
+          {syncInProgress ? (
+            <Text color="cyan">⏳ Syncing results to website...</Text>
+          ) : syncResult ? (
+            syncResult.success ? (
+              <Text color="green">✓ Results synced to website</Text>
+            ) : (
+              <Text color="yellow">⚠ Sync failed: {syncResult.error}</Text>
+            )
+          ) : canPublish ? (
+            <Text color="gray">Preparing to sync...</Text>
+          ) : null}
+        </Box>
 
         <Box marginTop={1}>
           {canPublish ? (
