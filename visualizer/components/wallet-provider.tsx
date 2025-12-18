@@ -155,11 +155,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
   );
 }
 
-// Hook to access wallet state
-export function useWallet() {
-  const context = useContext(WalletContext);
-  if (!context) {
-    throw new Error("useWallet must be used within a WalletProvider");
-  }
-  return context;
+// Hook to access wallet state - returns null if not yet mounted (ssr: false)
+export function useWallet(): WalletState | null {
+  return useContext(WalletContext);
 }

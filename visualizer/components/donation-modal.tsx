@@ -33,7 +33,12 @@ function usdToSats(usd: number): number {
 
 export function DonationModal({ suite, open, onClose }: DonationModalProps) {
   // Use reactive wallet state - automatically updates on signedOut/switchAccount events
-  const { isReady, isConnected, addresses, connect, wallet } = useWallet();
+  const walletState = useWallet();
+  const isReady = walletState?.isReady ?? false;
+  const isConnected = walletState?.isConnected ?? false;
+  const addresses = walletState?.addresses ?? null;
+  const connect = walletState?.connect ?? (async () => {});
+  const wallet = walletState?.wallet;
 
   const [amountUsd, setAmountUsd] = useState("");
   const [status, setStatus] = useState<DonationStatus>("idle");

@@ -23,14 +23,17 @@ function formatBalance(satoshis: number | null): string {
 }
 
 export function WalletConnect() {
-  const wallet = useWallet();
+  const walletState = useWallet();
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Get the raw wallet from state (if available)
+  const wallet = walletState?.wallet;
+
   const refreshState = useCallback(async () => {
-    if (!wallet?.isReady) return;
+    if (!wallet?.isReady || typeof wallet.isConnected !== "function") return;
 
     try {
       const connected = await wallet.isConnected();
@@ -63,19 +66,21 @@ export function WalletConnect() {
       setBalance(null);
     };
 
-    if (wallet?.isReady) {
+    if (wallet?.isReady && typeof wallet.on === "function") {
       wallet.on("switchAccount", handleSwitchAccount);
       wallet.on("signedOut", handleSignedOut);
 
       return () => {
-        wallet.removeListener("switchAccount", handleSwitchAccount);
-        wallet.removeListener("signedOut", handleSignedOut);
+        if (typeof wallet.removeListener === "function") {
+          wallet.removeListener("switchAccount", handleSwitchAccount);
+          wallet.removeListener("signedOut", handleSignedOut);
+        }
       };
     }
   }, [wallet, refreshState]);
 
   const handleConnect = async () => {
-    if (!wallet?.isReady) return;
+    if (!wallet?.isReady || typeof wallet.connect !== "function") return;
     try {
       await wallet.connect();
       await refreshState();
@@ -85,7 +90,7 @@ export function WalletConnect() {
   };
 
   const handleDisconnect = async () => {
-    if (!wallet?.isReady) return;
+    if (!wallet?.isReady || typeof wallet.disconnect !== "function") return;
     try {
       await wallet.disconnect();
       setIsConnected(false);
