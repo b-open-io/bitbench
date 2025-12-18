@@ -13,7 +13,7 @@ import {
   ChevronUp,
   Search,
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -408,14 +408,11 @@ export default function ResultsPage() {
                       formatter={(value: number) => [`${value.toFixed(1)}%`]}
                       labelFormatter={(label: string) => label}
                     />
-                    <Bar dataKey="averageScore" radius={[0, 4, 4, 0]}>
-                      {chartData.map((entry, index) => (
-                        <Cell
-                          key={entry.model}
-                          fill={index === 0 ? "var(--chart-4)" : "var(--chart-1)"}
-                        />
-                      ))}
-                    </Bar>
+                    <Bar
+                      dataKey="averageScore"
+                      fill="var(--color-averageScore)"
+                      radius={[0, 4, 4, 0]}
+                    />
                   </BarChart>
                 </ChartContainer>
               </CardContent>
