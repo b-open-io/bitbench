@@ -13,7 +13,7 @@ import {
   ChevronUp,
   Search,
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis } from "recharts";
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Cell } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -171,16 +171,16 @@ export default function ResultsPage() {
     }
   };
 
-  // Chart data - top 10 for bar chart
-  const chartData = useMemo(() => {
+  // Scatter plot data - all models with cost > 0
+  const scatterData = useMemo(() => {
     if (!resultsData) return [];
     return resultsData.globalLeaderboard
-      .slice(0, 10)
-      .map((m) => ({
-        model: m.model.length > 12 ? m.model.slice(0, 12) + "…" : m.model,
-        fullModel: m.model,
+      .filter((m) => m.totalCost > 0)
+      .map((m, index) => ({
+        model: m.model,
         averageScore: m.averageScore,
         totalCost: m.totalCost,
+        isTop: index < 3,
       }));
   }, [resultsData]);
 
@@ -368,14 +368,14 @@ export default function ResultsPage() {
 
           {/* RIGHT: Chart + Recent Suites */}
           <div className="lg:col-span-4 flex flex-col gap-4">
-            {/* Bar Chart */}
+            {/* Cost vs Accuracy Scatter Plot */}
             <Card>
               <CardHeader className="py-3 px-4 border-b">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-sm">Top 10 Models</CardTitle>
+                  <CardTitle className="text-sm">Cost vs Accuracy</CardTitle>
                 </div>
-                <CardDescription className="text-xs">Accuracy comparison</CardDescription>
+                <CardDescription className="text-xs">Top-left = best value</CardDescription>
               </CardHeader>
               <CardContent className="p-2">
                 <ChartContainer
@@ -384,36 +384,54 @@ export default function ResultsPage() {
                   }}
                   className="h-[260px] w-full"
                 >
-                  <BarChart
-                    data={chartData}
-                    layout="vertical"
-                    margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
-                  >
+                  <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                     <XAxis
                       type="number"
-                      domain={[0, 100]}
-                      tick={{ fontSize: 10 }}
-                      tickFormatter={(v) => `${v}%`}
+                      dataKey="totalCost"
+                      name="Cost"
+                      tick={{ fontSize: 9 }}
+                      tickFormatter={(v) => `$${v.toFixed(2)}`}
                       className="stroke-muted-foreground"
+                      label={{ value: "Cost ($)", position: "bottom", fontSize: 10, className: "fill-muted-foreground" }}
                     />
                     <YAxis
-                      type="category"
-                      dataKey="model"
-                      width={90}
+                      type="number"
+                      dataKey="averageScore"
+                      name="Accuracy"
+                      domain={[0, 100]}
                       tick={{ fontSize: 9 }}
+                      tickFormatter={(v) => `${v}%`}
                       className="stroke-muted-foreground"
+                      width={35}
                     />
                     <ChartTooltip
-                      content={<ChartTooltipContent />}
-                      formatter={(value: number) => [`${value.toFixed(1)}%`]}
-                      labelFormatter={(label: string) => label}
+                      cursor={{ strokeDasharray: "3 3" }}
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const d = payload[0].payload;
+                        return (
+                          <div className="rounded-lg border bg-popover p-2 shadow-md text-popover-foreground text-xs">
+                            <p className="font-medium">{d.model}</p>
+                            <p className="text-muted-foreground">
+                              Accuracy: <span className="font-mono text-foreground">{d.averageScore.toFixed(1)}%</span>
+                            </p>
+                            <p className="text-muted-foreground">
+                              Cost: <span className="font-mono text-foreground">${d.totalCost.toFixed(4)}</span>
+                            </p>
+                          </div>
+                        );
+                      }}
                     />
-                    <Bar
-                      dataKey="averageScore"
-                      fill="var(--color-averageScore)"
-                      radius={[0, 4, 4, 0]}
-                    />
-                  </BarChart>
+                    <Scatter data={scatterData} fill="var(--color-averageScore)">
+                      {scatterData.map((entry, index) => (
+                        <Cell
+                          key={entry.model}
+                          fill={entry.isTop ? "var(--chart-4)" : "var(--chart-1)"}
+                        />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
                 </ChartContainer>
               </CardContent>
             </Card>
