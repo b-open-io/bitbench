@@ -3,6 +3,7 @@ import type {
   BenchmarkRun,
   Donation,
   SuiteRuntimeState,
+  SuiteQuestionBreakdown,
 } from "./types";
 
 // Initialize Redis client (Vercel KV uses these env var names)
@@ -18,6 +19,8 @@ const KEYS = {
   suiteRuns: (id: string) => `suite:${id}:runs`,
   suiteLatest: (id: string) => `suite:${id}:latest`,
   suiteNotified: (id: string) => `suite:${id}:notified`,
+  suiteQuestions: (id: string, version: string) => `suite:${id}:questions:${version}`,
+  suiteQuestionsLatest: (id: string) => `suite:${id}:questions:latest`,
   addressToSuite: (address: string) => `address:${address}`,
 };
 
@@ -138,4 +141,27 @@ export async function getLatestRunForSuite(
   suiteId: string
 ): Promise<BenchmarkRun | null> {
   return getLatestRun(suiteId);
+}
+
+// Question breakdown operations
+export async function setQuestionBreakdown(
+  suiteId: string,
+  version: string,
+  data: SuiteQuestionBreakdown
+): Promise<void> {
+  // Store both versioned and latest
+  await Promise.all([
+    redis.set(KEYS.suiteQuestions(suiteId, version), data),
+    redis.set(KEYS.suiteQuestionsLatest(suiteId), data),
+  ]);
+}
+
+export async function getQuestionBreakdown(
+  suiteId: string,
+  version?: string
+): Promise<SuiteQuestionBreakdown | null> {
+  if (version) {
+    return redis.get<SuiteQuestionBreakdown>(KEYS.suiteQuestions(suiteId, version));
+  }
+  return redis.get<SuiteQuestionBreakdown>(KEYS.suiteQuestionsLatest(suiteId));
 }

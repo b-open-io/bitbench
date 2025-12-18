@@ -18,6 +18,7 @@ export {
   publishResults,
   isPublishingConfigured,
   syncResultsToWebsite,
+  syncQuestionBreakdown,
   type BenchmarkResultData,
   type PublishResult,
   type SyncResult,
@@ -1268,6 +1269,161 @@ export interface CacheStatus {
   totalExpected: number;
   progress: number; // 0-1
   canResume: boolean;
+}
+
+/**
+ * Question breakdown data for syncing to website
+ */
+export interface QuestionModelResult {
+  model: string;
+  correct: boolean;
+  response: string;
+  duration: number;
+  cost: number;
+}
+
+export interface QuestionBreakdown {
+  testIndex: number;
+  prompt: string;
+  answers: string[];
+  totalModels: number;
+  correctCount: number;
+  successRate: number;
+  modelResults: QuestionModelResult[];
+}
+
+export interface SuiteQuestionBreakdown {
+  suiteId: string;
+  version: string;
+  totalQuestions: number;
+  totalModels: number;
+  questions: QuestionBreakdown[];
+}
+
+/**
+ * Build question breakdown from cache files for syncing
+ */
+export async function buildQuestionBreakdown(
+  suiteId: string,
+  version: string
+): Promise<SuiteQuestionBreakdown | null> {
+  const cacheDir = join(OUTPUT_DIRECTORY, "cache", suiteId, version);
+
+  if (!existsSync(cacheDir)) {
+    return null;
+  }
+
+  const files = await readdir(cacheDir);
+  const jsonFiles = files.filter((f) => f.endsWith(".json"));
+
+  if (jsonFiles.length === 0) {
+    return null;
+  }
+
+  // Load all cache entries
+  interface CacheEntry {
+    testIndex: number;
+    prompt: string;
+    answers: string[];
+    model: string;
+    result?: { text?: string; correct?: boolean };
+    duration: number;
+    cost: number;
+  }
+
+  const entries: CacheEntry[] = [];
+  for (const file of jsonFiles) {
+    try {
+      const content = await fsReadFile(join(cacheDir, file), "utf-8");
+      const parsed = JSON.parse(content);
+      if (parsed.testIndex !== undefined && parsed.model) {
+        entries.push({
+          testIndex: parsed.testIndex,
+          prompt: parsed.prompt,
+          answers: parsed.answers,
+          model: parsed.model,
+          result: parsed.result,
+          duration: parsed.duration || 0,
+          cost: parsed.cost || 0,
+        });
+      }
+    } catch {
+      // Skip invalid files
+    }
+  }
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  // Group by testIndex
+  const questionMap = new Map<number, CacheEntry[]>();
+  for (const entry of entries) {
+    const existing = questionMap.get(entry.testIndex) ?? [];
+    existing.push(entry);
+    questionMap.set(entry.testIndex, existing);
+  }
+
+  // Get unique models
+  const allModels = new Set(entries.map((e) => e.model));
+
+  // Build question breakdowns
+  const questions: QuestionBreakdown[] = [];
+
+  for (const [testIndex, testEntries] of questionMap) {
+    const first = testEntries[0];
+
+    // Dedupe by model (take first run for each)
+    const modelResultMap = new Map<string, CacheEntry>();
+    for (const entry of testEntries) {
+      if (!modelResultMap.has(entry.model)) {
+        modelResultMap.set(entry.model, entry);
+      }
+    }
+
+    const modelResults: QuestionModelResult[] = [];
+    let correctCount = 0;
+
+    for (const [model, entry] of modelResultMap) {
+      const correct = entry.result?.correct ?? false;
+      if (correct) correctCount++;
+      modelResults.push({
+        model,
+        correct,
+        response: entry.result?.text || "",
+        duration: entry.duration,
+        cost: entry.cost,
+      });
+    }
+
+    // Sort: incorrect first, then by model name
+    modelResults.sort((a, b) => {
+      if (a.correct !== b.correct) return a.correct ? 1 : -1;
+      return a.model.localeCompare(b.model);
+    });
+
+    const modelsWithResults = modelResultMap.size;
+    questions.push({
+      testIndex,
+      prompt: first.prompt,
+      answers: first.answers,
+      totalModels: modelsWithResults,
+      correctCount,
+      successRate: modelsWithResults > 0 ? (correctCount / modelsWithResults) * 100 : 0,
+      modelResults,
+    });
+  }
+
+  // Sort by success rate (lowest first - most problematic)
+  questions.sort((a, b) => a.successRate - b.successRate);
+
+  return {
+    suiteId,
+    version,
+    totalQuestions: questions.length,
+    totalModels: allModels.size,
+    questions,
+  };
 }
 
 /**

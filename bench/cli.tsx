@@ -12,6 +12,8 @@ import {
   publishResults,
   isPublishingConfigured,
   syncResultsToWebsite,
+  syncQuestionBreakdown,
+  buildQuestionBreakdown,
   modelsToRun,
   estimateBenchmarkCost,
   TEST_RUNS_PER_MODEL,
@@ -651,7 +653,18 @@ const App: React.FC = () => {
     setSyncInProgress(true);
     (async () => {
       try {
+        // Sync summary results
         const result = await syncResultsToWebsite(benchmarkResults, { silent: true });
+
+        // Also sync question breakdown if available
+        const questionBreakdown = await buildQuestionBreakdown(
+          benchmarkResults.suiteId,
+          benchmarkResults.version
+        );
+        if (questionBreakdown) {
+          await syncQuestionBreakdown(questionBreakdown, { silent: true });
+        }
+
         setSyncResult(result);
       } catch (e) {
         setSyncResult({ success: false, error: (e as Error).message });

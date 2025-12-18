@@ -247,8 +247,19 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
   }
 
   if (error || !breakdown) {
-    // Don't render anything if there's no detailed data
-    return null;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl font-medium">Question Analysis</CardTitle>
+          <CardDescription>{error || "No data available"}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-32 flex items-center justify-center text-muted-foreground">
+            {error || "Detailed question data will appear after syncing results."}
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   const problematicCount = breakdown.questions.filter((q) => q.successRate < 50).length;

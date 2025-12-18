@@ -316,3 +316,87 @@ export async function syncResultsToWebsite(
     };
   }
 }
+
+/**
+ * Question breakdown data types (matching visualizer types)
+ */
+export interface QuestionModelResult {
+  model: string;
+  correct: boolean;
+  response: string;
+  duration: number;
+  cost: number;
+}
+
+export interface QuestionBreakdown {
+  testIndex: number;
+  prompt: string;
+  answers: string[];
+  totalModels: number;
+  correctCount: number;
+  successRate: number;
+  modelResults: QuestionModelResult[];
+}
+
+export interface SuiteQuestionBreakdown {
+  suiteId: string;
+  version: string;
+  totalQuestions: number;
+  totalModels: number;
+  questions: QuestionBreakdown[];
+}
+
+/**
+ * Sync question breakdown data to website's KV store
+ */
+export async function syncQuestionBreakdown(
+  data: SuiteQuestionBreakdown,
+  options?: { baseUrl?: string; silent?: boolean }
+): Promise<SyncResult> {
+  const wif = process.env.MASTER_WIF;
+  if (!wif) {
+    return { success: false, error: "MASTER_WIF not set" };
+  }
+
+  const baseUrl = options?.baseUrl || "https://bitbench.org";
+  const requestPath = `/api/suites/${data.suiteId}/questions`;
+  const body = JSON.stringify(data);
+
+  // Generate bitcoin-auth token
+  const authToken = getAuthToken({
+    privateKeyWif: wif,
+    requestPath,
+    body,
+    scheme: "brc77",
+  });
+
+  try {
+    const response = await fetch(`${baseUrl}${requestPath}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Bitcoin-Auth-Token": authToken,
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        error: errorData.error || `HTTP ${response.status}`,
+      };
+    }
+
+    if (!options?.silent) {
+      console.log(`✓ Synced question breakdown to website`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
