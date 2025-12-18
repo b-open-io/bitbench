@@ -32,7 +32,8 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
   const [balance, setBalance] = useState<Balance | null>(null);
 
   const refreshState = useCallback(async () => {
-    if (!wallet?.isReady) {
+    // Check both isReady flag AND that methods exist (wallet is fully loaded)
+    if (!wallet?.isReady || typeof wallet.isConnected !== "function") {
       setIsConnected(false);
       setAddresses(null);
       setBalance(null);
@@ -64,7 +65,8 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
 
   // Set up event listeners for wallet state changes
   useEffect(() => {
-    if (!wallet?.isReady) return;
+    // Check that wallet is fully loaded with all methods
+    if (!wallet?.isReady || typeof wallet.on !== "function") return;
 
     const handleSignedOut = () => {
       console.log("Wallet signed out");
@@ -88,13 +90,16 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
 
     // Cleanup listeners on unmount
     return () => {
-      wallet.removeListener("signedOut", handleSignedOut);
-      wallet.removeListener("switchAccount", handleSwitchAccount);
+      if (typeof wallet.removeListener === "function") {
+        wallet.removeListener("signedOut", handleSignedOut);
+        wallet.removeListener("switchAccount", handleSwitchAccount);
+      }
     };
   }, [wallet, wallet?.isReady, refreshState]);
 
   const connect = useCallback(async () => {
-    if (!wallet?.isReady) {
+    // Check wallet is fully loaded
+    if (!wallet?.isReady || typeof wallet.connect !== "function") {
       // Open Yours wallet download page if not installed
       window.open("https://yours.org", "_blank");
       return;
@@ -109,7 +114,7 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
   }, [wallet, refreshState]);
 
   const disconnect = useCallback(async () => {
-    if (!wallet?.isReady) return;
+    if (!wallet?.isReady || typeof wallet.disconnect !== "function") return;
 
     try {
       await wallet.disconnect();
