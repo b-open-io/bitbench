@@ -1,9 +1,11 @@
 "use client";
 
 import type { ComponentPropsWithoutRef } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { WalletConnect } from "@/components/wallet-connect";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { GitHubStars } from "@/components/github-stars";
 
 const BitcoinSVG = ({
   className,
@@ -42,14 +44,21 @@ export function SiteHeader({ modelCount }: SiteHeaderProps) {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/about"
+            className="hidden sm:inline-flex rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            About
+          </Link>
           <Badge
             variant="outline"
-            className="hidden sm:flex border-border bg-muted/50 px-3 py-1 text-xs font-normal text-muted-foreground"
+            className="hidden md:flex border-border bg-muted/50 px-3 py-1 text-xs font-normal text-muted-foreground"
           >
             <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             {modelCount} models
           </Badge>
+          <GitHubStars />
           <ThemeToggle />
           <WalletConnect />
         </div>

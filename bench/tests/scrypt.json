@@ -1,6 +1,7 @@
 {
   "name": "sCrypt (High-Level Script)",
   "description": "Tests knowledge of the sCrypt language for Bitcoin SV smart contracts.",
+  "version": "1.0.0",
   "system_prompt": "You are an expert sCrypt developer. You understand the syntax, decorators, and standard library of the sCrypt language (TypeScript-based).",
   "tests": [
     {

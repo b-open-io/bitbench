@@ -1,6 +1,7 @@
 {
   "name": "Type 42 Key Derivation",
   "description": "Tests knowledge of Type 42 key derivation and backup formats.",
+  "version": "1.0.0",
   "system_prompt": "You are a Bitcoin SV developer expert in Type 42 key derivation and the bitcoin-backup library. Provide technical answers about key derivation and serialization.",
   "tests": [
     {

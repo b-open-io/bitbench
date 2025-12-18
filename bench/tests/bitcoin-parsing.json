@@ -1,6 +1,7 @@
 {
   "name": "Bitcoin Parsing & Code",
   "description": "Tests the ability to parse hex data and write code using Bitcoin libraries.",
+  "version": "1.0.0",
   "system_prompt": "You are an expert Bitcoin developer. Provide precise code snippets and technical explanations.",
   "tests": [
     {

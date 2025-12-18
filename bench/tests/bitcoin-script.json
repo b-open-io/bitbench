@@ -1,6 +1,7 @@
 {
   "name": "Bitcoin Script & Transactions",
   "description": "Tests understanding of Bitcoin Script, SegWit, and Taproot.",
+  "version": "1.0.0",
   "system_prompt": "You are a Bitcoin protocol engineer specializing in Script and Taproot. Answer technical questions about transaction structures and opcodes.",
   "tests": [
     {

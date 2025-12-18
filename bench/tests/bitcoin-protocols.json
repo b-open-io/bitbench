@@ -1,6 +1,7 @@
 {
   "name": "Bitcoin SPV & Data Protocols",
   "description": "Tests awareness of OP_RETURN, Ordinals, Runes, and BRC-20 protocols.",
+  "version": "1.0.0",
   "system_prompt": "You are a Bitcoin protocol expert. Provide concise and accurate answers to technical questions about Bitcoin data protocols. If asked for a name or code snippet, provide just that.",
   "tests": [
     {

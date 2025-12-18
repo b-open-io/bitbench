@@ -1,6 +1,7 @@
 {
   "name": "Bitcoin Protocol Parsing",
   "description": "Tests the ability to identify and parse various Bitcoin data protocols (MAP, B, Run, AIP, Sigma, BAP) from raw hex and concept descriptions.",
+  "version": "1.0.0",
   "system_prompt": "You are a Bitcoin protocol analyst. You can read raw transaction hex and identify data protocols like MAP, B, AIP, Sigma, and Run. You understand the technical specifications of these protocols.",
   "tests": [
     {

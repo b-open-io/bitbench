@@ -18,30 +18,33 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     name: "BSV Data Protocols",
     description:
       "1Sat Ordinals, MAP, AIP, B protocol, and OP_RETURN data embedding.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
-    lastRunAt: null,
-    lastRunVersion: null,
-    status: "funding",
+    lastRunAt: "2024-12-15T10:30:00Z",
+    lastRunVersion: "1.0.0",
+    status: "completed", // TEMP: Demo completed state
     chain: "bsv",
   },
   {
     id: "bitcoin-libraries",
     name: "BSV SDK & Libraries",
     description: "Tests knowledge of @bsv/sdk, transaction building, and SPV.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
     lastRunAt: null,
     lastRunVersion: null,
-    status: "funding",
+    status: "pending", // TEMP: Demo fully funded, awaiting run
     chain: "bsv",
   },
   {
     id: "bitcoin-parsing",
     name: "BSV Transaction Parsing",
     description: "Parsing BSV transactions, scripts, and block structures.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -54,6 +57,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "protocol-parsing",
     name: "BSV Protocol Parsing",
     description: "Parsing MAP, AIP, BAP, and Sigma protocol data.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -66,6 +70,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "scrypt",
     name: "sCrypt Smart Contracts",
     description: "sCrypt language, Bitcoin smart contracts, and tooling.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -78,6 +83,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "type42",
     name: "Type 42 Key Derivation",
     description: "BSV-specific Type 42 key derivation and Paymail.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -90,6 +96,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "stratum-puzzle",
     name: "Stratum Mining Protocol",
     description: "Mining pool protocol, puzzle construction, and hashrate.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -106,6 +113,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "btc-lightning",
     name: "Lightning Network",
     description: "BOLT specs, channel management, routing, and LND/CLN APIs.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -118,6 +126,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "btc-taproot",
     name: "Taproot & Schnorr",
     description: "BIP-340 Schnorr signatures, Tapscript, and MAST.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -130,6 +139,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "btc-psbt",
     name: "PSBT & Miniscript",
     description: "Partially Signed Bitcoin Transactions and Miniscript policy.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -146,6 +156,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "eth-solidity",
     name: "Solidity & EVM",
     description: "Solidity patterns, EVM opcodes, gas optimization.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -158,6 +169,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "eth-tokens",
     name: "Token Standards",
     description: "ERC-20, ERC-721, ERC-1155, and ERC-4337 account abstraction.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -170,6 +182,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "eth-layer2",
     name: "Layer 2 Scaling",
     description: "Optimism, Arbitrum, Base, and rollup architecture.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -186,6 +199,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "sol-anchor",
     name: "Anchor & Programs",
     description: "Anchor framework, Rust programs, PDAs, and CPIs.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -198,6 +212,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "sol-tokens",
     name: "SPL & Metaplex",
     description: "SPL tokens, Metaplex NFTs, and compressed NFTs.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -214,6 +229,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "bch-cashscript",
     name: "CashScript",
     description: "CashScript smart contracts and libauth library.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -226,6 +242,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "bch-cashtokens",
     name: "CashTokens",
     description: "Fungible tokens, NFTs, and BCMR metadata.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -242,6 +259,7 @@ const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
     id: "ltc-mweb",
     name: "MWEB Privacy",
     description: "MimbleWimble Extension Blocks and confidential transactions.",
+    version: "1.0.0",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
@@ -323,10 +341,24 @@ interface WOCBalance {
   unconfirmed: number;
 }
 
+// TEMP: Demo balance overrides (remove after testing)
+const DEMO_BALANCES: Record<string, number> = {
+  "bitcoin-protocols": 5_000_000, // Fully funded + extra (completed)
+  "bitcoin-libraries": 5_000_000, // Fully funded (pending/awaiting run)
+};
+
 /**
  * Get balance for a BSV address from WhatsOnChain
  */
-export async function getAddressBalance(address: string): Promise<number> {
+export async function getAddressBalance(
+  address: string,
+  suiteId?: string
+): Promise<number> {
+  // TEMP: Return demo balances for testing UI states
+  if (suiteId && DEMO_BALANCES[suiteId]) {
+    return DEMO_BALANCES[suiteId];
+  }
+
   // Skip for placeholder addresses
   if (address.startsWith("placeholder-")) {
     return 0;
@@ -372,7 +404,7 @@ export async function getSuiteWithBalance(
   const suite = await getSuite(id);
   if (!suite) return null;
 
-  const balanceSats = await getAddressBalance(suite.donationAddress);
+  const balanceSats = await getAddressBalance(suite.donationAddress, suite.id);
   const balanceUsd = satsToUsd(balanceSats);
   const goalSats = usdToSats(suite.estimatedCostUsd);
 
@@ -393,7 +425,7 @@ export async function getAllSuitesWithBalance(): Promise<SuiteWithBalance[]> {
   // Fetch balances in parallel
   const suitesWithBalance = await Promise.all(
     suites.map(async (suite) => {
-      const balanceSats = await getAddressBalance(suite.donationAddress);
+      const balanceSats = await getAddressBalance(suite.donationAddress, suite.id);
       const balanceUsd = satsToUsd(balanceSats);
       const goalSats = usdToSats(suite.estimatedCostUsd);
 

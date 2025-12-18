@@ -1,6 +1,7 @@
 {
   "name": "BSV SDK & Go SDK",
   "description": "Tests knowledge of @bsv/sdk and bsv-blockchain/go-sdk.",
+  "version": "1.0.0",
   "system_prompt": "You are a Bitcoin SV developer expert in @bsv/sdk and the Go SDK. Provide technical answers about these specific libraries.",
   "tests": [
     {

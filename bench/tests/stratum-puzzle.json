@@ -1,6 +1,7 @@
 {
   "name": "Stratum & Byte Manipulation Puzzles",
   "description": "Hard technical puzzles based on Stratum implementation details and byte manipulation logic from Miningcore.",
+  "version": "1.0.0",
   "system_prompt": "You are a low-level Bitcoin protocol engineer and Stratum expert. Answer these specific puzzles related to byte order, serialization, and SDK internals.",
   "tests": [
     {

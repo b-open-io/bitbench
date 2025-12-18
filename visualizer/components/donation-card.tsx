@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ChainBadge } from "@/components/chain-badge";
 import type { SuiteWithBalance } from "@/lib/types";
-import { Clock, DollarSign, Zap } from "lucide-react";
+import { Clock, DollarSign, Zap, Tag } from "lucide-react";
 
 interface DonationCardProps {
   suite: SuiteWithBalance;
@@ -61,15 +61,19 @@ export function DonationCard({ suite, onDonate }: DonationCardProps) {
             <span>{suite.testCount} tests</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
-            <DollarSign className="h-4 w-4" />
-            <span>{formatUsd(suite.estimatedCostUsd)} est.</span>
+            <Tag className="h-4 w-4" />
+            <span>v{suite.version}</span>
           </div>
         </div>
 
         {/* Last Run */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Clock className="h-3 w-3" />
-          <span>Last run: {formatDate(suite.lastRunAt)}</span>
+          <span>
+            {suite.lastRunAt
+              ? `Last run: ${formatDate(suite.lastRunAt)}${suite.lastRunVersion ? ` (v${suite.lastRunVersion})` : ""}`
+              : "Never run"}
+          </span>
         </div>
 
         {/* Donate Button */}

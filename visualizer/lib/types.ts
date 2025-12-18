@@ -8,6 +8,7 @@ export interface TestQuestion {
 export interface TestSuiteFile {
   name: string;
   description: string;
+  version: string; // Semantic version (e.g., "1.0.0")
   system_prompt: string;
   tests: TestQuestion[];
 }
@@ -36,12 +37,13 @@ export interface TestSuite {
   id: string;
   name: string;
   description: string;
+  version: string; // Current test suite version (e.g., "1.0.0")
   testCount: number;
   modelCount: number;
   estimatedCostUsd: number;
   donationAddress: string;
   lastRunAt: string | null;
-  lastRunVersion: string | null;
+  lastRunVersion: string | null; // Version of tests used in last benchmark run
   status: SuiteStatus;
   chain: Chain; // Primary chain this suite tests
 }
