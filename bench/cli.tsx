@@ -12,6 +12,12 @@ import {
   type TestSuite,
   type RunnerEvent,
 } from "./index";
+import {
+  getAllFundingStatus,
+  formatFundingRow,
+  isMasterWifConfigured,
+  type FundingStatus,
+} from "./funding";
 
 function ensureRefUnref(stream: any) {
   if (!stream) return stream;
@@ -24,6 +30,9 @@ const stdin = ensureRefUnref(process.stdin as any);
 const stdout = ensureRefUnref(process.stdout as any);
 const stderr = ensureRefUnref(process.stderr as any);
 
+// Check for --force flag to bypass funding check
+const FORCE_RUN = process.argv.includes("--force");
+
 function useBenchRoot() {
   const here = fileURLToPath(import.meta.url);
   return dirname(here);
@@ -32,14 +41,18 @@ function useBenchRoot() {
 async function findTestSuites(testsDir: string) {
   const entries = await readdir(testsDir, { withFileTypes: true });
   const files = entries.filter((e) => e.isFile() && e.name.endsWith(".json"));
-  const suites: Array<{ filePath: string; suite: TestSuite }> = [];
+  const suites: Array<{ filePath: string; suite: TestSuite; id: string }> = [];
   for (const f of files) {
     try {
       const filePath = join(testsDir, f.name);
       const raw = await readFile(filePath, "utf-8");
       const json = JSON.parse(raw) as TestSuite;
       if (json && json.name && Array.isArray(json.tests)) {
-        suites.push({ filePath, suite: json });
+        suites.push({
+          filePath,
+          suite: json,
+          id: f.name.replace(".json", ""),
+        });
       }
     } catch {}
   }
@@ -97,6 +110,21 @@ function ProgressBar({
   );
 }
 
+function FundingProgressBar({ progress }: { progress: number }) {
+  const width = 10;
+  const filled = Math.round(width * progress);
+  const empty = width - filled;
+  const filledStr = "█".repeat(filled);
+  const emptyStr = "░".repeat(empty);
+  const color = progress >= 1 ? "green" : progress >= 0.5 ? "yellow" : "red";
+  return (
+    <Text>
+      <Text color={color}>{filledStr}</Text>
+      <Text color="gray">{emptyStr}</Text>
+    </Text>
+  );
+}
+
 function pad(str: string, width: number) {
   if (str.length === width) return str;
   if (str.length < width) return str.padEnd(width, " ");
@@ -116,6 +144,118 @@ function pctColor(p: number) {
   return "red" as const;
 }
 
+// Funding Status Table Component
+function FundingTable({ statuses }: { statuses: FundingStatus[] }) {
+  const rows = statuses.map(formatFundingRow);
+
+  const widths = {
+    name: Math.max(10, ...rows.map((r) => r.name.length)),
+    tests: Math.max(5, ...rows.map((r) => r.tests.length)),
+    address: Math.max(16, ...rows.map((r) => r.address.length)),
+    balance: Math.max(8, ...rows.map((r) => r.balance.length)),
+    goal: Math.max(6, ...rows.map((r) => r.goal.length)),
+    progress: 10, // Fixed for progress bar
+    funded: Math.max(8, ...rows.map((r) => r.funded.length)),
+  };
+
+  const totalRaised = statuses.reduce((sum, s) => sum + s.balanceUsd, 0);
+  const totalGoal = statuses.reduce((sum, s) => sum + s.goalUsd, 0);
+  const fundedCount = statuses.filter((s) => s.isFunded).length;
+
+  return (
+    <Box flexDirection="column">
+      <Text bold color="cyan">
+        ╔═══════════════════════════════════════════════════════════════════════╗
+      </Text>
+      <Text bold color="cyan">
+        ║                        BITBENCH FUNDING STATUS                        ║
+      </Text>
+      <Text bold color="cyan">
+        ╚═══════════════════════════════════════════════════════════════════════╝
+      </Text>
+
+      <Box marginTop={1} flexDirection="column">
+        <Text>
+          <Text underline color="whiteBright">
+            {pad("Suite", widths.name)}
+          </Text>
+          {"  "}
+          <Text underline color="whiteBright">
+            {padLeft("Tests", widths.tests)}
+          </Text>
+          {"  "}
+          <Text underline color="whiteBright">
+            {pad("Address", widths.address)}
+          </Text>
+          {"  "}
+          <Text underline color="whiteBright">
+            {padLeft("Raised", widths.balance)}
+          </Text>
+          {"  "}
+          <Text underline color="whiteBright">
+            {padLeft("Goal", widths.goal)}
+          </Text>
+          {"  "}
+          <Text underline color="whiteBright">
+            {"Progress  "}
+          </Text>
+          {"  "}
+          <Text underline color="whiteBright">
+            {pad("Funded", widths.funded)}
+          </Text>
+        </Text>
+
+        {rows.map((r, i) => (
+          <Text key={statuses[i].suiteId}>
+            <Text color="whiteBright">{pad(r.name, widths.name)}</Text>
+            {"  "}
+            <Text color="gray">{padLeft(r.tests, widths.tests)}</Text>
+            {"  "}
+            <Text color="gray">{pad(r.address, widths.address)}</Text>
+            {"  "}
+            <Text color={r.progressPct >= 100 ? "green" : "yellow"}>
+              {padLeft(r.balance, widths.balance)}
+            </Text>
+            {"  "}
+            <Text color="gray">{padLeft(r.goal, widths.goal)}</Text>
+            {"  "}
+            <FundingProgressBar progress={statuses[i].fundingProgress} />
+            {"  "}
+            <Text color={statuses[i].isFunded ? "green" : "red"}>
+              {pad(r.funded, widths.funded)}
+            </Text>
+          </Text>
+        ))}
+      </Box>
+
+      <Box marginTop={1} flexDirection="column">
+        <Text color="gray">────────────────────────────────────────────────────────</Text>
+        <Text>
+          Summary:{" "}
+          <Text color="green">${totalRaised.toFixed(2)}</Text>
+          <Text color="gray"> / </Text>
+          <Text color="white">${totalGoal.toFixed(2)}</Text>
+          <Text color="gray"> raised</Text>
+          {"  •  "}
+          <Text color={fundedCount > 0 ? "green" : "yellow"}>
+            {fundedCount}
+          </Text>
+          <Text color="gray">/{statuses.length} suites funded</Text>
+        </Text>
+      </Box>
+    </Box>
+  );
+}
+
+type Stage =
+  | "menu"
+  | "loadingFunding"
+  | "showFunding"
+  | "pickSuite"
+  | "confirmUnfunded"
+  | "version"
+  | "running";
+
 const App: React.FC = () => {
   const benchRoot = useBenchRoot();
   const testsDir = useMemo(() => join(benchRoot, "tests"), [benchRoot]);
@@ -124,18 +264,18 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [suites, setSuites] = useState<
-    Array<{ filePath: string; suite: TestSuite }>
+    Array<{ filePath: string; suite: TestSuite; id: string }>
   >([]);
+  const [fundingStatuses, setFundingStatuses] = useState<FundingStatus[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [version, setVersion] = useState<string>(formatDefaultVersion());
-  const [stage, setStage] = useState<"pickSuite" | "version" | "running">(
-    "pickSuite"
-  );
+  const [stage, setStage] = useState<Stage>("menu");
 
   const [modelOrder, setModelOrder] = useState<string[]>([]);
   const [stats, setStats] = useState<Record<string, ModelStats>>({});
 
+  // Initial load
   useEffect(() => {
     (async () => {
       try {
@@ -149,6 +289,22 @@ const App: React.FC = () => {
     })();
   }, [testsDir]);
 
+  // Load funding status when entering that stage
+  useEffect(() => {
+    if (stage === "loadingFunding") {
+      (async () => {
+        try {
+          const statuses = await getAllFundingStatus();
+          setFundingStatuses(statuses);
+          setStage("showFunding");
+        } catch (e) {
+          setError((e as Error).message);
+        }
+      })();
+    }
+  }, [stage]);
+
+  // Run benchmark
   useEffect(() => {
     if (stage === "running" && selectedIndex != null) {
       (async () => {
@@ -194,7 +350,6 @@ const App: React.FC = () => {
                 },
               }));
             } else if (event.type === "done") {
-              console.log("DONE", event);
               setStats((prev) => ({
                 ...prev,
                 [event.model]: {
@@ -256,11 +411,17 @@ const App: React.FC = () => {
             }
           },
         });
-        // Keep the final UI as-is and exit the app
         exit();
       })();
     }
   }, [stage, selectedIndex, suites, version, exit]);
+
+  // Get funding status for selected suite
+  const selectedFunding = useMemo(() => {
+    if (selectedIndex == null) return null;
+    const suiteId = suites[selectedIndex]?.id;
+    return fundingStatuses.find((f) => f.suiteId === suiteId);
+  }, [selectedIndex, suites, fundingStatuses]);
 
   if (loading) {
     return (
@@ -278,6 +439,84 @@ const App: React.FC = () => {
     );
   }
 
+  // Main menu
+  if (stage === "menu") {
+    return (
+      <Box flexDirection="column">
+        <Text bold color="cyan">
+          ╔═══════════════════════════════════════╗
+        </Text>
+        <Text bold color="cyan">
+          ║         BITBENCH CLI v1.0.0          ║
+        </Text>
+        <Text bold color="cyan">
+          ╚═══════════════════════════════════════╝
+        </Text>
+        <Box marginTop={1}>
+          <Text>What would you like to do?</Text>
+        </Box>
+        <SelectInput
+          items={[
+            {
+              key: "funding",
+              value: "funding",
+              label: "📊 View Funding Status",
+            },
+            { key: "run", value: "run", label: "🚀 Run Benchmark" },
+            { key: "exit", value: "exit", label: "❌ Exit" },
+          ]}
+          onSelect={(item: any) => {
+            if (item.value === "funding") {
+              setStage("loadingFunding");
+            } else if (item.value === "run") {
+              // Load funding info before showing suite picker
+              (async () => {
+                const statuses = await getAllFundingStatus();
+                setFundingStatuses(statuses);
+                setStage("pickSuite");
+              })();
+            } else {
+              exit();
+            }
+          }}
+        />
+        {!isMasterWifConfigured() && (
+          <Box marginTop={1}>
+            <Text color="yellow">
+              ⚠ MASTER_WIF not set. Add to .env to see funding addresses.
+            </Text>
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
+  // Loading funding status
+  if (stage === "loadingFunding") {
+    return (
+      <Box>
+        <Text color="cyan">Checking balances via WhatsOnChain...</Text>
+      </Box>
+    );
+  }
+
+  // Show funding status
+  if (stage === "showFunding") {
+    return (
+      <Box flexDirection="column">
+        <FundingTable statuses={fundingStatuses} />
+        <Box marginTop={1}>
+          <Text color="gray">Press any key to return to menu...</Text>
+        </Box>
+        <SelectInput
+          items={[{ key: "back", value: "back", label: "← Back to Menu" }]}
+          onSelect={() => setStage("menu")}
+        />
+      </Box>
+    );
+  }
+
+  // Pick suite
   if (stage === "pickSuite") {
     if (suites.length === 0) {
       return (
@@ -286,26 +525,100 @@ const App: React.FC = () => {
         </Box>
       );
     }
+
     return (
       <Box flexDirection="column">
         <Text>Select a test suite:</Text>
         <SelectInput
-          items={suites.map((s, idx) => ({
-            key: String(idx),
-            value: idx,
-            label: `${s.suite.name}${
-              s.suite.description ? ` — ${s.suite.description}` : ""
-            }`,
-          }))}
+          items={suites.map((s, idx) => {
+            const funding = fundingStatuses.find((f) => f.suiteId === s.id);
+            const isFunded = funding?.isFunded ?? false;
+            const progress = funding
+              ? Math.round(funding.fundingProgress * 100)
+              : 0;
+            const statusIcon = isFunded ? "✓" : "✗";
+            const statusColor = isFunded ? "green" : "red";
+
+            return {
+              key: String(idx),
+              value: idx,
+              label: `[${statusIcon} ${progress}%] ${s.suite.name}${
+                s.suite.description ? ` — ${s.suite.description}` : ""
+              }`,
+            };
+          })}
           onSelect={(item: any) => {
-            setSelectedIndex(item.value as number);
-            setStage("version");
+            const idx = item.value as number;
+            setSelectedIndex(idx);
+
+            const funding = fundingStatuses.find(
+              (f) => f.suiteId === suites[idx].id
+            );
+
+            // Check if funded or force flag is set
+            if (funding?.isFunded || FORCE_RUN) {
+              setStage("version");
+            } else {
+              setStage("confirmUnfunded");
+            }
+          }}
+        />
+        <Box marginTop={1}>
+          <Text color="gray">
+            Tip: Use --force flag to bypass funding check
+          </Text>
+        </Box>
+      </Box>
+    );
+  }
+
+  // Confirm running unfunded suite
+  if (stage === "confirmUnfunded") {
+    const funding = selectedFunding;
+
+    return (
+      <Box flexDirection="column">
+        <Text bold color="yellow">
+          ⚠️ WARNING: Suite Not Fully Funded
+        </Text>
+        <Box marginTop={1} flexDirection="column">
+          <Text>
+            Suite: <Text color="whiteBright">{suites[selectedIndex!]?.suite.name}</Text>
+          </Text>
+          <Text>
+            Funding:{" "}
+            <Text color="yellow">
+              ${funding?.balanceUsd.toFixed(2) ?? "0.00"}
+            </Text>{" "}
+            / <Text color="white">${funding?.goalUsd.toFixed(2) ?? "2.50"}</Text>
+            {" ("}
+            <Text color="yellow">
+              {Math.round((funding?.fundingProgress ?? 0) * 100)}%
+            </Text>
+            {")"}
+          </Text>
+        </Box>
+        <Box marginTop={1}>
+          <Text>Do you want to run this benchmark anyway?</Text>
+        </Box>
+        <SelectInput
+          items={[
+            { key: "no", value: "no", label: "❌ No, go back" },
+            { key: "yes", value: "yes", label: "✓ Yes, run anyway" },
+          ]}
+          onSelect={(item: any) => {
+            if (item.value === "yes") {
+              setStage("version");
+            } else {
+              setStage("pickSuite");
+            }
           }}
         />
       </Box>
     );
   }
 
+  // Version input
   if (stage === "version") {
     return (
       <Box flexDirection="column">
@@ -321,6 +634,7 @@ const App: React.FC = () => {
     );
   }
 
+  // Running benchmark
   if (stage === "running") {
     const picked = selectedIndex != null ? suites[selectedIndex] : null;
 
@@ -341,7 +655,7 @@ const App: React.FC = () => {
         acc.durationDenom +=
           s.reuseCompleted + s.executedDone + s.executedErrors;
         acc.costSum += s.costSum;
-        acc.costDenom += s.reuseCompleted + s.executedDone; // cost recorded for completed, not for errors
+        acc.costDenom += s.reuseCompleted + s.executedDone;
         acc.completionTokensSum += s.completionTokensSum;
         acc.tokensDenom += s.reuseCompleted + s.executedDone;
         return acc;
@@ -392,9 +706,7 @@ const App: React.FC = () => {
       const avgSec =
         avgCount > 0 ? s!.executedDurationSumMs / avgCount / 1000 : null;
       const slowSec =
-        s && s.executedMaxDurationMs > 0
-          ? s.executedMaxDurationMs / 1000
-          : null;
+        s && s.executedMaxDurationMs > 0 ? s.executedMaxDurationMs / 1000 : null;
       const costDenom = s ? s.reuseCompleted + s.executedDone : 0;
       const avgCost = costDenom > 0 ? s!.costSum / costDenom : null;
       const tokensDenom = s ? s.reuseCompleted + s.executedDone : 0;
@@ -402,7 +714,6 @@ const App: React.FC = () => {
         tokensDenom > 0
           ? Math.round(s!.completionTokensSum / tokensDenom)
           : null;
-      // TPS = total completion tokens / total duration in seconds
       const tpsDurationSec = s ? s.executedDurationSumMs / 1000 : 0;
       const tps =
         tpsDurationSec > 0 ? s!.completionTokensSum / tpsDurationSec : null;
