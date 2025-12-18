@@ -1,73 +1,64 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ChainBadge } from "@/components/chain-badge";
 import { cn } from "@/lib/utils";
 import type { SuiteWithBalance } from "@/lib/types";
-import { Clock, Zap, Tag, CheckCircle2, Loader2, Trophy } from "lucide-react";
+import {
+  Zap,
+  Tag,
+  CheckCircle2,
+  Loader2,
+  Trophy,
+  ArrowRight,
+} from "lucide-react";
 
 interface DonationCardProps {
   suite: SuiteWithBalance;
   onDonate: (suite: SuiteWithBalance) => void;
-}
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return "Never run";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  /** Optional: top performer from last run */
+  lastRunScore?: number;
 }
 
 function formatUsd(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-// Status badge component - using theme colors
-function StatusBadge({ status }: { status: string }) {
-  if (status === "pending") {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-chart-4/10 px-2.5 py-1 text-xs font-medium text-chart-4 ring-1 ring-inset ring-chart-4/20">
-        <Loader2 className="h-3 w-3 animate-spin" />
-        Queued
-      </span>
-    );
-  }
-  if (status === "completed") {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
-        <Trophy className="h-3 w-3" />
-        Results Ready
-      </span>
-    );
-  }
-  return null;
-}
-
-export function DonationCard({ suite, onDonate }: DonationCardProps) {
+export function DonationCard({
+  suite,
+  onDonate,
+  lastRunScore,
+}: DonationCardProps) {
   const progressPercent = Math.round(suite.fundingProgress * 100);
   const isPending = suite.status === "pending";
-  const isCompleted = suite.status === "completed";
+  const hasResults = suite.status === "completed" || suite.lastRunAt;
+  const isFullyFunded = progressPercent >= 100;
+
+  // Determine what run number we're funding
+  const runNumber = suite.lastRunVersion
+    ? parseInt(suite.lastRunVersion.split(".")[0] || "1") + 1
+    : 1;
 
   return (
     <Card
       className={cn(
         "flex flex-col transition-colors",
-        isPending && "border-chart-4/30 bg-chart-4/5",
-        isCompleted && "border-primary/30 bg-primary/5"
+        isPending && "border-chart-4/30 bg-chart-4/5"
       )}
     >
+      {/* Header: Name + Chain Badge */}
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <StatusBadge status={suite.status} />
-            </div>
             <CardTitle className="text-lg">{suite.name}</CardTitle>
           </div>
           <ChainBadge chain={suite.chain} size="sm" />
@@ -76,92 +67,102 @@ export function DonationCard({ suite, onDonate }: DonationCardProps) {
           {suite.description}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col gap-4">
-        {/* Funding Progress - different display for pending/completed */}
-        {isPending ? (
-          <div className="rounded-lg bg-chart-4/10 p-3 text-center">
-            <div className="flex items-center justify-center gap-2 text-chart-4">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="font-semibold">Fully Funded</span>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Benchmark will run soon
-            </p>
-          </div>
-        ) : isCompleted ? (
-          <div className="rounded-lg bg-primary/10 p-3 text-center">
-            <div className="flex items-center justify-center gap-2 text-primary">
-              <Trophy className="h-5 w-5" />
-              <span className="font-semibold">Benchmark Complete</span>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {formatDate(suite.lastRunAt)}
-              {suite.lastRunVersion && ` (v${suite.lastRunVersion})`}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Funding Progress</span>
-              <span className="font-medium">{progressPercent}%</span>
-            </div>
-            <Progress value={progressPercent} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{formatUsd(suite.currentBalanceUsd)} raised</span>
-              <span>{formatUsd(suite.estimatedCostUsd)} goal</span>
-            </div>
-          </div>
-        )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Zap className="h-4 w-4" />
+      {/* Body: Funding Progress (always visible) */}
+      <CardContent className="flex-1 flex flex-col gap-3">
+        {/* Funding Section */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">
+              {isPending ? (
+                <span className="flex items-center gap-1.5 text-chart-4">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Running Benchmark...
+                </span>
+              ) : isFullyFunded ? (
+                <span className="flex items-center gap-1.5 text-primary">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Fully Funded
+                </span>
+              ) : (
+                `Funding Run #${runNumber}`
+              )}
+            </span>
+            <span className="font-medium">{progressPercent}%</span>
+          </div>
+          <Progress
+            value={progressPercent}
+            className={cn("h-2", isPending && "[&>div]:bg-chart-4")}
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{formatUsd(suite.currentBalanceUsd)} raised</span>
+            <span>{formatUsd(suite.estimatedCostUsd)} goal</span>
+          </div>
+        </div>
+
+        {/* Stats Row */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <Zap className="h-3 w-3" />
             <span>{suite.testCount} tests</span>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Tag className="h-4 w-4" />
+          <div className="flex items-center gap-1.5">
+            <Tag className="h-3 w-3" />
             <span>v{suite.version}</span>
           </div>
         </div>
 
-        {/* Last Run - only show for funding status */}
-        {!isPending && !isCompleted && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>
-              {suite.lastRunAt
-                ? `Last run: ${formatDate(suite.lastRunAt)}${suite.lastRunVersion ? ` (v${suite.lastRunVersion})` : ""}`
-                : "Never run"}
-            </span>
-          </div>
-        )}
+        {/* Donate Button */}
+        <Button
+          onClick={() => onDonate(suite)}
+          className={cn(
+            "w-full",
+            isPending && "bg-chart-4 hover:bg-chart-4/90 text-primary-foreground"
+          )}
+          disabled={isPending}
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Benchmark Running
+            </>
+          ) : isFullyFunded ? (
+            "Add More Funding"
+          ) : (
+            "Fund This Benchmark"
+          )}
+        </Button>
 
-        {/* Action Button */}
-        {isCompleted ? (
-          <Button asChild className="mt-auto w-full">
-            <Link href={`/suite/${suite.id}`}>View Results</Link>
-          </Button>
-        ) : (
-          <Button
-            onClick={() => onDonate(suite)}
-            className={cn(
-              "mt-auto w-full",
-              isPending && "bg-chart-4 hover:bg-chart-4/90 text-primary-foreground"
-            )}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Awaiting Benchmark Run
-              </>
-            ) : progressPercent >= 100 ? (
-              "Fully Funded"
-            ) : (
-              "Fund This Benchmark"
-            )}
-          </Button>
+        {/* Footer: Last Run Results (if available) */}
+        {hasResults && (
+          <div className="mt-1 pt-3 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Trophy className="h-4 w-4 text-chart-4" />
+                <span className="text-muted-foreground">
+                  Last Run
+                  {suite.lastRunVersion && (
+                    <span className="text-foreground font-medium">
+                      {" "}
+                      v{suite.lastRunVersion}
+                    </span>
+                  )}
+                  {lastRunScore !== undefined && (
+                    <span className="text-primary font-medium">
+                      : {lastRunScore.toFixed(1)}%
+                    </span>
+                  )}
+                </span>
+              </div>
+              <Link
+                href={`/suite/${suite.id}`}
+                className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+              >
+                View Results
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
