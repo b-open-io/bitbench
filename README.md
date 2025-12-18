@@ -32,7 +32,7 @@ The project consists of two main parts:
 ### Prerequisites
 
 - [Bun](https://bun.sh)
-- API keys for models (OPENROUTER_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, ANTHROPIC_API_KEY)
+- OpenRouter API key (all models routed through OpenRouter)
 
 ### Running Benchmarks (Admin)
 
@@ -64,9 +64,7 @@ MASTER_WIF=          # Master private key for donation address derivation
 ### Bench CLI
 
 ```
-OPENROUTER_API_KEY=
-GOOGLE_GENERATIVE_AI_API_KEY=
-ANTHROPIC_API_KEY=
+OPENROUTER_API_KEY=      # All models routed through OpenRouter
 ```
 
 ## Architecture
