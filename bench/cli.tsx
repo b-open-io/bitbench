@@ -296,9 +296,13 @@ const App: React.FC = () => {
     () => new Set(modelsToRun.map((m) => m.name))
   );
   const [modelCursor, setModelCursor] = useState(0);
+  // Track if user has interacted with model selection (prevents accidental immediate start)
+  const [modelSelectionReady, setModelSelectionReady] = useState(false);
 
   // Cache status for showing resume capability
   const [cacheStatus, setCacheStatus] = useState<CacheStatus | null>(null);
+  // Cache statuses for all suites (shown in suite picker)
+  const [allCacheStatuses, setAllCacheStatuses] = useState<Map<string, CacheStatus>>(new Map());
 
   // Initial load
   useEffect(() => {
@@ -332,6 +336,8 @@ const App: React.FC = () => {
   // Load cache status when entering selectModels stage
   useEffect(() => {
     if (stage === "selectModels" && selectedIndex != null) {
+      // Reset ready state so user must interact before starting
+      setModelSelectionReady(false);
       (async () => {
         const entry = suites[selectedIndex];
         const status = await getCacheStatus(
@@ -519,6 +525,112 @@ const App: React.FC = () => {
     return fundingStatuses.find((f) => f.suiteId === suiteId);
   }, [selectedIndex, suites, fundingStatuses]);
 
+  // Version input keyboard handling (for escape to go back)
+  useInput(
+    (input, key) => {
+      if (stage !== "version") return;
+      if (key.escape) {
+        setStage("pickSuite");
+      }
+    },
+    { isActive: stage === "version" }
+  );
+
+  // Model selection keyboard handling
+  useInput(
+    (input, key) => {
+      if (stage !== "selectModels") return;
+
+      if (key.escape) {
+        setCacheStatus(null);
+        setStage("version");
+      } else if (key.upArrow) {
+        setModelCursor((c) => (c > 0 ? c - 1 : modelsToRun.length - 1));
+        setModelSelectionReady(true);
+      } else if (key.downArrow) {
+        setModelCursor((c) => (c < modelsToRun.length - 1 ? c + 1 : 0));
+        setModelSelectionReady(true);
+      } else if (input === " ") {
+        const modelName = modelsToRun[modelCursor].name;
+        setSelectedModels((prev) => {
+          const next = new Set(prev);
+          if (next.has(modelName)) {
+            next.delete(modelName);
+          } else {
+            next.add(modelName);
+          }
+          return next;
+        });
+        setModelSelectionReady(true);
+      } else if (input === "a") {
+        setSelectedModels(new Set(modelsToRun.map((m) => m.name)));
+        setModelSelectionReady(true);
+      } else if (input === "n") {
+        setSelectedModels(new Set());
+        setModelSelectionReady(true);
+      } else if (input === "s" || input === "S") {
+        // Explicit 's' to start - always works if models selected
+        if (selectedModels.size > 0) {
+          setStage("running");
+        }
+      } else if (key.return && selectedModels.size > 0 && modelSelectionReady) {
+        // Enter only works after user has interacted with the selection
+        setStage("running");
+      }
+    },
+    { isActive: stage === "selectModels" }
+  );
+
+  // Handle publishing effect - must be before conditional returns
+  useEffect(() => {
+    if (stage !== "publishing" || !benchmarkResults || publishedOutpoint || publishError) {
+      return;
+    }
+
+    (async () => {
+      try {
+        const result = await publishResults(benchmarkResults, { silent: true });
+        setPublishedOutpoint(result.outpoint);
+
+        // Save outpoint to a file alongside results
+        const entry = suites[selectedIndex!];
+        const resultsDir = join(
+          dirname(entry.filePath),
+          "..",
+          "results",
+          entry.id,
+          version
+        );
+
+        // Ensure results directory exists
+        await mkdir(resultsDir, { recursive: true });
+
+        const outpointFile = join(
+          resultsDir,
+          `published-${result.txid.slice(0, 8)}.json`
+        );
+        await fsWriteFile(
+          outpointFile,
+          JSON.stringify(
+            {
+              txid: result.txid,
+              vout: result.vout,
+              outpoint: result.outpoint,
+              publishedAt: new Date().toISOString(),
+              suiteId: entry.id,
+              version,
+            },
+            null,
+            2
+          ),
+          "utf-8"
+        );
+      } catch (e) {
+        setPublishError((e as Error).message);
+      }
+    })();
+  }, [stage, benchmarkResults, publishedOutpoint, publishError, suites, selectedIndex, version]);
+
   if (loading) {
     return (
       <Box>
@@ -565,10 +677,26 @@ const App: React.FC = () => {
             if (item.value === "funding") {
               setStage("loadingFunding");
             } else if (item.value === "run") {
-              // Load funding info before showing suite picker
+              // Load funding info and cache statuses before showing suite picker
               (async () => {
                 const statuses = await getAllFundingStatus();
                 setFundingStatuses(statuses);
+
+                // Load cache statuses for all suites with today's version
+                const cacheMap = new Map<string, CacheStatus>();
+                const todayVersion = formatDefaultVersion();
+                for (const suite of suites) {
+                  const status = await getCacheStatus(
+                    suite.id,
+                    todayVersion,
+                    suite.suite.tests.length
+                  );
+                  if (status.cachedResults > 0) {
+                    cacheMap.set(suite.id, status);
+                  }
+                }
+                setAllCacheStatuses(cacheMap);
+
                 setStage("pickSuite");
               })();
             } else {
@@ -622,25 +750,39 @@ const App: React.FC = () => {
       );
     }
 
-    const suiteItems = suites.map((s, idx) => {
+    type SuiteSelection = { type: "suite"; idx: number } | { type: "back"; idx: number };
+
+    const suiteItems: Array<{ key: string; value: SuiteSelection; label: string }> = suites.map((s, idx) => {
       const funding = fundingStatuses.find((f) => f.suiteId === s.id);
       const isFunded = funding?.isFunded ?? false;
-      const progress = funding
+      const fundingProgress = funding
         ? Math.round(funding.fundingProgress * 100)
         : 0;
-      const statusIcon = isFunded ? "✓" : "✗";
+      const fundingIcon = isFunded ? "✓" : "✗";
+
+      // Check for cached progress
+      const cache = allCacheStatuses.get(s.id);
+      const cacheProgress = cache ? Math.round(cache.progress * 100) : 0;
+      const hasCachedProgress = cache && cache.cachedResults > 0;
+
+      // Build label with cache status if applicable
+      let label = `[${fundingIcon} ${fundingProgress}%] ${s.suite.name}`;
+      if (hasCachedProgress) {
+        label += ` ⏸ ${cacheProgress}% cached`;
+      }
+      if (s.suite.description) {
+        label += ` — ${s.suite.description}`;
+      }
 
       return {
         key: String(idx),
         value: { type: "suite" as const, idx },
-        label: `[${statusIcon} ${progress}%] ${s.suite.name}${
-          s.suite.description ? ` — ${s.suite.description}` : ""
-        }`,
+        label,
       };
     });
 
     // Add back option at the end
-    const items = [
+    const items: Array<{ key: string; value: SuiteSelection; label: string }> = [
       ...suiteItems,
       { key: "back", value: { type: "back" as const, idx: -1 }, label: "← Back to Menu" },
     ];
@@ -728,17 +870,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Version input keyboard handling (for escape to go back)
-  useInput(
-    (input, key) => {
-      if (stage !== "version") return;
-      if (key.escape) {
-        setStage("pickSuite");
-      }
-    },
-    { isActive: stage === "version" }
-  );
-
   // Version input
   if (stage === "version") {
     return (
@@ -757,37 +888,6 @@ const App: React.FC = () => {
       </Box>
     );
   }
-
-  // Model selection keyboard handling
-  useInput(
-    (input, key) => {
-      if (stage !== "selectModels") return;
-
-      if (key.upArrow) {
-        setModelCursor((c) => (c > 0 ? c - 1 : modelsToRun.length - 1));
-      } else if (key.downArrow) {
-        setModelCursor((c) => (c < modelsToRun.length - 1 ? c + 1 : 0));
-      } else if (input === " ") {
-        const modelName = modelsToRun[modelCursor].name;
-        setSelectedModels((prev) => {
-          const next = new Set(prev);
-          if (next.has(modelName)) {
-            next.delete(modelName);
-          } else {
-            next.add(modelName);
-          }
-          return next;
-        });
-      } else if (input === "a") {
-        setSelectedModels(new Set(modelsToRun.map((m) => m.name)));
-      } else if (input === "n") {
-        setSelectedModels(new Set());
-      } else if (key.return && selectedModels.size > 0) {
-        setStage("running");
-      }
-    },
-    { isActive: stage === "selectModels" }
-  );
 
   // Model selection
   if (stage === "selectModels") {
@@ -834,7 +934,7 @@ const App: React.FC = () => {
           )}
         </Text>
         <Text color="gray">
-          [↑↓] navigate • [Space] toggle • [a] all • [n] none • [Enter] start
+          [↑↓] navigate • [Space] toggle • [a] all • [n] none • [s] start • [Esc] back
         </Text>
         <Box marginTop={1} flexDirection="column">
           {modelsToRun.map((model, idx) => {
@@ -862,7 +962,7 @@ const App: React.FC = () => {
         <Box marginTop={1}>
           <Text color={selectedCount > 0 ? "green" : "red"}>
             {selectedCount > 0
-              ? `Press Enter to start benchmark (~$${estimatedCost.toFixed(2)})`
+              ? `Press [s] to start benchmark (~$${estimatedCost.toFixed(2)})`
               : "Select at least one model to continue"}
           </Text>
         </Box>
@@ -1179,56 +1279,6 @@ const App: React.FC = () => {
       </Box>
     );
   }
-
-  // Handle publishing effect
-  useEffect(() => {
-    if (stage !== "publishing" || !benchmarkResults || publishedOutpoint || publishError) {
-      return;
-    }
-
-    (async () => {
-      try {
-        const result = await publishResults(benchmarkResults, { silent: true });
-        setPublishedOutpoint(result.outpoint);
-
-        // Save outpoint to a file alongside results
-        const entry = suites[selectedIndex!];
-        const resultsDir = join(
-          dirname(entry.filePath),
-          "..",
-          "results",
-          entry.id,
-          version
-        );
-
-        // Ensure results directory exists
-        await mkdir(resultsDir, { recursive: true });
-
-        const outpointFile = join(
-          resultsDir,
-          `published-${result.txid.slice(0, 8)}.json`
-        );
-        await fsWriteFile(
-          outpointFile,
-          JSON.stringify(
-            {
-              txid: result.txid,
-              vout: result.vout,
-              outpoint: result.outpoint,
-              publishedAt: new Date().toISOString(),
-              suiteId: entry.id,
-              version,
-            },
-            null,
-            2
-          ),
-          "utf-8"
-        );
-      } catch (e) {
-        setPublishError((e as Error).message);
-      }
-    })();
-  }, [stage, benchmarkResults, publishedOutpoint, publishError, suites, selectedIndex, version]);
 
   // Publishing results to blockchain
   if (stage === "publishing") {
