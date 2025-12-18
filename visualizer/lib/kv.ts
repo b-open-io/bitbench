@@ -19,6 +19,7 @@ const KEYS = {
   suiteDonations: (id: string) => `suite:${id}:donations`,
   suiteRuns: (id: string) => `suite:${id}:runs`,
   suiteLatest: (id: string) => `suite:${id}:latest`,
+  suiteNotified: (id: string) => `suite:${id}:notified`, // Tracks if funding notification was sent
   addressToSuite: (address: string) => `address:${address}`,
 };
 
@@ -115,6 +116,24 @@ export async function getBenchmarkRuns(
 // Clear donations for a suite (after benchmark run)
 export async function clearDonations(suiteId: string): Promise<void> {
   await redis.del(KEYS.suiteDonations(suiteId));
+}
+
+// Notification tracking - prevent duplicate funding notifications
+export async function wasFundingNotificationSent(
+  suiteId: string
+): Promise<boolean> {
+  const notified = await redis.get<string>(KEYS.suiteNotified(suiteId));
+  return notified === "true";
+}
+
+export async function markFundingNotificationSent(
+  suiteId: string
+): Promise<void> {
+  await redis.set(KEYS.suiteNotified(suiteId), "true");
+}
+
+export async function clearFundingNotification(suiteId: string): Promise<void> {
+  await redis.del(KEYS.suiteNotified(suiteId));
 }
 
 // Utility to check if Redis is configured
