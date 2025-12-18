@@ -13,15 +13,12 @@ import {
   ChevronUp,
   Search,
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Cell } from "recharts";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import {
   Card,
   CardContent,
@@ -103,22 +100,6 @@ function formatCost(val: number): string {
   return `$${val.toFixed(2)}`;
 }
 
-// Custom tooltip for chart
-function ChartTooltip({ active, payload }: any) {
-  if (!active || !payload?.[0]) return null;
-  const data = payload[0].payload;
-  return (
-    <div className="rounded-lg border bg-popover p-2 text-popover-foreground shadow-md">
-      <p className="font-medium text-sm">{data.model}</p>
-      <p className="text-xs text-muted-foreground">
-        Score: <span className="font-mono text-foreground">{data.averageScore.toFixed(1)}%</span>
-      </p>
-      <p className="text-xs text-muted-foreground">
-        Cost: <span className="font-mono text-foreground">{formatCost(data.totalCost)}</span>
-      </p>
-    </div>
-  );
-}
 
 export default function ResultsPage() {
   const [resultsData, setResultsData] = useState<AggregatedResults | null>(null);
@@ -397,7 +378,12 @@ export default function ResultsPage() {
                 <CardDescription className="text-xs">Accuracy comparison</CardDescription>
               </CardHeader>
               <CardContent className="p-2">
-                <ResponsiveContainer width="100%" height={260}>
+                <ChartContainer
+                  config={{
+                    averageScore: { label: "Accuracy", color: "var(--chart-1)" },
+                  }}
+                  className="h-[260px] w-full"
+                >
                   <BarChart
                     data={chartData}
                     layout="vertical"
@@ -408,26 +394,30 @@ export default function ResultsPage() {
                       domain={[0, 100]}
                       tick={{ fontSize: 10 }}
                       tickFormatter={(v) => `${v}%`}
-                      stroke="hsl(var(--muted-foreground))"
+                      className="stroke-muted-foreground"
                     />
                     <YAxis
                       type="category"
                       dataKey="model"
                       width={90}
                       tick={{ fontSize: 9 }}
-                      stroke="hsl(var(--muted-foreground))"
+                      className="stroke-muted-foreground"
                     />
-                    <Tooltip content={<ChartTooltip />} />
+                    <ChartTooltip
+                      content={<ChartTooltipContent />}
+                      formatter={(value: number) => [`${value.toFixed(1)}%`]}
+                      labelFormatter={(label: string) => label}
+                    />
                     <Bar dataKey="averageScore" radius={[0, 4, 4, 0]}>
-                      {chartData.map((_, index) => (
+                      {chartData.map((entry, index) => (
                         <Cell
-                          key={index}
-                          fill={index === 0 ? "hsl(var(--chart-4))" : "hsl(var(--primary))"}
+                          key={entry.model}
+                          fill={index === 0 ? "var(--chart-4)" : "var(--chart-1)"}
                         />
                       ))}
                     </Bar>
                   </BarChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
 
