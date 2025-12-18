@@ -15,6 +15,22 @@ export interface TestSuiteFile {
 // Suite status for tracking benchmark state
 export type SuiteStatus = "funding" | "pending" | "completed";
 
+// Supported blockchain chains
+export type Chain = "bsv" | "btc" | "eth" | "sol" | "bch" | "ltc";
+
+// Chain metadata for display
+export const CHAIN_INFO: Record<
+  Chain,
+  { name: string; color: string; bgColor: string }
+> = {
+  bsv: { name: "BSV", color: "text-orange-500", bgColor: "bg-orange-500/10" },
+  btc: { name: "BTC", color: "text-amber-500", bgColor: "bg-amber-500/10" },
+  eth: { name: "ETH", color: "text-indigo-500", bgColor: "bg-indigo-500/10" },
+  sol: { name: "SOL", color: "text-purple-500", bgColor: "bg-purple-500/10" },
+  bch: { name: "BCH", color: "text-green-500", bgColor: "bg-green-500/10" },
+  ltc: { name: "LTC", color: "text-slate-400", bgColor: "bg-slate-400/10" },
+};
+
 // Database types for donation tracking
 export interface TestSuite {
   id: string;
@@ -26,7 +42,8 @@ export interface TestSuite {
   donationAddress: string;
   lastRunAt: string | null;
   lastRunVersion: string | null;
-  status: SuiteStatus; // funding = accepting donations, pending = waiting for admin to run, completed = results uploaded
+  status: SuiteStatus;
+  chain: Chain; // Primary chain this suite tests
 }
 
 export interface Donation {

@@ -1,4 +1,4 @@
-import type { TestSuite, SuiteWithBalance, TestSuiteFile } from "./types";
+import type { TestSuite, SuiteWithBalance, Chain } from "./types";
 import { getDonationAddress, isMasterWifConfigured } from "./addresses";
 import {
   getAllSuites as getAllSuitesFromKV,
@@ -10,95 +10,245 @@ import {
 // Hardcoded suite definitions (derived from bench/tests/*.json)
 // These are used as defaults when KV is not populated
 const SUITE_DEFINITIONS: Omit<TestSuite, "donationAddress">[] = [
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BSV (Bitcoin SV) - Unbounded scaling, data protocols, sCrypt
+  // ═══════════════════════════════════════════════════════════════════════════
   {
     id: "bitcoin-protocols",
-    name: "Bitcoin SPV & Data Protocols",
+    name: "BSV Data Protocols",
     description:
-      "Tests awareness of OP_RETURN, Ordinals, Runes, and BRC-20 protocols.",
+      "1Sat Ordinals, MAP, AIP, B protocol, and OP_RETURN data embedding.",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
     lastRunAt: null,
     lastRunVersion: null,
     status: "funding",
-  },
-  {
-    id: "bitcoin-script",
-    name: "Bitcoin Script & Transactions",
-    description:
-      "Tests understanding of Bitcoin Script, SegWit, and Taproot.",
-    testCount: 5,
-    modelCount: 44,
-    estimatedCostUsd: 2.5,
-    lastRunAt: null,
-    lastRunVersion: null,
-    status: "funding",
+    chain: "bsv",
   },
   {
     id: "bitcoin-libraries",
-    name: "Bitcoin Libraries",
-    description: "Tests knowledge of popular Bitcoin development libraries.",
+    name: "BSV SDK & Libraries",
+    description: "Tests knowledge of @bsv/sdk, transaction building, and SPV.",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
     lastRunAt: null,
     lastRunVersion: null,
     status: "funding",
+    chain: "bsv",
   },
   {
     id: "bitcoin-parsing",
-    name: "Bitcoin Parsing",
-    description: "Tests ability to parse Bitcoin transactions and blocks.",
+    name: "BSV Transaction Parsing",
+    description: "Parsing BSV transactions, scripts, and block structures.",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
     lastRunAt: null,
     lastRunVersion: null,
     status: "funding",
+    chain: "bsv",
   },
   {
     id: "protocol-parsing",
-    name: "Protocol Parsing",
-    description: "Tests parsing of various Bitcoin data protocols.",
+    name: "BSV Protocol Parsing",
+    description: "Parsing MAP, AIP, BAP, and Sigma protocol data.",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
     lastRunAt: null,
     lastRunVersion: null,
     status: "funding",
+    chain: "bsv",
   },
   {
     id: "scrypt",
     name: "sCrypt Smart Contracts",
-    description: "Tests knowledge of sCrypt Bitcoin smart contract language.",
+    description: "sCrypt language, Bitcoin smart contracts, and tooling.",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
     lastRunAt: null,
     lastRunVersion: null,
     status: "funding",
-  },
-  {
-    id: "stratum-puzzle",
-    name: "Stratum Mining Protocol",
-    description: "Tests understanding of Stratum mining protocol.",
-    testCount: 5,
-    modelCount: 44,
-    estimatedCostUsd: 2.5,
-    lastRunAt: null,
-    lastRunVersion: null,
-    status: "funding",
+    chain: "bsv",
   },
   {
     id: "type42",
     name: "Type 42 Key Derivation",
-    description: "Tests knowledge of BIP-42 style key derivation.",
+    description: "BSV-specific Type 42 key derivation and Paymail.",
     testCount: 5,
     modelCount: 44,
     estimatedCostUsd: 2.5,
     lastRunAt: null,
     lastRunVersion: null,
     status: "funding",
+    chain: "bsv",
+  },
+  {
+    id: "stratum-puzzle",
+    name: "Stratum Mining Protocol",
+    description: "Mining pool protocol, puzzle construction, and hashrate.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "bsv",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BTC (Bitcoin Core) - Lightning, Taproot, PSBT
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    id: "btc-lightning",
+    name: "Lightning Network",
+    description: "BOLT specs, channel management, routing, and LND/CLN APIs.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "btc",
+  },
+  {
+    id: "btc-taproot",
+    name: "Taproot & Schnorr",
+    description: "BIP-340 Schnorr signatures, Tapscript, and MAST.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "btc",
+  },
+  {
+    id: "btc-psbt",
+    name: "PSBT & Miniscript",
+    description: "Partially Signed Bitcoin Transactions and Miniscript policy.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "btc",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ETH (Ethereum) - Solidity, EVM, Layer 2
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    id: "eth-solidity",
+    name: "Solidity & EVM",
+    description: "Solidity patterns, EVM opcodes, gas optimization.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "eth",
+  },
+  {
+    id: "eth-tokens",
+    name: "Token Standards",
+    description: "ERC-20, ERC-721, ERC-1155, and ERC-4337 account abstraction.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "eth",
+  },
+  {
+    id: "eth-layer2",
+    name: "Layer 2 Scaling",
+    description: "Optimism, Arbitrum, Base, and rollup architecture.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "eth",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SOL (Solana) - Anchor, SPL, Metaplex
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    id: "sol-anchor",
+    name: "Anchor & Programs",
+    description: "Anchor framework, Rust programs, PDAs, and CPIs.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "sol",
+  },
+  {
+    id: "sol-tokens",
+    name: "SPL & Metaplex",
+    description: "SPL tokens, Metaplex NFTs, and compressed NFTs.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "sol",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BCH (Bitcoin Cash) - CashScript, CashTokens
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    id: "bch-cashscript",
+    name: "CashScript",
+    description: "CashScript smart contracts and libauth library.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "bch",
+  },
+  {
+    id: "bch-cashtokens",
+    name: "CashTokens",
+    description: "Fungible tokens, NFTs, and BCMR metadata.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "bch",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LTC (Litecoin) - MWEB, OmniLite
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    id: "ltc-mweb",
+    name: "MWEB Privacy",
+    description: "MimbleWimble Extension Blocks and confidential transactions.",
+    testCount: 5,
+    modelCount: 44,
+    estimatedCostUsd: 2.5,
+    lastRunAt: null,
+    lastRunVersion: null,
+    status: "funding",
+    chain: "ltc",
   },
 ];
 
@@ -257,4 +407,12 @@ export async function getAllSuitesWithBalance(): Promise<SuiteWithBalance[]> {
   );
 
   return suitesWithBalance;
+}
+
+/**
+ * Get suites filtered by chain
+ */
+export async function getSuitesByChain(chain: Chain): Promise<TestSuite[]> {
+  const suites = await getAllSuites();
+  return suites.filter((s) => s.chain === chain);
 }

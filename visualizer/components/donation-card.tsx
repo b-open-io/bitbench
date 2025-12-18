@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { ChainBadge } from "@/components/chain-badge";
 import type { SuiteWithBalance } from "@/lib/types";
 import { Clock, DollarSign, Zap } from "lucide-react";
 
@@ -31,7 +32,10 @@ export function DonationCard({ suite, onDonate }: DonationCardProps) {
   return (
     <Card className="flex flex-col">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{suite.name}</CardTitle>
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-lg">{suite.name}</CardTitle>
+          <ChainBadge chain={suite.chain} size="sm" />
+        </div>
         <CardDescription className="line-clamp-2">
           {suite.description}
         </CardDescription>
