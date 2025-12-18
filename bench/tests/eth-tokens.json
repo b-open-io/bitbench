@@ -1,0 +1,43 @@
+{
+  "id": "eth-tokens",
+  "chain": "eth",
+  "name": "Token Standards",
+  "description": "ERC-20, ERC-721, ERC-1155, and ERC-4337 account abstraction.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
+  "system_prompt": "You are an Ethereum developer expert in token standards and account abstraction. Answer technical questions about ERCs and their implementations.",
+  "tests": [
+    {
+      "prompt": "In ERC-20, what event must be emitted when tokens are transferred?",
+      "answers": [
+        "Transfer"
+      ]
+    },
+    {
+      "prompt": "What ERC-721 function returns the owner of a specific token ID?",
+      "answers": [
+        "ownerOf"
+      ]
+    },
+    {
+      "prompt": "In ERC-1155, what is the name of the function that allows batch transfers?",
+      "answers": [
+        "safeBatchTransferFrom"
+      ]
+    },
+    {
+      "prompt": "In ERC-4337, what is the name of the singleton contract that handles UserOperations?",
+      "answers": [
+        "EntryPoint"
+      ]
+    },
+    {
+      "prompt": "What ERC defines the 'permit' function for gasless approvals?",
+      "answers": [
+        "ERC-2612",
+        "ERC2612",
+        "2612"
+      ]
+    }
+  ]
+}

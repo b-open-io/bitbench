@@ -13,6 +13,17 @@ import { existsSync } from "fs";
 import { join, basename, extname } from "path";
 import { createHash } from "crypto";
 
+// Re-export publish functionality
+export {
+  publishResults,
+  isPublishingConfigured,
+  type BenchmarkResultData,
+  type PublishResult,
+} from "./publish";
+
+// Re-export models for CLI
+export { modelsToRun, type RunnableModel, estimateBenchmarkCost, getModelCostPerTest, TEST_RUNS_PER_MODEL } from "./constants";
+
 export type TestCase = {
   prompt: string;
   answers: string[];
@@ -21,8 +32,11 @@ export type TestCase = {
 
 export type TestSuite = {
   id?: string;
+  chain?: string;
   name: string;
   description?: string;
+  version?: string;
+  estimatedCostUsd?: number;
   system_prompt: string;
   tests: TestCase[];
 };
@@ -502,6 +516,7 @@ export type TestRunnerOptions = {
   version?: string;
   onEvent?: (event: RunnerEvent) => void;
   silent?: boolean;
+  models?: RunnableModel[];
 };
 
 async function writeCacheEntry(params: {
@@ -584,7 +599,8 @@ async function writeCacheEntry(params: {
 }
 
 export async function testRunner(options: TestRunnerOptions) {
-  const { suite, suiteFilePath, version, onEvent, silent } = options;
+  const { suite, suiteFilePath, version, onEvent, silent, models } = options;
+  const activeModels = models ?? modelsToRun;
   const suiteId = computeSuiteId(
     suite.id ||
       (suiteFilePath
@@ -595,7 +611,7 @@ export async function testRunner(options: TestRunnerOptions) {
 
   if (!silent)
     console.log(
-      `Starting test runner for suite "${suite.name}" (id: ${suiteId}) with ${suite.tests.length} tests, ${modelsToRun.length} models, ${TEST_RUNS_PER_MODEL} runs each`
+      `Starting test runner for suite "${suite.name}" (id: ${suiteId}) with ${suite.tests.length} tests, ${activeModels.length} models, ${TEST_RUNS_PER_MODEL} runs each`
     );
   if (!silent)
     console.log(
@@ -607,7 +623,7 @@ export async function testRunner(options: TestRunnerOptions) {
   const workQueue: WorkItem[] = [];
 
   suite.tests.forEach((test, testIndex) => {
-    modelsToRun.map((model) => {
+    activeModels.map((model) => {
       workQueue.push({
         model,
         system_prompt: suite.system_prompt,
@@ -661,7 +677,7 @@ export async function testRunner(options: TestRunnerOptions) {
     string,
     { total: number; execute: number; reuse: number }
   > = {};
-  for (const m of modelsToRun)
+  for (const m of activeModels)
     planTotals[m.name] = { total: 0, execute: 0, reuse: 0 };
   const sortedTestIndicesForPlan = Object.keys(itemsByTest)
     .map((k) => parseInt(k))
@@ -1052,7 +1068,7 @@ export async function testRunner(options: TestRunnerOptions) {
     console.log(
       `Scheduling ${executeJobs.length} execution${
         executeJobs.length === 1 ? "" : "s"
-      } across ${suite.tests.length} tests and ${modelsToRun.length} models`
+      } across ${suite.tests.length} tests and ${activeModels.length} models`
     );
 
   await processJobQueue(executeJobs);
@@ -1098,7 +1114,7 @@ export async function testRunner(options: TestRunnerOptions) {
         testSuite: suite.name,
         suiteId,
         version: version || null,
-        models: modelsToRun.map((m) => m.name),
+        models: activeModels.map((m) => m.name),
       },
       results,
     };
@@ -1238,4 +1254,54 @@ export async function loadSuiteFromFile(filePath: string): Promise<TestSuite> {
   const raw = await fsReadFile(filePath, "utf-8");
   const json = JSON.parse(raw);
   return json as TestSuite;
+}
+
+/**
+ * Cache status for a suite
+ */
+export interface CacheStatus {
+  suiteId: string;
+  version: string;
+  cachedResults: number;
+  totalExpected: number;
+  progress: number; // 0-1
+  canResume: boolean;
+}
+
+/**
+ * Get cache status for a suite to show resumability
+ */
+export async function getCacheStatus(
+  suiteId: string,
+  version: string,
+  testCount: number,
+  models?: RunnableModel[]
+): Promise<CacheStatus> {
+  const activeModels = models ?? modelsToRun;
+  const totalExpected = testCount * activeModels.length * TEST_RUNS_PER_MODEL;
+
+  const cacheDir = join(OUTPUT_DIRECTORY, "cache", suiteId, version);
+
+  let cachedResults = 0;
+
+  try {
+    if (existsSync(cacheDir)) {
+      const files = await readdir(cacheDir);
+      // Count valid JSON files (each represents one cached result)
+      cachedResults = files.filter((f) => f.endsWith(".json")).length;
+    }
+  } catch {
+    // Directory doesn't exist or can't be read
+  }
+
+  const progress = totalExpected > 0 ? cachedResults / totalExpected : 0;
+
+  return {
+    suiteId,
+    version,
+    cachedResults,
+    totalExpected,
+    progress: Math.min(progress, 1), // Cap at 100%
+    canResume: cachedResults > 0 && cachedResults < totalExpected,
+  };
 }

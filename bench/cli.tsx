@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import React, { useEffect, useMemo, useState } from "react";
-import { render, Box, Text, useApp } from "ink";
+import { render, Box, Text, useApp, useInput } from "ink";
 import SelectInput from "ink-select-input";
 import TextInput from "ink-text-input";
 import { join, dirname } from "path";
@@ -9,8 +9,17 @@ import { readdir, readFile } from "fs/promises";
 import {
   loadSuiteFromFile,
   testRunner,
+  publishResults,
+  isPublishingConfigured,
+  modelsToRun,
+  estimateBenchmarkCost,
+  TEST_RUNS_PER_MODEL,
+  getCacheStatus,
   type TestSuite,
   type RunnerEvent,
+  type BenchmarkResultData,
+  type RunnableModel,
+  type CacheStatus,
 } from "./index";
 import {
   getAllFundingStatus,
@@ -18,6 +27,7 @@ import {
   isMasterWifConfigured,
   type FundingStatus,
 } from "./funding";
+import { writeFile as fsWriteFile, mkdir } from "fs/promises";
 
 function ensureRefUnref(stream: any) {
   if (!stream) return stream;
@@ -254,7 +264,10 @@ type Stage =
   | "pickSuite"
   | "confirmUnfunded"
   | "version"
-  | "running";
+  | "selectModels"
+  | "running"
+  | "completed"
+  | "publishing";
 
 const App: React.FC = () => {
   const benchRoot = useBenchRoot();
@@ -274,6 +287,18 @@ const App: React.FC = () => {
 
   const [modelOrder, setModelOrder] = useState<string[]>([]);
   const [stats, setStats] = useState<Record<string, ModelStats>>({});
+  const [benchmarkResults, setBenchmarkResults] = useState<BenchmarkResultData | null>(null);
+  const [publishedOutpoint, setPublishedOutpoint] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
+
+  // Model selection - all models enabled by default
+  const [selectedModels, setSelectedModels] = useState<Set<string>>(
+    () => new Set(modelsToRun.map((m) => m.name))
+  );
+  const [modelCursor, setModelCursor] = useState(0);
+
+  // Cache status for showing resume capability
+  const [cacheStatus, setCacheStatus] = useState<CacheStatus | null>(null);
 
   // Initial load
   useEffect(() => {
@@ -304,6 +329,21 @@ const App: React.FC = () => {
     }
   }, [stage]);
 
+  // Load cache status when entering selectModels stage
+  useEffect(() => {
+    if (stage === "selectModels" && selectedIndex != null) {
+      (async () => {
+        const entry = suites[selectedIndex];
+        const status = await getCacheStatus(
+          entry.id,
+          version,
+          entry.suite.tests.length
+        );
+        setCacheStatus(status);
+      })();
+    }
+  }, [stage, selectedIndex, version, suites]);
+
   // Run benchmark
   useEffect(() => {
     if (stage === "running" && selectedIndex != null) {
@@ -311,110 +351,166 @@ const App: React.FC = () => {
         const entry = suites[selectedIndex];
         const suite = await loadSuiteFromFile(entry.filePath);
 
+        // Track stats locally to avoid stale closure issues
+        let localModelOrder: string[] = [];
+        let localStats: Record<string, ModelStats> = {};
+
+        // Filter models based on selection
+        const activeModels = modelsToRun.filter((m) => selectedModels.has(m.name));
+
         await testRunner({
           suite,
           suiteFilePath: entry.filePath,
           version,
           silent: true,
+          models: activeModels,
           onEvent: (event: RunnerEvent) => {
             if (event.type === "plan") {
               const order = Object.keys(event.totals);
+              localModelOrder = order;
+              localStats = order.reduce((acc, name) => {
+                const t = event.totals[name];
+                acc[name] = {
+                  total: t.total,
+                  executeTotal: t.execute,
+                  reuseTotal: t.reuse,
+                  reuseCompleted: 0,
+                  executedStarted: 0,
+                  executedDone: 0,
+                  executedErrors: 0,
+                  executedDurationSumMs: 0,
+                  executedMaxDurationMs: 0,
+                  correctCount: 0,
+                  incorrectCount: 0,
+                  costSum: 0,
+                  completionTokensSum: 0,
+                };
+                return acc;
+              }, {} as Record<string, ModelStats>);
               setModelOrder(order);
-              setStats(
-                order.reduce((acc, name) => {
-                  const t = event.totals[name];
-                  acc[name] = {
-                    total: t.total,
-                    executeTotal: t.execute,
-                    reuseTotal: t.reuse,
-                    reuseCompleted: 0,
-                    executedStarted: 0,
-                    executedDone: 0,
-                    executedErrors: 0,
-                    executedDurationSumMs: 0,
-                    executedMaxDurationMs: 0,
-                    correctCount: 0,
-                    incorrectCount: 0,
-                    costSum: 0,
-                    completionTokensSum: 0,
-                  };
-                  return acc;
-                }, {} as Record<string, ModelStats>)
-              );
+              setStats(localStats);
             } else if (event.type === "start") {
+              localStats[event.model] = {
+                ...localStats[event.model],
+                executedStarted: localStats[event.model].executedStarted + 1,
+              };
               setStats((prev) => ({
                 ...prev,
-                [event.model]: {
-                  ...prev[event.model],
-                  executedStarted: prev[event.model].executedStarted + 1,
-                },
+                [event.model]: localStats[event.model],
               }));
             } else if (event.type === "done") {
+              localStats[event.model] = {
+                ...localStats[event.model],
+                executedDone: localStats[event.model].executedDone + 1,
+                executedDurationSumMs:
+                  localStats[event.model].executedDurationSumMs + event.duration,
+                executedMaxDurationMs: Math.max(
+                  localStats[event.model].executedMaxDurationMs,
+                  event.duration
+                ),
+                correctCount:
+                  localStats[event.model].correctCount + (event.correct ? 1 : 0),
+                incorrectCount:
+                  localStats[event.model].incorrectCount + (!event.correct ? 1 : 0),
+                costSum: localStats[event.model].costSum + (event.cost || 0),
+                completionTokensSum:
+                  localStats[event.model].completionTokensSum +
+                  (event.completionTokens || 0),
+              };
               setStats((prev) => ({
                 ...prev,
-                [event.model]: {
-                  ...prev[event.model],
-                  executedDone: prev[event.model].executedDone + 1,
-                  executedDurationSumMs:
-                    prev[event.model].executedDurationSumMs + event.duration,
-                  executedMaxDurationMs: Math.max(
-                    prev[event.model].executedMaxDurationMs,
-                    event.duration
-                  ),
-                  correctCount:
-                    prev[event.model].correctCount + (event.correct ? 1 : 0),
-                  incorrectCount:
-                    prev[event.model].incorrectCount + (!event.correct ? 1 : 0),
-                  costSum: prev[event.model].costSum + (event.cost || 0),
-                  completionTokensSum:
-                    prev[event.model].completionTokensSum +
-                    (event.completionTokens || 0),
-                },
+                [event.model]: localStats[event.model],
               }));
             } else if (event.type === "error") {
+              localStats[event.model] = {
+                ...localStats[event.model],
+                executedErrors: localStats[event.model].executedErrors + 1,
+                executedDurationSumMs:
+                  localStats[event.model].executedDurationSumMs + event.duration,
+                executedMaxDurationMs: Math.max(
+                  localStats[event.model].executedMaxDurationMs,
+                  event.duration
+                ),
+              };
               setStats((prev) => ({
                 ...prev,
-                [event.model]: {
-                  ...prev[event.model],
-                  executedErrors: prev[event.model].executedErrors + 1,
-                  executedDurationSumMs:
-                    prev[event.model].executedDurationSumMs + event.duration,
-                  executedMaxDurationMs: Math.max(
-                    prev[event.model].executedMaxDurationMs,
-                    event.duration
-                  ),
-                },
+                [event.model]: localStats[event.model],
               }));
             } else if (event.type === "reuse") {
+              localStats[event.model] = {
+                ...localStats[event.model],
+                reuseCompleted: localStats[event.model].reuseCompleted + 1,
+                executedDurationSumMs:
+                  localStats[event.model].executedDurationSumMs +
+                  (event.duration || 0),
+                executedMaxDurationMs: Math.max(
+                  localStats[event.model].executedMaxDurationMs,
+                  event.duration || 0
+                ),
+                correctCount:
+                  localStats[event.model].correctCount + (event.correct ? 1 : 0),
+                incorrectCount:
+                  localStats[event.model].incorrectCount + (!event.correct ? 1 : 0),
+                costSum: localStats[event.model].costSum + (event.cost || 0),
+                completionTokensSum:
+                  localStats[event.model].completionTokensSum +
+                  (event.completionTokens || 0),
+              };
               setStats((prev) => ({
                 ...prev,
-                [event.model]: {
-                  ...prev[event.model],
-                  reuseCompleted: prev[event.model].reuseCompleted + 1,
-                  executedDurationSumMs:
-                    prev[event.model].executedDurationSumMs +
-                    (event.duration || 0),
-                  executedMaxDurationMs: Math.max(
-                    prev[event.model].executedMaxDurationMs,
-                    event.duration || 0
-                  ),
-                  correctCount:
-                    prev[event.model].correctCount + (event.correct ? 1 : 0),
-                  incorrectCount:
-                    prev[event.model].incorrectCount + (!event.correct ? 1 : 0),
-                  costSum: prev[event.model].costSum + (event.cost || 0),
-                  completionTokensSum:
-                    prev[event.model].completionTokensSum +
-                    (event.completionTokens || 0),
-                },
+                [event.model]: localStats[event.model],
               }));
             }
           },
         });
-        exit();
+
+        // Build results data for publishing using local accumulators
+        const suiteEntry = suites[selectedIndex];
+        const resultsData: BenchmarkResultData = {
+          suiteId: suiteEntry.id,
+          suiteName: suiteEntry.suite.name,
+          chain: suiteEntry.suite.chain || "unknown",
+          version,
+          timestamp: new Date().toISOString(),
+          rankings: localModelOrder.map((model) => {
+            const s = localStats[model];
+            const answered = s ? s.correctCount + s.incorrectCount : 0;
+            return {
+              model,
+              correct: s?.correctCount || 0,
+              incorrect: s?.incorrectCount || 0,
+              errors: s?.executedErrors || 0,
+              totalTests: s?.total || 0,
+              successRate: answered > 0 ? (s!.correctCount / answered) * 100 : 0,
+              totalCost: s?.costSum || 0,
+              tokensPerSecond:
+                s && s.executedDurationSumMs > 0
+                  ? s.completionTokensSum / (s.executedDurationSumMs / 1000)
+                  : 0,
+            };
+          }).sort((a, b) => b.successRate - a.successRate),
+          metadata: {
+            totalModels: localModelOrder.length,
+            totalTestsRun: Object.values(localStats).reduce((sum, s) => sum + s.total, 0),
+            overallSuccessRate: (() => {
+              const total = Object.values(localStats).reduce(
+                (sum, s) => sum + s.correctCount + s.incorrectCount,
+                0
+              );
+              const correct = Object.values(localStats).reduce(
+                (sum, s) => sum + s.correctCount,
+                0
+              );
+              return total > 0 ? (correct / total) * 100 : 0;
+            })(),
+            totalCost: Object.values(localStats).reduce((sum, s) => sum + s.costSum, 0),
+          },
+        };
+        setBenchmarkResults(resultsData);
+        setStage("completed");
       })();
     }
-  }, [stage, selectedIndex, suites, version, exit]);
+  }, [stage, selectedIndex, suites, version]);
 
   // Get funding status for selected suite
   const selectedFunding = useMemo(() => {
@@ -590,7 +686,7 @@ const App: React.FC = () => {
             <Text color="yellow">
               ${funding?.balanceUsd.toFixed(2) ?? "0.00"}
             </Text>{" "}
-            / <Text color="white">${funding?.goalUsd.toFixed(2) ?? "2.50"}</Text>
+            / <Text color="white">${funding?.goalUsd.toFixed(2) ?? "--"}</Text>
             {" ("}
             <Text color="yellow">
               {Math.round((funding?.fundingProgress ?? 0) * 100)}%
@@ -622,13 +718,125 @@ const App: React.FC = () => {
   if (stage === "version") {
     return (
       <Box flexDirection="column">
-        <Text>Version label (press Enter to start):</Text>
+        <Text>Version label (press Enter to continue):</Text>
         <Box marginTop={1}>
           <TextInput
             value={version}
             onChange={setVersion}
-            onSubmit={() => setStage("running")}
+            onSubmit={() => setStage("selectModels")}
           />
+        </Box>
+      </Box>
+    );
+  }
+
+  // Model selection keyboard handling
+  useInput(
+    (input, key) => {
+      if (stage !== "selectModels") return;
+
+      if (key.upArrow) {
+        setModelCursor((c) => (c > 0 ? c - 1 : modelsToRun.length - 1));
+      } else if (key.downArrow) {
+        setModelCursor((c) => (c < modelsToRun.length - 1 ? c + 1 : 0));
+      } else if (input === " ") {
+        const modelName = modelsToRun[modelCursor].name;
+        setSelectedModels((prev) => {
+          const next = new Set(prev);
+          if (next.has(modelName)) {
+            next.delete(modelName);
+          } else {
+            next.add(modelName);
+          }
+          return next;
+        });
+      } else if (input === "a") {
+        setSelectedModels(new Set(modelsToRun.map((m) => m.name)));
+      } else if (input === "n") {
+        setSelectedModels(new Set());
+      } else if (key.return && selectedModels.size > 0) {
+        setStage("running");
+      }
+    },
+    { isActive: stage === "selectModels" }
+  );
+
+  // Model selection
+  if (stage === "selectModels") {
+    const selectedCount = selectedModels.size;
+    const numTests = suites[selectedIndex!]?.suite.tests.length ?? 0;
+    const totalExecutions = selectedCount * numTests * TEST_RUNS_PER_MODEL;
+    const estimatedCost = estimateBenchmarkCost(
+      Array.from(selectedModels),
+      numTests,
+      TEST_RUNS_PER_MODEL
+    );
+
+    const cacheProgress = cacheStatus ? Math.round(cacheStatus.progress * 100) : 0;
+    const hasCachedProgress = cacheStatus && cacheStatus.cachedResults > 0;
+
+    return (
+      <Box flexDirection="column">
+        {/* Cache status banner */}
+        {hasCachedProgress && (
+          <Box marginBottom={1} flexDirection="column">
+            <Text bold color={cacheStatus.canResume ? "yellow" : "green"}>
+              {cacheStatus.canResume
+                ? `⏸ Cached Progress: ${cacheProgress}% (${cacheStatus.cachedResults}/${cacheStatus.totalExpected} results)`
+                : `✓ Complete: ${cacheStatus.cachedResults} cached results`}
+            </Text>
+            {cacheStatus.canResume && (
+              <Text color="yellow">
+                Run will resume from where it left off — existing results will be reused
+              </Text>
+            )}
+          </Box>
+        )}
+
+        <Text bold color="cyan">
+          Select models to run ({selectedCount}/{modelsToRun.length} selected)
+        </Text>
+        <Text color="gray">
+          {numTests} tests × {TEST_RUNS_PER_MODEL} runs = {totalExecutions.toLocaleString()} executions
+        </Text>
+        <Text color="green" bold>
+          Estimated cost: ${estimatedCost.toFixed(2)}
+          {hasCachedProgress && cacheStatus.canResume && (
+            <Text color="yellow"> (reduced due to cache)</Text>
+          )}
+        </Text>
+        <Text color="gray">
+          [↑↓] navigate • [Space] toggle • [a] all • [n] none • [Enter] start
+        </Text>
+        <Box marginTop={1} flexDirection="column">
+          {modelsToRun.map((model, idx) => {
+            const isSelected = selectedModels.has(model.name);
+            const isCursor = idx === modelCursor;
+            const costPerTest = model.avgCostPerTest ?? 0.01;
+            const modelCost = costPerTest * numTests * TEST_RUNS_PER_MODEL;
+            return (
+              <Text key={model.name}>
+                <Text color={isCursor ? "cyan" : "white"}>
+                  {isCursor ? ">" : " "}
+                </Text>
+                <Text color={isSelected ? "green" : "red"}>
+                  {isSelected ? " ✓ " : " ✗ "}
+                </Text>
+                <Text color={isSelected ? "white" : "gray"}>
+                  {model.name}
+                </Text>
+                <Text color="gray"> ${modelCost.toFixed(2)}</Text>
+                {model.reasoning && <Text color="yellow"> (reasoning)</Text>}
+              </Text>
+            );
+          })}
+        </Box>
+        <Box marginTop={1}>
+          <Text color={selectedCount > 0 ? "green" : "red"}>
+            {selectedCount > 0
+              ? `Press Enter to start benchmark (~$${estimatedCost.toFixed(2)})`
+              : "Select at least one model to continue"}
+          </Text>
         </Box>
       </Box>
     );
@@ -867,6 +1075,189 @@ const App: React.FC = () => {
             <Text color="green">${totals.costSum.toFixed(4)}</Text> total cost
           </Text>
         </Box>
+      </Box>
+    );
+  }
+
+  // Benchmark completed - ask about publishing
+  if (stage === "completed") {
+    const canPublish = isPublishingConfigured();
+
+    return (
+      <Box flexDirection="column">
+        <Text bold color="green">
+          ╔═══════════════════════════════════════╗
+        </Text>
+        <Text bold color="green">
+          ║       BENCHMARK COMPLETED!            ║
+        </Text>
+        <Text bold color="green">
+          ╚═══════════════════════════════════════╝
+        </Text>
+
+        {benchmarkResults && (
+          <Box marginTop={1} flexDirection="column">
+            <Text>
+              Suite: <Text color="cyan">{benchmarkResults.suiteName}</Text>
+            </Text>
+            <Text>
+              Chain: <Text color="yellow">{benchmarkResults.chain.toUpperCase()}</Text>
+            </Text>
+            <Text>
+              Version: <Text color="magenta">{benchmarkResults.version}</Text>
+            </Text>
+            <Text>
+              Models tested: <Text color="white">{benchmarkResults.metadata.totalModels}</Text>
+            </Text>
+            <Text>
+              Overall accuracy:{" "}
+              <Text color={benchmarkResults.metadata.overallSuccessRate >= 70 ? "green" : "yellow"}>
+                {benchmarkResults.metadata.overallSuccessRate.toFixed(1)}%
+              </Text>
+            </Text>
+            <Text>
+              Total cost: <Text color="green">${benchmarkResults.metadata.totalCost.toFixed(4)}</Text>
+            </Text>
+          </Box>
+        )}
+
+        <Box marginTop={1}>
+          {canPublish ? (
+            <Text>Would you like to publish results to the blockchain?</Text>
+          ) : (
+            <Text color="yellow">
+              ⚠ MASTER_WIF not set - cannot publish to blockchain
+            </Text>
+          )}
+        </Box>
+
+        <SelectInput
+          items={
+            canPublish
+              ? [
+                  { key: "publish", value: "publish", label: "📜 Publish to blockchain" },
+                  { key: "skip", value: "skip", label: "⏭ Skip publishing" },
+                ]
+              : [{ key: "exit", value: "exit", label: "✓ Done" }]
+          }
+          onSelect={(item: any) => {
+            if (item.value === "publish") {
+              setStage("publishing");
+            } else {
+              exit();
+            }
+          }}
+        />
+      </Box>
+    );
+  }
+
+  // Handle publishing effect
+  useEffect(() => {
+    if (stage !== "publishing" || !benchmarkResults || publishedOutpoint || publishError) {
+      return;
+    }
+
+    (async () => {
+      try {
+        const result = await publishResults(benchmarkResults, { silent: true });
+        setPublishedOutpoint(result.outpoint);
+
+        // Save outpoint to a file alongside results
+        const entry = suites[selectedIndex!];
+        const resultsDir = join(
+          dirname(entry.filePath),
+          "..",
+          "results",
+          entry.id,
+          version
+        );
+
+        // Ensure results directory exists
+        await mkdir(resultsDir, { recursive: true });
+
+        const outpointFile = join(
+          resultsDir,
+          `published-${result.txid.slice(0, 8)}.json`
+        );
+        await fsWriteFile(
+          outpointFile,
+          JSON.stringify(
+            {
+              txid: result.txid,
+              vout: result.vout,
+              outpoint: result.outpoint,
+              publishedAt: new Date().toISOString(),
+              suiteId: entry.id,
+              version,
+            },
+            null,
+            2
+          ),
+          "utf-8"
+        );
+      } catch (e) {
+        setPublishError((e as Error).message);
+      }
+    })();
+  }, [stage, benchmarkResults, publishedOutpoint, publishError, suites, selectedIndex, version]);
+
+  // Publishing results to blockchain
+  if (stage === "publishing") {
+    if (publishError) {
+      return (
+        <Box flexDirection="column">
+          <Text bold color="red">
+            Publishing failed!
+          </Text>
+          <Text color="red">{publishError}</Text>
+          <Box marginTop={1}>
+            <SelectInput
+              items={[{ key: "exit", value: "exit", label: "✓ Done" }]}
+              onSelect={() => exit()}
+            />
+          </Box>
+        </Box>
+      );
+    }
+
+    if (publishedOutpoint) {
+      const txid = publishedOutpoint.split("_")[0];
+      return (
+        <Box flexDirection="column">
+          <Text bold color="green">
+            ╔═══════════════════════════════════════╗
+          </Text>
+          <Text bold color="green">
+            ║      PUBLISHED TO BLOCKCHAIN!         ║
+          </Text>
+          <Text bold color="green">
+            ╚═══════════════════════════════════════╝
+          </Text>
+
+          <Box marginTop={1} flexDirection="column">
+            <Text>
+              Outpoint: <Text color="cyan">{publishedOutpoint}</Text>
+            </Text>
+            <Text>
+              View: <Text color="blue">https://whatsonchain.com/tx/{txid}</Text>
+            </Text>
+          </Box>
+
+          <Box marginTop={1}>
+            <SelectInput
+              items={[{ key: "exit", value: "exit", label: "✓ Done" }]}
+              onSelect={() => exit()}
+            />
+          </Box>
+        </Box>
+      );
+    }
+
+    return (
+      <Box flexDirection="column">
+        <Text color="cyan">Publishing to blockchain...</Text>
+        <Text color="gray">Creating 1sat ordinal with benchmark results...</Text>
       </Box>
     );
   }

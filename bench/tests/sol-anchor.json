@@ -1,0 +1,46 @@
+{
+  "id": "sol-anchor",
+  "chain": "sol",
+  "name": "Anchor & Programs",
+  "description": "Anchor framework, Rust programs, PDAs, CPIs, and Solana runtime.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
+  "system_prompt": "You are a Solana developer expert in Anchor and native programs. Answer technical questions about program development and the Solana runtime.",
+  "tests": [
+    {
+      "prompt": "In Anchor, what attribute macro is used to define a program's instruction handlers?",
+      "answers": [
+        "#[program]"
+      ]
+    },
+    {
+      "prompt": "What Anchor constraint ensures an account is owned by a specific program?",
+      "answers": [
+        "owner",
+        "#[account(owner = ...)]"
+      ]
+    },
+    {
+      "prompt": "What function is used to derive a Program Derived Address (PDA)?",
+      "answers": [
+        "find_program_address",
+        "Pubkey::find_program_address"
+      ]
+    },
+    {
+      "prompt": "In Anchor, what attribute validates that an account matches a specific public key?",
+      "answers": [
+        "address",
+        "constraint",
+        "#[account(address = ...)]"
+      ]
+    },
+    {
+      "prompt": "What is the maximum size of a Solana transaction?",
+      "answers": [
+        "1232 bytes",
+        "1232"
+      ]
+    }
+  ]
+}

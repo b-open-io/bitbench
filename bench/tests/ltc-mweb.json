@@ -1,0 +1,46 @@
+{
+  "id": "ltc-mweb",
+  "chain": "ltc",
+  "name": "MWEB Privacy",
+  "description": "MimbleWimble Extension Blocks, confidential transactions, and Litecoin privacy features.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
+  "system_prompt": "You are a Litecoin developer expert in MWEB and MimbleWimble. Answer technical questions about confidential transactions and privacy features.",
+  "tests": [
+    {
+      "prompt": "What does MWEB stand for in the context of Litecoin?",
+      "answers": [
+        "MimbleWimble Extension Blocks"
+      ]
+    },
+    {
+      "prompt": "In MWEB, what cryptographic technique hides transaction amounts?",
+      "answers": [
+        "confidential transactions",
+        "Pedersen commitments"
+      ]
+    },
+    {
+      "prompt": "What type of transaction moves coins from the main chain into MWEB?",
+      "answers": [
+        "peg-in",
+        "pegin"
+      ]
+    },
+    {
+      "prompt": "In MimbleWimble, what feature allows transactions to be merged, removing intermediate outputs?",
+      "answers": [
+        "cut-through",
+        "transaction cut-through"
+      ]
+    },
+    {
+      "prompt": "What proof system does MWEB use to verify transaction validity without revealing amounts?",
+      "answers": [
+        "range proof",
+        "Bulletproofs",
+        "rangeproof"
+      ]
+    }
+  ]
+}

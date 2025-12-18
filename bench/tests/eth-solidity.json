@@ -1,0 +1,48 @@
+{
+  "id": "eth-solidity",
+  "chain": "eth",
+  "name": "Solidity & EVM",
+  "description": "Solidity patterns, EVM opcodes, gas optimization, and smart contract security.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
+  "system_prompt": "You are an Ethereum smart contract developer expert in Solidity and the EVM. Answer technical questions about contract development and optimization.",
+  "tests": [
+    {
+      "prompt": "What is the maximum size in bytes of deployed contract bytecode on Ethereum mainnet?",
+      "answers": [
+        "24576",
+        "24KB",
+        "24,576 bytes"
+      ]
+    },
+    {
+      "prompt": "In Solidity, what keyword prevents a function from modifying state?",
+      "answers": [
+        "view",
+        "pure"
+      ]
+    },
+    {
+      "prompt": "What EVM opcode is used to read from contract storage?",
+      "answers": [
+        "SLOAD"
+      ]
+    },
+    {
+      "prompt": "What is the gas cost of a cold SLOAD operation after EIP-2929?",
+      "answers": [
+        "2100",
+        "2100 gas"
+      ]
+    },
+    {
+      "prompt": "In Solidity 0.8+, what happens when an integer overflow occurs?",
+      "answers": [
+        "revert",
+        "reverts",
+        "automatic revert",
+        "panic"
+      ]
+    }
+  ]
+}

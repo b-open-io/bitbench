@@ -1,0 +1,49 @@
+{
+  "id": "btc-lightning",
+  "chain": "btc",
+  "name": "Lightning Network",
+  "description": "BOLT specs, channel management, routing, HTLCs, and LND/CLN APIs.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
+  "system_prompt": "You are a Lightning Network protocol expert. Answer technical questions about BOLT specifications, channel operations, and Lightning implementations.",
+  "tests": [
+    {
+      "prompt": "What BOLT specification defines the peer protocol for channel establishment?",
+      "answers": [
+        "BOLT 2",
+        "BOLT-2",
+        "BOLT2"
+      ]
+    },
+    {
+      "prompt": "In Lightning, what is the name of the contract that ensures atomic payments across multiple hops?",
+      "answers": [
+        "HTLC",
+        "Hash Time-Locked Contract"
+      ]
+    },
+    {
+      "prompt": "What is the maximum HTLC value in millisatoshis that a channel can route, as defined by the `htlc_maximum_msat` field?",
+      "answers": [
+        "channel capacity",
+        "depends on channel"
+      ]
+    },
+    {
+      "prompt": "In LND, what gRPC method is used to open a channel with another node?",
+      "answers": [
+        "OpenChannel",
+        "OpenChannelSync"
+      ]
+    },
+    {
+      "prompt": "What is the purpose of the `payment_secret` field introduced in BOLT 11 invoices?",
+      "answers": [
+        "prevent probing",
+        "multi-path payments",
+        "MPP",
+        "privacy"
+      ]
+    }
+  ]
+}

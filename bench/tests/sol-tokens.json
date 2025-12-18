@@ -1,0 +1,45 @@
+{
+  "id": "sol-tokens",
+  "chain": "sol",
+  "name": "SPL & Metaplex",
+  "description": "SPL tokens, Metaplex NFTs, Token-2022, and compressed NFTs.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
+  "system_prompt": "You are a Solana developer expert in SPL tokens and Metaplex. Answer technical questions about token programs and NFT standards.",
+  "tests": [
+    {
+      "prompt": "What is the program ID for the SPL Token program?",
+      "answers": [
+        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+      ]
+    },
+    {
+      "prompt": "In Metaplex, what account stores the NFT's name, symbol, and URI?",
+      "answers": [
+        "Metadata",
+        "metadata account"
+      ]
+    },
+    {
+      "prompt": "What SPL Token-2022 extension allows tokens to be non-transferable?",
+      "answers": [
+        "NonTransferable",
+        "non-transferable extension"
+      ]
+    },
+    {
+      "prompt": "What data structure does Metaplex use for compressed NFTs?",
+      "answers": [
+        "Merkle tree",
+        "concurrent merkle tree"
+      ]
+    },
+    {
+      "prompt": "In SPL Token, what instruction creates a new token mint?",
+      "answers": [
+        "InitializeMint",
+        "initialize_mint"
+      ]
+    }
+  ]
+}

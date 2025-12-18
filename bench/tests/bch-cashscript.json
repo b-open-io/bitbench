@@ -1,0 +1,45 @@
+{
+  "id": "bch-cashscript",
+  "chain": "bch",
+  "name": "CashScript",
+  "description": "CashScript smart contracts, libauth, and Bitcoin Cash scripting.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
+  "system_prompt": "You are a Bitcoin Cash developer expert in CashScript and libauth. Answer technical questions about BCH smart contracts and scripting.",
+  "tests": [
+    {
+      "prompt": "What high-level language is used to write smart contracts on Bitcoin Cash?",
+      "answers": [
+        "CashScript"
+      ]
+    },
+    {
+      "prompt": "In CashScript, what keyword is used to define a contract's constructor?",
+      "answers": [
+        "contract"
+      ]
+    },
+    {
+      "prompt": "What library provides low-level Bitcoin Cash transaction building in JavaScript?",
+      "answers": [
+        "libauth",
+        "@bitauth/libauth"
+      ]
+    },
+    {
+      "prompt": "What opcode enables native introspection of transaction data in Bitcoin Cash?",
+      "answers": [
+        "OP_TXINPUTCOUNT",
+        "OP_UTXOVALUE",
+        "native introspection opcodes"
+      ]
+    },
+    {
+      "prompt": "In CashScript, what function is used to require a specific signature?",
+      "answers": [
+        "require(checkSig(sig, pubkey))",
+        "checkSig"
+      ]
+    }
+  ]
+}

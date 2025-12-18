@@ -1,30 +1,55 @@
 {
-  "name": "Stratum & Byte Manipulation Puzzles",
-  "description": "Hard technical puzzles based on Stratum implementation details and byte manipulation logic from Miningcore.",
+  "id": "bsv-stratum",
+  "chain": "bsv",
+  "name": "Stratum Mining Protocol",
+  "description": "Mining pool protocol, puzzle construction, byte manipulation, and Miningcore internals.",
   "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
   "system_prompt": "You are a low-level Bitcoin protocol engineer and Stratum expert. Answer these specific puzzles related to byte order, serialization, and SDK internals.",
   "tests": [
     {
       "prompt": "In Miningcore's Stratum implementation, if `BlockTemplate.PreviousBlockhash` is `000000004a75d7a3d5e09bb904575a7235eaa5c8e13e9cc4cde8a01839dd47a6`, what is the exact `prevhash` hex string sent in the `mining.notify` message? (Hint: check endianness)",
-      "answers": ["a647dd3918a0e8cdc49c3ee1c8a5ea35725a5704b99be0d5a3d7754a00000000"]
+      "answers": [
+        "a647dd3918a0e8cdc49c3ee1c8a5ea35725a5704b99be0d5a3d7754a00000000"
+      ]
     },
     {
       "prompt": "In Miningcore's `BitcoinJob.cs`, what specific byte manipulation operation is applied to transaction hashes *before* they are passed to the `MerkleTree` constructor to build the branches?",
-      "answers": ["reverse", "ReverseInPlace", "byte reversal", "endian swap"],
-      "negative_answers": ["hash", "sha256", "none"]
+      "answers": [
+        "reverse",
+        "ReverseInPlace",
+        "byte reversal",
+        "endian swap"
+      ],
+      "negative_answers": [
+        "hash",
+        "sha256",
+        "none"
+      ]
     },
     {
       "prompt": "When serializing the block header in `BitcoinJob.cs`, specifically for the `HashPrevBlock` field in the `BlockHeader` struct, is the byte order big-endian or little-endian?",
-      "answers": ["little-endian", "little endian"],
-      "negative_answers": ["big-endian", "big endian"]
+      "answers": [
+        "little-endian",
+        "little endian"
+      ],
+      "negative_answers": [
+        "big-endian",
+        "big endian"
+      ]
     },
     {
       "prompt": "Calculate the difficulty (diff) if the target (hashInt) is `000000004a75d7a3d5e09bb904575a7235eaa5c8e13e9cc4cde8a01839dd47a6` (little-endian interpretation) and `diff1` is `00ffff0000000000000000000000000000000000000000000000000000000000`. Give the result to 6 decimal places.",
-      "answers": ["234384.776606", "234384.776607"]
+      "answers": [
+        "234384.776606",
+        "234384.776607"
+      ]
     },
     {
       "prompt": "In the `@bsv/sdk`, what is the specific interface name required by the `Transaction.verify()` method to validate Merkle roots?",
-      "answers": ["ChainTracker"]
+      "answers": [
+        "ChainTracker"
+      ]
     }
   ]
 }

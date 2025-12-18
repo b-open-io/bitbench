@@ -1,0 +1,46 @@
+{
+  "id": "bch-cashtokens",
+  "chain": "bch",
+  "name": "CashTokens",
+  "description": "Fungible tokens, NFTs, BCMR metadata, and token-aware contracts.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
+  "system_prompt": "You are a Bitcoin Cash developer expert in CashTokens. Answer technical questions about BCH token standards and metadata.",
+  "tests": [
+    {
+      "prompt": "What is the name of the native token protocol on Bitcoin Cash?",
+      "answers": [
+        "CashTokens"
+      ]
+    },
+    {
+      "prompt": "In CashTokens, what determines the token category?",
+      "answers": [
+        "genesis transaction",
+        "outpoint",
+        "txid:vout"
+      ]
+    },
+    {
+      "prompt": "What metadata standard is used for CashTokens?",
+      "answers": [
+        "BCMR",
+        "Bitcoin Cash Metadata Registries"
+      ]
+    },
+    {
+      "prompt": "In CashTokens, can a single UTXO hold both fungible tokens and an NFT?",
+      "answers": [
+        "yes",
+        "true"
+      ]
+    },
+    {
+      "prompt": "What is the name for NFT tokens that can have their commitment data modified?",
+      "answers": [
+        "mutable",
+        "mutable NFT"
+      ]
+    }
+  ]
+}

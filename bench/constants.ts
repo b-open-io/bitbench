@@ -7,12 +7,23 @@ export const STAGGER_DELAY_MS = 150;
 
 import { type LanguageModel } from "ai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
+import { type ReasoningEffort } from "openai/resources/shared";
+import modelCostsData from "./model-costs.json";
+
+// Load model costs from JSON file
+const modelCosts: Record<string, number> = modelCostsData.costs;
+
+// Helper to bypass outdated @openrouter/ai-sdk-provider types
+// OpenAI SDK correctly types effort as: 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
+const withEffort = (effort: ReasoningEffort) => ({ effort } as { effort: "low" });
 
 export type RunnableModel = {
   name: string;
   llm: LanguageModel;
   providerOptions?: any;
   reasoning?: boolean;
+  /** Average cost per test execution (updated from benchmark results) */
+  avgCostPerTest?: number;
 };
 
 // Include "usage" so we can log cost
@@ -191,9 +202,7 @@ export const modelsToRun: RunnableModel[] = [
     name: "gpt-5-minimal",
     llm: openrouter("openai/gpt-5", {
       ...defaultProviderOptions,
-      reasoning: {
-        effort: "minimal",
-      },
+      reasoning: withEffort("minimal"),
     }),
     reasoning: true,
   },
@@ -253,10 +262,16 @@ export const modelsToRun: RunnableModel[] = [
     name: "gpt-5.2-none",
     llm: openrouter("openai/gpt-5.2", {
       ...defaultProviderOptions,
-      reasoning: {
-        effort: "none",
-      },
+      reasoning: withEffort("none"),
     }),
+  },
+  {
+    name: "gpt-5.2-xhigh",
+    llm: openrouter("openai/gpt-5.2", {
+      ...defaultProviderOptions,
+      reasoning: withEffort("xhigh"),
+    }),
+    reasoning: true,
   },
   {
     name: "gpt-5.2-high",
@@ -264,16 +279,6 @@ export const modelsToRun: RunnableModel[] = [
       ...defaultProviderOptions,
       reasoning: {
         effort: "high",
-      },
-    }),
-    reasoning: true,
-  },
-  {
-    name: "gpt-5.2-xhigh",
-    llm: openrouter("openai/gpt-5.2", {
-      ...defaultProviderOptions,
-      reasoning: {
-        effort: "xhigh",
       },
     }),
     reasoning: true,
@@ -309,3 +314,34 @@ export const modelsToRun: RunnableModel[] = [
     reasoning: true,
   },
 ];
+
+// Apply costs from model-costs.json to each model
+for (const model of modelsToRun) {
+  model.avgCostPerTest = modelCosts[model.name] ?? 0.01; // Default to $0.01 if unknown
+}
+
+/**
+ * Estimate cost for running a benchmark with given models
+ * @param modelNames - Names of models to include
+ * @param numTests - Number of tests in the suite
+ * @param runsPerModel - Number of runs per model (default: TEST_RUNS_PER_MODEL)
+ */
+export function estimateBenchmarkCost(
+  modelNames: string[],
+  numTests: number,
+  runsPerModel: number = TEST_RUNS_PER_MODEL
+): number {
+  let totalCost = 0;
+  for (const name of modelNames) {
+    const cost = modelCosts[name] ?? 0.01;
+    totalCost += cost * numTests * runsPerModel;
+  }
+  return totalCost;
+}
+
+/**
+ * Get cost per test for a specific model
+ */
+export function getModelCostPerTest(modelName: string): number {
+  return modelCosts[modelName] ?? 0.01;
+}

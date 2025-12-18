@@ -1,37 +1,73 @@
 {
-  "name": "Bitcoin Protocol Parsing",
-  "description": "Tests the ability to identify and parse various Bitcoin data protocols (MAP, B, Run, AIP, Sigma, BAP) from raw hex and concept descriptions.",
+  "id": "bsv-protocols",
+  "chain": "bsv",
+  "name": "BSV Data Protocols",
+  "description": "Tests parsing of MAP, B, AIP, Sigma, BAP, and Run protocols from raw hex.",
   "version": "1.0.0",
+  "estimatedCostUsd": 35.100,
   "system_prompt": "You are a Bitcoin protocol analyst. You can read raw transaction hex and identify data protocols like MAP, B, AIP, Sigma, and Run. You understand the technical specifications of these protocols.",
   "tests": [
     {
       "prompt": "Analyze the following OP_RETURN script hex and identify the protocol and the value of the 'app' field:\n`6a223150755161374b36324d694b43747373534c4b79316b683536575755374d74555235035345540361707008746f6e6963706f7704747970650b6f666665725f636c69636b`",
-      "answers": ["MAP", "tonicpow", "Magic Attribute Protocol"],
-      "negative_answers": ["Run", "B"]
+      "answers": [
+        "MAP",
+        "tonicpow",
+        "Magic Attribute Protocol"
+      ],
+      "negative_answers": [
+        "Run",
+        "B"
+      ]
     },
     {
       "prompt": "Construct the raw hex for a 'B' protocol OP_RETURN output containing the text 'Hello world' with content-type 'text/plain' and encoding 'utf8'. The B protocol prefix is `19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut`. (Do not include the length byte for the OP_RETURN itself, just start with 6a...)",
-      "answers": ["6a2231394878696756345179427633744870515663554551797131707a5a56646f4175740b48656c6c6f20776f726c640a746578742f706c61696e0475746638"]
+      "answers": [
+        "6a2231394878696756345179427633744870515663554551797131707a5a56646f4175740b48656c6c6f20776f726c640a746578742f706c61696e0475746638"
+      ]
     },
     {
       "prompt": "Identify the protocol and the application name from this script snippet: `6a0372756e01050c63727970746f666967687473`",
-      "answers": ["Run", "cryptofights"],
-      "negative_answers": ["MAP", "B", "Ordinals"]
+      "answers": [
+        "run",
+        "cryptofights"
+      ],
+      "negative_answers": [
+        "MAP",
+        "B",
+        "Ordinals"
+      ]
     },
     {
       "prompt": "What is the 4-byte hex prefix for the Sigma protocol (signatures) in an OP_RETURN script?",
-      "answers": ["5349474d41", "SIGMA"],
-      "negative_answers": ["BAP", "AIP"]
+      "answers": [
+        "5349474d41",
+        "SIGMA"
+      ],
+      "negative_answers": [
+        "BAP",
+        "AIP"
+      ]
     },
     {
       "prompt": "In the AIP (Author Identity Protocol), what is the specific Bitcom prefix address used to identify the protocol?",
-      "answers": ["15PciHG22SNLQJXMoSUaWVi7WSqc7hCfva"],
-      "negative_answers": ["19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut"]
+      "answers": [
+        "15PciHG22SNLQJXMoSUaWVi7WSqc7hCfva"
+      ],
+      "negative_answers": [
+        "19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut"
+      ]
     },
     {
       "prompt": "What does BAP stand for in the context of Bitcoin data protocols, and what is its primary function?",
-      "answers": ["Bitcoin Attestation Protocol", "identity", "attestations"],
-      "negative_answers": ["Bitcoin Application Protocol", "Business"]
+      "answers": [
+        "Bitcoin Attestation Protocol",
+        "identity",
+        "attestations"
+      ],
+      "negative_answers": [
+        "Bitcoin Application Protocol",
+        "Business"
+      ]
     }
   ]
 }

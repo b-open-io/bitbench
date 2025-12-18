@@ -1,28 +1,44 @@
 {
-  "name": "BSV SDK & Go SDK",
-  "description": "Tests knowledge of @bsv/sdk and bsv-blockchain/go-sdk.",
+  "id": "bsv-sdk",
+  "chain": "bsv",
+  "name": "BSV SDK & Libraries",
+  "description": "Tests knowledge of @bsv/sdk, bsv-blockchain/go-sdk, transaction building, and SPV.",
   "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
   "system_prompt": "You are a Bitcoin SV developer expert in @bsv/sdk and the Go SDK. Provide technical answers about these specific libraries.",
   "tests": [
     {
       "prompt": "In `@bsv/sdk`, what class is used to verify Merkle proofs against a specific block height?",
-      "answers": ["ChainTracker"]
+      "answers": [
+        "ChainTracker"
+      ]
     },
     {
       "prompt": "In `bsv-blockchain/go-sdk`, which sub-package contains the `Lock` and `Unlock` functions for P2PKH scripts?",
-      "answers": ["p2pkh", "template/p2pkh"]
+      "answers": [
+        "p2pkh",
+        "template/p2pkh"
+      ]
     },
     {
       "prompt": "Using `@bsv/sdk`, what method on the `Transaction` class allows you to verify a transaction using a `ChainTracker`?",
-      "answers": ["verify", ".verify()"]
+      "answers": [
+        "verify",
+        ".verify()"
+      ]
     },
     {
       "prompt": "In `bsv-blockchain/go-sdk`, what function is used to parse a hex string into a `Transaction` object?",
-      "answers": ["NewTransactionFromHex", "transaction.NewTransactionFromHex"]
+      "answers": [
+        "NewTransactionFromHex",
+        "transaction.NewTransactionFromHex"
+      ]
     },
     {
       "prompt": "In `@bsv/sdk`, which class represents a private key and has a `fromWif` static method?",
-      "answers": ["PrivateKey"]
+      "answers": [
+        "PrivateKey"
+      ]
     }
   ]
 }

@@ -8,20 +8,8 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { readdir, readFile } from "fs/promises";
 
-// Suite funding configuration
-export const SUITE_CONFIG: Record<
-  string,
-  { estimatedCostUsd: number; modelCount: number }
-> = {
-  "bitcoin-protocols": { estimatedCostUsd: 2.5, modelCount: 44 },
-  "bitcoin-script": { estimatedCostUsd: 2.5, modelCount: 44 },
-  "bitcoin-libraries": { estimatedCostUsd: 2.5, modelCount: 44 },
-  "bitcoin-parsing": { estimatedCostUsd: 2.5, modelCount: 44 },
-  "protocol-parsing": { estimatedCostUsd: 2.5, modelCount: 44 },
-  scrypt: { estimatedCostUsd: 2.5, modelCount: 44 },
-  "stratum-puzzle": { estimatedCostUsd: 2.5, modelCount: 44 },
-  type42: { estimatedCostUsd: 2.5, modelCount: 44 },
-};
+// Model count constant
+const MODEL_COUNT = 44;
 
 // WhatsOnChain API for balance checking
 const WOC_API = "https://api.whatsonchain.com/v1/bsv/main";
@@ -110,7 +98,7 @@ function getSuiteIdFromFilename(filename: string): string {
  * Load all test suites from tests/ directory
  */
 export async function loadTestSuites(): Promise<
-  Array<{ id: string; name: string; testCount: number; filePath: string }>
+  Array<{ id: string; name: string; testCount: number; estimatedCostUsd: number; filePath: string }>
 > {
   const here = fileURLToPath(import.meta.url);
   const testsDir = join(dirname(here), "tests");
@@ -122,6 +110,7 @@ export async function loadTestSuites(): Promise<
     id: string;
     name: string;
     testCount: number;
+    estimatedCostUsd: number;
     filePath: string;
   }> = [];
 
@@ -135,6 +124,7 @@ export async function loadTestSuites(): Promise<
           id: getSuiteIdFromFilename(f.name),
           name: json.name,
           testCount: json.tests.length,
+          estimatedCostUsd: json.estimatedCostUsd ?? 29,
           filePath,
         });
       }
@@ -152,13 +142,9 @@ export async function loadTestSuites(): Promise<
 export async function getSuiteFundingStatus(
   suiteId: string,
   suiteName: string,
-  testCount: number
+  testCount: number,
+  estimatedCostUsd: number
 ): Promise<FundingStatus> {
-  const config = SUITE_CONFIG[suiteId] || {
-    estimatedCostUsd: 2.5,
-    modelCount: 44,
-  };
-
   let address: string;
   try {
     address = getDonationAddress(suiteId);
@@ -169,8 +155,8 @@ export async function getSuiteFundingStatus(
   const balanceSats =
     address.startsWith("(") ? 0 : await getAddressBalance(address);
   const balanceUsd = satsToUsd(balanceSats);
-  const goalSats = usdToSats(config.estimatedCostUsd);
-  const goalUsd = config.estimatedCostUsd;
+  const goalSats = usdToSats(estimatedCostUsd);
+  const goalUsd = estimatedCostUsd;
   const fundingProgress = goalSats > 0 ? Math.min(balanceSats / goalSats, 1) : 0;
 
   return {
@@ -196,7 +182,7 @@ export async function getAllFundingStatus(): Promise<FundingStatus[]> {
   // Fetch balances in parallel
   const statuses = await Promise.all(
     suites.map((suite) =>
-      getSuiteFundingStatus(suite.id, suite.name, suite.testCount)
+      getSuiteFundingStatus(suite.id, suite.name, suite.testCount, suite.estimatedCostUsd)
     )
   );
 

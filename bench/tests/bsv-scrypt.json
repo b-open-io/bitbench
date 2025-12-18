@@ -1,0 +1,70 @@
+{
+  "id": "bsv-scrypt",
+  "chain": "bsv",
+  "name": "sCrypt Smart Contracts",
+  "description": "Tests knowledge of sCrypt language, decorators, and Bitcoin SV smart contract patterns.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
+  "system_prompt": "You are an expert sCrypt developer. You understand the syntax, decorators, and standard library of the sCrypt language (TypeScript-based).",
+  "tests": [
+    {
+      "prompt": "In sCrypt, what decorator is used to mark a property as part of the contract's state, allowing it to be mutated across transactions?",
+      "answers": [
+        "@state"
+      ],
+      "negative_answers": [
+        "@prop",
+        "static",
+        "const"
+      ]
+    },
+    {
+      "prompt": "In the `MneeMinter` contract example, what function is used from the `Ordinal` library to create a BSV-20 transfer inscription JSON?",
+      "answers": [
+        "Ordinal.createInsciption",
+        "createInsciption"
+      ],
+      "negative_answers": [
+        "JSON.stringify",
+        "Utils.buildOutput"
+      ]
+    },
+    {
+      "prompt": "What does `SigHashType(b'c1')` represent in Bitcoin script signature hashing, often used in sCrypt contracts?",
+      "answers": [
+        "ANYONECANPAY | FORKID",
+        "ANYONECANPAY | SIGHASH_FORKID",
+        "0xc1",
+        "193"
+      ],
+      "negative_answers": [
+        "ALL",
+        "NONE",
+        "SINGLE"
+      ]
+    },
+    {
+      "prompt": "In sCrypt, which type represents the preimage of the current transaction, used to validate the spending context?",
+      "answers": [
+        "SigHashPreimage"
+      ],
+      "negative_answers": [
+        "OpCode",
+        "bytes",
+        "PubKey"
+      ]
+    },
+    {
+      "prompt": "What keyword is used in sCrypt to define a method that can be called from outside the contract (i.e., an entry point)?",
+      "answers": [
+        "public",
+        "public function"
+      ],
+      "negative_answers": [
+        "static function",
+        "function",
+        "entry"
+      ]
+    }
+  ]
+}

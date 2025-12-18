@@ -1,0 +1,49 @@
+{
+  "id": "eth-layer2",
+  "chain": "eth",
+  "name": "Layer 2 Scaling",
+  "description": "Optimism, Arbitrum, Base, rollup architecture, and cross-chain bridges.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 29.250,
+  "system_prompt": "You are an Ethereum L2 expert. Answer technical questions about rollups, bridges, and scaling solutions.",
+  "tests": [
+    {
+      "prompt": "What type of rollup is Optimism - optimistic or zk?",
+      "answers": [
+        "optimistic",
+        "optimistic rollup"
+      ]
+    },
+    {
+      "prompt": "In Arbitrum, what is the name of the dispute resolution mechanism?",
+      "answers": [
+        "fraud proof",
+        "interactive fraud proof",
+        "challenge"
+      ]
+    },
+    {
+      "prompt": "What L1 chain does Base use for settlement?",
+      "answers": [
+        "Ethereum",
+        "ETH mainnet"
+      ]
+    },
+    {
+      "prompt": "In optimistic rollups, how long is the typical challenge period?",
+      "answers": [
+        "7 days",
+        "1 week",
+        "7"
+      ]
+    },
+    {
+      "prompt": "What is the name of the bridge contract pattern where users lock assets on L1?",
+      "answers": [
+        "lock and mint",
+        "canonical bridge",
+        "gateway"
+      ]
+    }
+  ]
+}
