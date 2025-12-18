@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/theme-provider";
-import { WalletProvider } from "@/components/wallet-provider";
+import { WalletProviderClient } from "@/components/wallet-provider-client";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -63,7 +63,7 @@ html {
           enableSystem
           disableTransitionOnChange
         >
-          <WalletProvider>{children}</WalletProvider>
+          <WalletProviderClient>{children}</WalletProviderClient>
         </ThemeProvider>
       </body>
     </html>

@@ -90,7 +90,7 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
 
     // Cleanup listeners on unmount
     return () => {
-      if (typeof wallet.removeListener === "function") {
+      if (typeof wallet?.removeListener === "function") {
         wallet.removeListener("signedOut", handleSignedOut);
         wallet.removeListener("switchAccount", handleSwitchAccount);
       }
