@@ -388,7 +388,7 @@ export default function ResultsPage() {
           {/* RIGHT: Chart + Recent Suites */}
           <div className="lg:col-span-4 flex flex-col gap-4">
             {/* Bar Chart */}
-            <Card className="flex-1">
+            <Card>
               <CardHeader className="py-3 px-4 border-b">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
@@ -396,8 +396,8 @@ export default function ResultsPage() {
                 </div>
                 <CardDescription className="text-xs">Accuracy comparison</CardDescription>
               </CardHeader>
-              <CardContent className="p-2 h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
+              <CardContent className="p-2">
+                <ResponsiveContainer width="100%" height={260}>
                   <BarChart
                     data={chartData}
                     layout="vertical"
