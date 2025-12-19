@@ -20,6 +20,7 @@ import {
   Loader2,
   Trophy,
   ArrowRight,
+  Play,
 } from "lucide-react";
 
 interface DonationCardProps {
@@ -129,7 +130,10 @@ export function DonationCard({
           ) : isFullyFunded ? (
             "Add More Funding"
           ) : (
-            "Fund This Benchmark"
+            <>
+              <Play className="mr-1.5 h-4 w-4" />
+              Run Benchmark
+            </>
           )}
         </Button>
 

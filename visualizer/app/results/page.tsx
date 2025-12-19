@@ -202,10 +202,14 @@ export default function ResultsPage() {
     );
   };
 
+  // Show header while loading - don't block entire page
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="relative min-h-screen bg-background text-foreground">
+        <SiteHeader modelCount={44} />
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
       </div>
     );
   }
@@ -296,9 +300,9 @@ export default function ResultsPage() {
               config={{
                 averageScore: { label: "Accuracy", color: "var(--chart-1)" },
               }}
-              className="h-[180px] w-full"
+              className="h-[140px] w-full"
             >
-              <ScatterChart margin={{ top: 10, right: 20, bottom: 30, left: 40 }}>
+              <ScatterChart margin={{ top: 5, right: 10, bottom: 20, left: 35 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis
                   type="number"
