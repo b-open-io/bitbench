@@ -1,11 +1,12 @@
 "use client";
 
-import type { ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { WalletConnect } from "@/components/wallet-connect";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { GitHubStars } from "@/components/github-stars";
+import { getWidthVariant, WIDTH_CONFIG } from "@/lib/layout-config";
 
 // Logo matching favicon.svg
 const LogoIcon = ({ className }: { className?: string }) => (
@@ -20,9 +21,13 @@ interface SiteHeaderProps {
 }
 
 export function SiteHeader({ modelCount }: SiteHeaderProps) {
+  const pathname = usePathname();
+  const widthVariant = getWidthVariant(pathname);
+  const widthClass = WIDTH_CONFIG[widthVariant];
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+      <div className={`mx-auto flex h-16 items-center justify-between px-4 transition-[max-width] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ${widthClass}`}>
         <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <LogoIcon className="h-10 w-10" />
           <div className="flex flex-col">
@@ -36,8 +41,18 @@ export function SiteHeader({ modelCount }: SiteHeaderProps) {
         </Link>
         <div className="flex items-center gap-2">
           <Link
+            href="/results"
+            className={`hidden sm:inline-flex rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-accent hover:text-foreground ${
+              pathname === "/results" ? "text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            Results
+          </Link>
+          <Link
             href="/about"
-            className="hidden sm:inline-flex rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className={`hidden sm:inline-flex rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-accent hover:text-foreground ${
+              pathname === "/about" ? "text-foreground" : "text-muted-foreground"
+            }`}
           >
             About
           </Link>

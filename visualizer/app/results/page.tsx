@@ -39,6 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { SiteHeader } from "@/components/site-header";
+import { PageContainer } from "@/components/page-container";
 import { ChainBadge } from "@/components/chain-badge";
 
 interface SuiteRunSummary {
@@ -242,7 +243,8 @@ export default function ResultsPage() {
     <div className="relative min-h-screen bg-background text-foreground">
       <SiteHeader modelCount={44} />
 
-      <main className="mx-auto max-w-7xl px-4 py-4">
+      {/* Full-width section: Header + Chart */}
+      <PageContainer forceWidth="full" className="py-4">
         {/* Compact Header with Stats */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div className="flex items-center gap-4">
@@ -275,7 +277,80 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Main Dashboard Grid */}
+        {/* Full-width Cost vs Accuracy Scatter Plot */}
+        <Card className="mb-4">
+          <CardHeader className="py-3 px-4 border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <CardTitle className="text-base">Cost vs Accuracy</CardTitle>
+                <CardDescription className="text-xs ml-2">Top-left = best value (high accuracy, low cost)</CardDescription>
+              </div>
+              <Badge variant="outline" className="text-xs font-normal">
+                {scatterData.length} models
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4">
+            <ChartContainer
+              config={{
+                averageScore: { label: "Accuracy", color: "var(--chart-1)" },
+              }}
+              className="h-[300px] w-full"
+            >
+              <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 50 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis
+                  type="number"
+                  dataKey="totalCost"
+                  name="Cost"
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(v) => `$${v.toFixed(2)}`}
+                  className="stroke-muted-foreground"
+                  label={{ value: "Cost ($)", position: "bottom", offset: -10, fontSize: 12, className: "fill-muted-foreground" }}
+                />
+                <YAxis
+                  type="number"
+                  dataKey="averageScore"
+                  name="Accuracy"
+                  domain={[0, 100]}
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(v) => `${v}%`}
+                  className="stroke-muted-foreground"
+                  width={45}
+                  label={{ value: "Accuracy (%)", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, className: "fill-muted-foreground" }}
+                />
+                <ChartTooltip
+                  cursor={{ strokeDasharray: "3 3" }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const d = payload[0].payload;
+                    return (
+                      <div className="rounded-lg border bg-popover p-2 shadow-md text-popover-foreground text-xs">
+                        <p className="font-medium">{d.model}</p>
+                        <p className="text-muted-foreground">
+                          Accuracy: <span className="font-mono text-foreground">{d.averageScore.toFixed(1)}%</span>
+                        </p>
+                        <p className="text-muted-foreground">
+                          Cost: <span className="font-mono text-foreground">${d.totalCost.toFixed(4)}</span>
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
+                <Scatter data={scatterData}>
+                  {scatterData.map((entry) => (
+                    <Cell key={entry.model} fill={entry.color} />
+                  ))}
+                </Scatter>
+              </ScatterChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </PageContainer>
+
+      {/* Centered section: Leaderboard + Completed Suites */}
+      <PageContainer forceWidth="default" className="pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* LEFT: Leaderboard Table */}
           <Card className="lg:col-span-8 flex flex-col overflow-hidden">
@@ -374,114 +449,46 @@ export default function ResultsPage() {
             </ScrollArea>
           </Card>
 
-          {/* RIGHT: Chart + Recent Suites */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            {/* Cost vs Accuracy Scatter Plot */}
-            <Card>
-              <CardHeader className="py-3 px-4 border-b">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-sm">Cost vs Accuracy</CardTitle>
-                </div>
-                <CardDescription className="text-xs">Top-left = best value</CardDescription>
-              </CardHeader>
-              <CardContent className="p-2">
-                <ChartContainer
-                  config={{
-                    averageScore: { label: "Accuracy", color: "var(--chart-1)" },
-                  }}
-                  className="h-[260px] w-full"
-                >
-                  <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis
-                      type="number"
-                      dataKey="totalCost"
-                      name="Cost"
-                      tick={{ fontSize: 9 }}
-                      tickFormatter={(v) => `$${v.toFixed(2)}`}
-                      className="stroke-muted-foreground"
-                      label={{ value: "Cost ($)", position: "bottom", fontSize: 10, className: "fill-muted-foreground" }}
-                    />
-                    <YAxis
-                      type="number"
-                      dataKey="averageScore"
-                      name="Accuracy"
-                      domain={[0, 100]}
-                      tick={{ fontSize: 9 }}
-                      tickFormatter={(v) => `${v}%`}
-                      className="stroke-muted-foreground"
-                      width={35}
-                    />
-                    <ChartTooltip
-                      cursor={{ strokeDasharray: "3 3" }}
-                      content={({ active, payload }) => {
-                        if (!active || !payload?.length) return null;
-                        const d = payload[0].payload;
-                        return (
-                          <div className="rounded-lg border bg-popover p-2 shadow-md text-popover-foreground text-xs">
-                            <p className="font-medium">{d.model}</p>
-                            <p className="text-muted-foreground">
-                              Accuracy: <span className="font-mono text-foreground">{d.averageScore.toFixed(1)}%</span>
-                            </p>
-                            <p className="text-muted-foreground">
-                              Cost: <span className="font-mono text-foreground">${d.totalCost.toFixed(4)}</span>
-                            </p>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Scatter data={scatterData}>
-                      {scatterData.map((entry) => (
-                        <Cell key={entry.model} fill={entry.color} />
-                      ))}
-                    </Scatter>
-                  </ScatterChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-
-            {/* Recent Suites */}
-            <Card>
-              <CardHeader className="py-3 px-4 border-b bg-muted/30">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <CardTitle className="text-sm">Completed Suites</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-border">
-                  {resultsData.suiteRuns.map((run) => (
-                    <Link
-                      key={run.suiteId}
-                      href={`/suite/${run.suiteId}`}
-                      className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm truncate">{run.suiteName}</span>
-                          <ChainBadge chain={run.chain} size="sm" />
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {run.topPerformer && (
-                            <span>
-                              Top: {run.topPerformer.model} ({run.topPerformer.score.toFixed(0)}%)
-                            </span>
-                          )}
-                        </div>
+          {/* RIGHT: Completed Suites */}
+          <Card className="lg:col-span-4">
+            <CardHeader className="py-3 px-4 border-b bg-muted/30">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm">Completed Suites</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border">
+                {resultsData.suiteRuns.map((run) => (
+                  <Link
+                    key={run.suiteId}
+                    href={`/suite/${run.suiteId}`}
+                    className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm truncate">{run.suiteName}</span>
+                        <ChainBadge chain={run.chain} size="sm" />
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <span className="text-xs">{formatRelativeTime(run.timestamp)}</span>
-                        <ArrowRight className="h-4 w-4" />
+                      <div className="text-xs text-muted-foreground">
+                        {run.topPerformer && (
+                          <span>
+                            Top: {run.topPerformer.model} ({run.topPerformer.score.toFixed(0)}%)
+                          </span>
+                        )}
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="text-xs">{formatRelativeTime(run.timestamp)}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </main>
+      </PageContainer>
     </div>
   );
 }
