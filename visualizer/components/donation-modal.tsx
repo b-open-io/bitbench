@@ -97,8 +97,13 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
     onClose();
   };
 
-  const setQuickAmount = (usd: number) => {
-    setAmountUsd(usd.toString());
+  const addAmount = (usd: number) => {
+    const current = Number.parseFloat(amountUsd) || 0;
+    setAmountUsd((current + usd).toFixed(2));
+  };
+
+  const resetAmount = () => {
+    setAmountUsd("");
   };
 
   if (!suite) return null;
@@ -192,29 +197,58 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
                 )}
               </div>
 
-              {/* Quick amounts */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuickAmount(0.5)}
-                >
-                  $0.50
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuickAmount(1)}
-                >
-                  $1
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuickAmount(remainingUsd)}
-                >
-                  ${remainingUsd.toFixed(2)}
-                </Button>
+              {/* Quick amounts - tap to increment */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Tap to add</Label>
+                  {amountUsd && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={resetAmount}
+                    >
+                      Reset
+                    </Button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addAmount(0.5)}
+                  >
+                    +$0.50
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addAmount(1)}
+                  >
+                    +$1
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addAmount(5)}
+                  >
+                    +$5
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addAmount(10)}
+                  >
+                    +$10
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => addAmount(remainingUsd)}
+                  >
+                    +${remainingUsd.toFixed(2)} (full)
+                  </Button>
+                </div>
               </div>
 
               {/* Address display */}
