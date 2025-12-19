@@ -332,7 +332,7 @@ export default function ResultsPage() {
             </div>
           </CardHeader>
           <CardContent className="px-2 sm:p-6">
-            <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+            <ChartContainer config={chartConfig} className="!aspect-auto h-[200px] w-full">
               <BarChart
                 accessibilityLayer
                 data={barChartData}
@@ -346,7 +346,14 @@ export default function ResultsPage() {
                   tickMargin={8}
                   minTickGap={32}
                 />
-                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      className="w-[180px]"
+                      labelKey="model"
+                    />
+                  }
+                />
                 <ChartLegend content={<ChartLegendContent />} />
                 <Bar
                   dataKey="standard"
