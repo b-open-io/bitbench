@@ -8,6 +8,7 @@ import { SuiteSwitcher } from "@/components/suite-switcher";
 import { BenchmarkCharts } from "@/components/benchmark-charts";
 import { QuestionBreakdownCard } from "@/components/question-breakdown";
 import { SiteHeader } from "@/components/site-header";
+import { PageContainer } from "@/components/page-container";
 import { getSuiteWithBalance, getAllSuites } from "@/lib/suites";
 import { getLatestRun } from "@/lib/kv";
 import type { ModelResult, BenchmarkRun } from "@/lib/types";
@@ -91,7 +92,8 @@ export default async function SuiteResultsPage({ params }: PageProps) {
     <div className="min-h-screen bg-background">
       <SiteHeader modelCount={44} />
 
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      {/* Full-width section: Header + Charts */}
+      <PageContainer forceWidth="full" className="py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -133,12 +135,9 @@ export default async function SuiteResultsPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Results */}
+        {/* Charts - Full Width */}
         {hasResults ? (
-          <div className="space-y-8">
-            <BenchmarkCharts rankings={transformRankings(latestRun.rankings)} />
-            <QuestionBreakdownCard suiteId={id} />
-          </div>
+          <BenchmarkCharts rankings={transformRankings(latestRun.rankings)} />
         ) : (
           <div className="rounded-lg border border-border bg-muted/30 p-12 text-center">
             <h2 className="text-xl font-semibold mb-2">No Results Yet</h2>
@@ -150,7 +149,14 @@ export default async function SuiteResultsPage({ params }: PageProps) {
             </Button>
           </div>
         )}
-      </main>
+      </PageContainer>
+
+      {/* Centered section: Question Breakdown */}
+      {hasResults && (
+        <PageContainer forceWidth="default" className="pb-8">
+          <QuestionBreakdownCard suiteId={id} />
+        </PageContainer>
+      )}
     </div>
   );
 }
