@@ -331,8 +331,8 @@ export default function ResultsPage() {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="px-2 sm:p-6 h-[320px]">
-              <ChartContainer config={chartConfig} className="h-full w-full">
+          <CardContent className="px-2 sm:p-6 h-[320px] overflow-hidden">
+              <ChartContainer config={chartConfig} className="!h-full w-full ![aspect-ratio:auto]">
               <BarChart
                 accessibilityLayer
                 data={barChartData}
