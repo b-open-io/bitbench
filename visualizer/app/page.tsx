@@ -15,6 +15,7 @@ import { SiteHeader } from "@/components/site-header";
 import { FundingStats } from "@/components/funding-stats";
 import { SuiteGrid } from "@/components/suite-grid";
 import { DonationModal } from "@/components/donation-modal";
+import { SponsorSection } from "@/components/sponsor-section";
 import type { SuiteWithBalance, Chain } from "@/lib/types";
 import { CHAIN_INFO } from "@/lib/types";
 
@@ -211,6 +212,9 @@ function BenchmarkVisualizerContent() {
           />
         </div>
       </main>
+
+      {/* Sponsor Section */}
+      <SponsorSection />
 
       {/* Donation Modal */}
       <DonationModal
