@@ -13,7 +13,8 @@ import {
   ChevronUp,
   Search,
 } from "lucide-react";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Cell } from "recharts";
+import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import type { ChartConfig } from "@/components/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
@@ -172,26 +173,24 @@ export default function ResultsPage() {
     }
   };
 
-  // Scatter plot data - all models with cost > 0
-  const chartColors = [
-    "var(--chart-1)",
-    "var(--chart-2)",
-    "var(--chart-3)",
-    "var(--chart-4)",
-    "var(--chart-5)",
-  ];
-
-  const scatterData = useMemo(() => {
+  // Bar chart data - top models sorted by score
+  const barChartData = useMemo(() => {
     if (!resultsData) return [];
-    return resultsData.globalLeaderboard
-      .filter((m) => m.totalCost > 0)
-      .map((m, index) => ({
-        model: m.model,
-        averageScore: m.averageScore,
-        totalCost: m.totalCost,
-        color: chartColors[index % chartColors.length],
+    return [...resultsData.globalLeaderboard]
+      .sort((a, b) => a.averageScore - b.averageScore)
+      .slice(-15) // Top 15 models
+      .map((m) => ({
+        model: m.model.length > 20 ? m.model.slice(0, 18) + "…" : m.model,
+        score: m.averageScore,
       }));
   }, [resultsData]);
+
+  const chartConfig = {
+    score: {
+      label: "Accuracy",
+      color: "var(--chart-1)",
+    },
+  } satisfies ChartConfig;
 
   const SortIcon = ({ column }: { column: SortKey }) => {
     if (sortKey !== column) return null;
@@ -281,71 +280,52 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Full-width Cost vs Accuracy Scatter Plot */}
+        {/* Model Accuracy Bar Chart */}
         <Card className="mb-4">
           <CardHeader className="py-3 px-4 border-b">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-primary" />
-                <CardTitle className="text-base">Cost vs Accuracy</CardTitle>
-                <CardDescription className="text-xs ml-2">Top-left = best value (high accuracy, low cost)</CardDescription>
+                <CardTitle className="text-base">Model Accuracy</CardTitle>
               </div>
               <Badge variant="outline" className="text-xs font-normal">
-                {scatterData.length} models
+                Top {barChartData.length} models
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-2 h-[300px]">
-            <ChartContainer
-              config={{
-                averageScore: { label: "Accuracy", color: "var(--chart-1)" },
-              }}
-              className="w-full"
-            >
-              <ScatterChart margin={{ top: 5, right: 10, bottom: 20, left: 35 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+          <CardContent className="p-4 h-[400px]">
+            <ChartContainer config={chartConfig} className="h-full w-full">
+              <BarChart
+                accessibilityLayer
+                data={barChartData}
+                layout="vertical"
+                margin={{ left: 0, right: 20 }}
+              >
+                <YAxis
+                  dataKey="model"
+                  type="category"
+                  tickLine={false}
+                  axisLine={false}
+                  width={140}
+                  tick={{ fontSize: 11 }}
+                />
                 <XAxis
                   type="number"
-                  dataKey="totalCost"
-                  name="Cost"
-                  tick={{ fontSize: 10 }}
-                  tickFormatter={(v) => `$${v.toFixed(2)}`}
-                  className="stroke-muted-foreground"
-                />
-                <YAxis
-                  type="number"
-                  dataKey="averageScore"
-                  name="Accuracy"
                   domain={[0, 100]}
-                  tick={{ fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={false}
                   tickFormatter={(v) => `${v}%`}
-                  className="stroke-muted-foreground"
-                  width={35}
                 />
                 <ChartTooltip
-                  cursor={{ strokeDasharray: "3 3" }}
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    const d = payload[0].payload;
-                    return (
-                      <div className="rounded-lg border bg-popover p-2 shadow-md text-popover-foreground text-xs">
-                        <p className="font-medium">{d.model}</p>
-                        <p className="text-muted-foreground">
-                          Accuracy: <span className="font-mono text-foreground">{d.averageScore.toFixed(1)}%</span>
-                        </p>
-                        <p className="text-muted-foreground">
-                          Cost: <span className="font-mono text-foreground">${d.totalCost.toFixed(4)}</span>
-                        </p>
-                      </div>
-                    );
-                  }}
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="line" />}
                 />
-                <Scatter data={scatterData}>
-                  {scatterData.map((entry) => (
-                    <Cell key={entry.model} fill={entry.color} />
-                  ))}
-                </Scatter>
-              </ScatterChart>
+                <Bar
+                  dataKey="score"
+                  fill="var(--color-score)"
+                  radius={4}
+                />
+              </BarChart>
             </ChartContainer>
           </CardContent>
         </Card>
