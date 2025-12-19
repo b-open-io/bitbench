@@ -1,6 +1,8 @@
 export const WIDTH_CONFIG = {
-  results: "max-w-full",
-  suite: "max-w-full",
+  // Use rem values for both so CSS can interpolate the transition
+  // max-w-7xl = 80rem (1280px), max-w-[96rem] = 1536px
+  results: "max-w-[96rem]",
+  suite: "max-w-[96rem]",
   default: "max-w-7xl",
 } as const;
 
