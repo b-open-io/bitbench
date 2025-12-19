@@ -13,7 +13,7 @@ import {
   ChevronUp,
   Search,
 } from "lucide-react";
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import type { ChartConfig } from "@/components/ui/chart";
 import {
   ChartContainer,
@@ -175,58 +175,48 @@ export default function ResultsPage() {
     }
   };
 
-  // Group models by vendor/family, separate thinking vs standard
+  // Pair models with their thinking counterparts for stacked chart
   const barChartData = useMemo(() => {
     if (!resultsData) return [];
 
-    // Map model names to vendor groups
-    const getVendorGroup = (model: string): { vendor: string; isThinking: boolean } => {
-      const lower = model.toLowerCase();
-      const isThinking = lower.includes("thinking") || lower.includes("reasoner") ||
-                         lower.startsWith("o1") || lower.startsWith("o3");
-
-      if (lower.includes("claude")) return { vendor: "Claude", isThinking };
-      if (lower.includes("gpt") || lower.startsWith("o1") || lower.startsWith("o3")) return { vendor: "OpenAI", isThinking };
-      if (lower.includes("gemini")) return { vendor: "Gemini", isThinking };
-      if (lower.includes("deepseek")) return { vendor: "DeepSeek", isThinking };
-      if (lower.includes("grok")) return { vendor: "Grok", isThinking };
-      if (lower.includes("llama")) return { vendor: "Llama", isThinking };
-      if (lower.includes("mistral") || lower.includes("codestral")) return { vendor: "Mistral", isThinking };
-      if (lower.includes("qwen")) return { vendor: "Qwen", isThinking };
-      if (lower.includes("command")) return { vendor: "Cohere", isThinking };
-      if (lower.includes("nova")) return { vendor: "Amazon", isThinking };
-      return { vendor: model.split("-")[0] || model, isThinking };
+    // Get base model name (strip thinking suffixes)
+    const getBaseName = (model: string): string => {
+      return model
+        .replace(/-thinking-high$/, "")
+        .replace(/-thinking$/, "")
+        .replace(/-non-thinking$/, "");
     };
 
-    // Group scores by vendor
-    const vendorMap = new Map<string, { standard: number[]; thinking: number[] }>();
+    // Check if model is a thinking variant
+    const isThinking = (model: string): boolean => {
+      const lower = model.toLowerCase();
+      return lower.includes("-thinking") || lower.startsWith("o3") || lower.startsWith("o4");
+    };
+
+    // Group by base name
+    const groups = new Map<string, { standard: number; thinking: number }>();
 
     for (const m of resultsData.globalLeaderboard) {
-      const { vendor, isThinking } = getVendorGroup(m.model);
-      if (!vendorMap.has(vendor)) {
-        vendorMap.set(vendor, { standard: [], thinking: [] });
+      const base = getBaseName(m.model);
+      if (!groups.has(base)) {
+        groups.set(base, { standard: 0, thinking: 0 });
       }
-      const group = vendorMap.get(vendor)!;
-      if (isThinking) {
-        group.thinking.push(m.averageScore);
+      const group = groups.get(base)!;
+      if (isThinking(m.model)) {
+        group.thinking = m.averageScore;
       } else {
-        group.standard.push(m.averageScore);
+        group.standard = m.averageScore;
       }
     }
 
-    // Average scores per vendor and sort by best score
-    const data = Array.from(vendorMap.entries()).map(([vendor, scores]) => ({
-      vendor,
-      standard: scores.standard.length > 0
-        ? Math.round(scores.standard.reduce((a, b) => a + b, 0) / scores.standard.length * 10) / 10
-        : 0,
-      thinking: scores.thinking.length > 0
-        ? Math.round(scores.thinking.reduce((a, b) => a + b, 0) / scores.thinking.length * 10) / 10
-        : 0,
-    }));
-
-    // Sort by best score (max of standard or thinking)
-    return data.sort((a, b) => Math.max(b.standard, b.thinking) - Math.max(a.standard, a.thinking));
+    // Convert to array and sort by total score (standard + thinking)
+    return Array.from(groups.entries())
+      .map(([model, scores]) => ({
+        model,
+        standard: scores.standard,
+        thinking: scores.thinking,
+      }))
+      .sort((a, b) => (b.standard + b.thinking) - (a.standard + a.thinking));
   }, [resultsData]);
 
   const chartConfig = {
@@ -337,37 +327,36 @@ export default function ResultsPage() {
                 <CardTitle className="text-base">Model Accuracy</CardTitle>
               </div>
               <Badge variant="outline" className="text-xs font-normal">
-                {barChartData.length} vendors
+                {barChartData.length} models
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-4 h-[350px]">
+          <CardContent className="p-4 h-[300px]">
             <ChartContainer config={chartConfig} className="h-full w-full">
               <BarChart accessibilityLayer data={barChartData}>
+                <CartesianGrid vertical={false} />
                 <XAxis
-                  dataKey="vendor"
+                  dataKey="model"
                   tickLine={false}
                   tickMargin={10}
                   axisLine={false}
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                  interval={0}
+                  tick={{ fontSize: 9 }}
                 />
-                <YAxis
-                  domain={[0, 100]}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v) => `${v}%`}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="line" />}
-                />
+                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
                 <ChartLegend content={<ChartLegendContent />} />
                 <Bar
                   dataKey="standard"
+                  stackId="a"
                   fill="var(--color-standard)"
                   radius={[0, 0, 4, 4]}
                 />
                 <Bar
                   dataKey="thinking"
+                  stackId="a"
                   fill="var(--color-thinking)"
                   radius={[4, 4, 0, 0]}
                 />
