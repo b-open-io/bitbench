@@ -180,6 +180,14 @@ export async function getSuiteWithBalance(
 }
 
 /**
+ * Get full suite file by ID (includes tests array)
+ */
+export async function getSuiteFile(id: string): Promise<TestSuiteFile | null> {
+  const files = await loadSuiteFiles();
+  return files.find((f) => f.id === id) || null;
+}
+
+/**
  * Get all suites with balance information
  */
 export async function getAllSuitesWithBalance(): Promise<SuiteWithBalance[]> {

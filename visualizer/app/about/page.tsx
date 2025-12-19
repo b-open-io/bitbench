@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { SuiteListModal } from "@/components/suite-list-modal";
 import { getAllSuites } from "@/lib/suites";
 import { Github, GitPullRequest, Coins, Zap, FileJson } from "lucide-react";
 
@@ -152,24 +153,7 @@ export default async function AboutPage() {
           <h2 className="text-xl font-semibold mb-4">
             Current Test Suites ({suites.length})
           </h2>
-          <div className="grid gap-2">
-            {suites.map((suite) => (
-              <div
-                key={suite.id}
-                className="flex items-center justify-between rounded-lg border border-border p-3"
-              >
-                <div>
-                  <span className="font-medium">{suite.name}</span>
-                  <span className="ml-2 text-xs text-muted-foreground uppercase">
-                    {suite.chain}
-                  </span>
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  {suite.testCount} tests
-                </span>
-              </div>
-            ))}
-          </div>
+          <SuiteListModal suites={suites} />
         </section>
 
         {/* Get Involved */}

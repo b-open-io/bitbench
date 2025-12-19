@@ -23,7 +23,7 @@ export function SiteHeader({ modelCount }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <LogoIcon className="h-10 w-10" />
           <div className="flex flex-col">
             <h1 className="text-lg font-bold tracking-tight">
@@ -33,7 +33,7 @@ export function SiteHeader({ modelCount }: SiteHeaderProps) {
               Bitcoin AI Benchmark
             </span>
           </div>
-        </div>
+        </Link>
         <div className="flex items-center gap-2">
           <Link
             href="/about"
