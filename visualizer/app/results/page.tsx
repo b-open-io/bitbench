@@ -300,7 +300,7 @@ export default function ResultsPage() {
               config={{
                 averageScore: { label: "Accuracy", color: "var(--chart-1)" },
               }}
-              className="!aspect-auto h-[200px] w-full"
+              className="min-h-[200px] w-full"
             >
               <ScatterChart margin={{ top: 5, right: 10, bottom: 20, left: 35 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
