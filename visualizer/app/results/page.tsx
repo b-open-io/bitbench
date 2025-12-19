@@ -331,20 +331,20 @@ export default function ResultsPage() {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-4 h-[300px]">
-            <ChartContainer config={chartConfig} className="h-full w-full">
-              <BarChart accessibilityLayer data={barChartData}>
+          <CardContent className="px-2 sm:p-6">
+            <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+              <BarChart
+                accessibilityLayer
+                data={barChartData}
+                margin={{ left: 12, right: 12 }}
+              >
                 <CartesianGrid vertical={false} />
                 <XAxis
                   dataKey="model"
                   tickLine={false}
-                  tickMargin={10}
                   axisLine={false}
-                  angle={-45}
-                  textAnchor="end"
-                  height={100}
-                  interval={0}
-                  tick={{ fontSize: 9 }}
+                  tickMargin={8}
+                  minTickGap={32}
                 />
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
                 <ChartLegend content={<ChartLegendContent />} />
