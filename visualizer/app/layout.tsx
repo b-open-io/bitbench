@@ -1,33 +1,36 @@
 import type { Metadata } from "next";
+import type { WebApplication, WithContext } from "schema-dts";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/theme-provider";
 import { WalletProviderClient } from "@/components/wallet-provider-client";
+import { JsonLd } from "@/components/json-ld";
 import "./globals.css";
 
-const jsonLd = {
+const jsonLd: WithContext<WebApplication> = {
   "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Organization",
-      "@id": "https://bitbench.org/#organization",
-      name: "Bitbench",
-      url: "https://bitbench.org",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://bitbench.org/favicon.svg",
-      },
-      sameAs: ["https://github.com/b-open-io/bitbench"],
+  "@type": "WebApplication",
+  name: "Bitbench",
+  url: "https://bitbench.org",
+  description:
+    "A donation-funded benchmark platform for comparing 40+ AI models on blockchain development tasks, libraries, and protocols.",
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "Web",
+  provider: {
+    "@type": "Organization",
+    name: "Bitbench",
+    url: "https://bitbench.org",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://bitbench.org/favicon.svg",
     },
-    {
-      "@type": "WebSite",
-      "@id": "https://bitbench.org/#website",
-      url: "https://bitbench.org",
-      name: "Bitbench",
-      description:
-        "A donation-funded benchmark platform for comparing AI models on blockchain development tasks.",
-      publisher: { "@id": "https://bitbench.org/#organization" },
-    },
+    sameAs: ["https://github.com/b-open-io/bitbench"],
+  },
+  featureList: [
+    "AI model benchmarking for blockchain tasks",
+    "BSV donation-funded test runs",
+    "40+ model comparison",
+    "Open source results",
   ],
 };
 
@@ -81,10 +84,7 @@ html {
   --font-mono: ${GeistMono.variable};
 }
         `}</style>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        <JsonLd data={jsonLd} />
       </head>
       <body>
         <ThemeProvider
