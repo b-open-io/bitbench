@@ -172,6 +172,14 @@ export default function ResultsPage() {
   };
 
   // Scatter plot data - all models with cost > 0
+  const chartColors = [
+    "var(--chart-1)",
+    "var(--chart-2)",
+    "var(--chart-3)",
+    "var(--chart-4)",
+    "var(--chart-5)",
+  ];
+
   const scatterData = useMemo(() => {
     if (!resultsData) return [];
     return resultsData.globalLeaderboard
@@ -180,7 +188,7 @@ export default function ResultsPage() {
         model: m.model,
         averageScore: m.averageScore,
         totalCost: m.totalCost,
-        isTop: index < 3,
+        color: chartColors[index % chartColors.length],
       }));
   }, [resultsData]);
 
@@ -423,12 +431,9 @@ export default function ResultsPage() {
                         );
                       }}
                     />
-                    <Scatter data={scatterData} fill="var(--color-averageScore)">
-                      {scatterData.map((entry, index) => (
-                        <Cell
-                          key={entry.model}
-                          fill={entry.isTop ? "var(--chart-4)" : "var(--chart-1)"}
-                        />
+                    <Scatter data={scatterData}>
+                      {scatterData.map((entry) => (
+                        <Cell key={entry.model} fill={entry.color} />
                       ))}
                     </Scatter>
                   </ScatterChart>
