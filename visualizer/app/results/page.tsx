@@ -19,6 +19,8 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
 } from "@/components/ui/chart";
 import {
   Card,
@@ -173,22 +175,68 @@ export default function ResultsPage() {
     }
   };
 
-  // Bar chart data - top models sorted by score
+  // Group models by vendor/family, separate thinking vs standard
   const barChartData = useMemo(() => {
     if (!resultsData) return [];
-    return [...resultsData.globalLeaderboard]
-      .sort((a, b) => a.averageScore - b.averageScore)
-      .slice(-15) // Top 15 models
-      .map((m) => ({
-        model: m.model.length > 20 ? m.model.slice(0, 18) + "…" : m.model,
-        score: m.averageScore,
-      }));
+
+    // Map model names to vendor groups
+    const getVendorGroup = (model: string): { vendor: string; isThinking: boolean } => {
+      const lower = model.toLowerCase();
+      const isThinking = lower.includes("thinking") || lower.includes("reasoner") ||
+                         lower.startsWith("o1") || lower.startsWith("o3");
+
+      if (lower.includes("claude")) return { vendor: "Claude", isThinking };
+      if (lower.includes("gpt") || lower.startsWith("o1") || lower.startsWith("o3")) return { vendor: "OpenAI", isThinking };
+      if (lower.includes("gemini")) return { vendor: "Gemini", isThinking };
+      if (lower.includes("deepseek")) return { vendor: "DeepSeek", isThinking };
+      if (lower.includes("grok")) return { vendor: "Grok", isThinking };
+      if (lower.includes("llama")) return { vendor: "Llama", isThinking };
+      if (lower.includes("mistral") || lower.includes("codestral")) return { vendor: "Mistral", isThinking };
+      if (lower.includes("qwen")) return { vendor: "Qwen", isThinking };
+      if (lower.includes("command")) return { vendor: "Cohere", isThinking };
+      if (lower.includes("nova")) return { vendor: "Amazon", isThinking };
+      return { vendor: model.split("-")[0] || model, isThinking };
+    };
+
+    // Group scores by vendor
+    const vendorMap = new Map<string, { standard: number[]; thinking: number[] }>();
+
+    for (const m of resultsData.globalLeaderboard) {
+      const { vendor, isThinking } = getVendorGroup(m.model);
+      if (!vendorMap.has(vendor)) {
+        vendorMap.set(vendor, { standard: [], thinking: [] });
+      }
+      const group = vendorMap.get(vendor)!;
+      if (isThinking) {
+        group.thinking.push(m.averageScore);
+      } else {
+        group.standard.push(m.averageScore);
+      }
+    }
+
+    // Average scores per vendor and sort by best score
+    const data = Array.from(vendorMap.entries()).map(([vendor, scores]) => ({
+      vendor,
+      standard: scores.standard.length > 0
+        ? Math.round(scores.standard.reduce((a, b) => a + b, 0) / scores.standard.length * 10) / 10
+        : 0,
+      thinking: scores.thinking.length > 0
+        ? Math.round(scores.thinking.reduce((a, b) => a + b, 0) / scores.thinking.length * 10) / 10
+        : 0,
+    }));
+
+    // Sort by best score (max of standard or thinking)
+    return data.sort((a, b) => Math.max(b.standard, b.thinking) - Math.max(a.standard, a.thinking));
   }, [resultsData]);
 
   const chartConfig = {
-    score: {
-      label: "Accuracy",
+    standard: {
+      label: "Standard",
       color: "var(--chart-1)",
+    },
+    thinking: {
+      label: "Thinking",
+      color: "var(--chart-2)",
     },
   } satisfies ChartConfig;
 
@@ -289,28 +337,20 @@ export default function ResultsPage() {
                 <CardTitle className="text-base">Model Accuracy</CardTitle>
               </div>
               <Badge variant="outline" className="text-xs font-normal">
-                Top {barChartData.length} models
+                {barChartData.length} vendors
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-4 h-[400px]">
+          <CardContent className="p-4 h-[350px]">
             <ChartContainer config={chartConfig} className="h-full w-full">
-              <BarChart
-                accessibilityLayer
-                data={barChartData}
-                layout="vertical"
-                margin={{ left: 0, right: 20 }}
-              >
-                <YAxis
-                  dataKey="model"
-                  type="category"
-                  tickLine={false}
-                  axisLine={false}
-                  width={140}
-                  tick={{ fontSize: 11 }}
-                />
+              <BarChart accessibilityLayer data={barChartData}>
                 <XAxis
-                  type="number"
+                  dataKey="vendor"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                />
+                <YAxis
                   domain={[0, 100]}
                   tickLine={false}
                   axisLine={false}
@@ -320,10 +360,16 @@ export default function ResultsPage() {
                   cursor={false}
                   content={<ChartTooltipContent indicator="line" />}
                 />
+                <ChartLegend content={<ChartLegendContent />} />
                 <Bar
-                  dataKey="score"
-                  fill="var(--color-score)"
-                  radius={4}
+                  dataKey="standard"
+                  fill="var(--color-standard)"
+                  radius={[0, 0, 4, 4]}
+                />
+                <Bar
+                  dataKey="thinking"
+                  fill="var(--color-thinking)"
+                  radius={[4, 4, 0, 0]}
                 />
               </BarChart>
             </ChartContainer>
