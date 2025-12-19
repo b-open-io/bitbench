@@ -291,34 +291,32 @@ export default function ResultsPage() {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-4">
+          <CardContent className="p-2">
             <ChartContainer
               config={{
                 averageScore: { label: "Accuracy", color: "var(--chart-1)" },
               }}
-              className="h-[300px] w-full"
+              className="h-[180px] w-full"
             >
-              <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 50 }}>
+              <ScatterChart margin={{ top: 10, right: 20, bottom: 30, left: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis
                   type="number"
                   dataKey="totalCost"
                   name="Cost"
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 10 }}
                   tickFormatter={(v) => `$${v.toFixed(2)}`}
                   className="stroke-muted-foreground"
-                  label={{ value: "Cost ($)", position: "bottom", offset: -10, fontSize: 12, className: "fill-muted-foreground" }}
                 />
                 <YAxis
                   type="number"
                   dataKey="averageScore"
                   name="Accuracy"
                   domain={[0, 100]}
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 10 }}
                   tickFormatter={(v) => `${v}%`}
                   className="stroke-muted-foreground"
-                  width={45}
-                  label={{ value: "Accuracy (%)", angle: -90, position: "insideLeft", offset: 10, fontSize: 12, className: "fill-muted-foreground" }}
+                  width={35}
                 />
                 <ChartTooltip
                   cursor={{ strokeDasharray: "3 3" }}
