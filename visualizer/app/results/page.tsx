@@ -193,29 +193,44 @@ export default function ResultsPage() {
       return lower.includes("-thinking") || lower.startsWith("o3") || lower.startsWith("o4");
     };
 
-    // Group by base name
-    const groups = new Map<string, { standard: number; thinking: number }>();
+    // Group by base name, track raw scores
+    const groups = new Map<string, { standard: number; thinkingRaw: number }>();
 
     for (const m of resultsData.globalLeaderboard) {
       const base = getBaseName(m.model);
       if (!groups.has(base)) {
-        groups.set(base, { standard: 0, thinking: 0 });
+        groups.set(base, { standard: 0, thinkingRaw: 0 });
       }
       const group = groups.get(base)!;
       if (isThinking(m.model)) {
-        group.thinking = m.averageScore;
+        group.thinkingRaw = m.averageScore;
       } else {
         group.standard = m.averageScore;
       }
     }
 
-    // Convert to array and sort by total score (standard + thinking)
+    // Convert to array - thinking value is the DELTA for bar rendering,
+    // but we store thinkingActual for tooltip display
     return Array.from(groups.entries())
-      .map(([model, scores]) => ({
-        model,
-        standard: scores.standard,
-        thinking: scores.thinking,
-      }))
+      .map(([model, scores]) => {
+        const hasStandard = scores.standard > 0;
+        const hasThinking = scores.thinkingRaw > 0;
+
+        if (hasStandard && hasThinking) {
+          return {
+            model,
+            standard: scores.standard,
+            thinking: Math.max(0, scores.thinkingRaw - scores.standard),
+            thinkingActual: scores.thinkingRaw, // For tooltip
+          };
+        }
+        return {
+          model,
+          standard: hasStandard ? scores.standard : scores.thinkingRaw,
+          thinking: 0,
+          thinkingActual: hasThinking ? scores.thinkingRaw : 0,
+        };
+      })
       .sort((a, b) => (b.standard + b.thinking) - (a.standard + a.thinking));
   }, [resultsData]);
 
@@ -331,8 +346,9 @@ export default function ResultsPage() {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="px-2 sm:p-6 h-[320px] overflow-hidden">
-              <ChartContainer config={chartConfig} className="!h-full w-full ![aspect-ratio:auto]">
+          <CardContent className="px-2 sm:p-6">
+            <div style={{ height: 320 }}>
+              <ChartContainer config={chartConfig} className="!aspect-auto h-full w-full">
               <BarChart
                 accessibilityLayer
                 data={barChartData}
@@ -353,8 +369,37 @@ export default function ResultsPage() {
                 <ChartTooltip
                   content={
                     <ChartTooltipContent
-                      className="w-[180px]"
-                      labelKey="model"
+                      className="w-[200px]"
+                      labelFormatter={(_, payload) => {
+                        if (payload?.[0]?.payload?.model) {
+                          return payload[0].payload.model;
+                        }
+                        return "";
+                      }}
+                      formatter={(value, name, item) => {
+                        // Show actual scores, not deltas
+                        const displayValue = name === "thinking"
+                          ? item.payload.thinkingActual
+                          : value;
+                        // Don't show thinking row if no thinking score
+                        if (name === "thinking" && !item.payload.thinkingActual) return null;
+                        return (
+                          <>
+                            <div
+                              className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <div className="flex flex-1 items-center justify-between">
+                              <span className="text-muted-foreground">
+                                {name === "standard" ? "Standard" : "Thinking"}
+                              </span>
+                              <span className="font-mono font-medium">
+                                {Number(displayValue).toFixed(1)}%
+                              </span>
+                            </div>
+                          </>
+                        );
+                      }}
                     />
                   }
                 />
@@ -373,6 +418,7 @@ export default function ResultsPage() {
                 />
               </BarChart>
               </ChartContainer>
+            </div>
           </CardContent>
         </Card>
       </PageContainer>
