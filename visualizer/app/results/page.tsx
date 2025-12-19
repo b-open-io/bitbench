@@ -295,12 +295,12 @@ export default function ResultsPage() {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-2">
+          <CardContent className="p-2 h-[300px]">
             <ChartContainer
               config={{
                 averageScore: { label: "Accuracy", color: "var(--chart-1)" },
               }}
-              className="min-h-[200px] w-full"
+              className="w-full"
             >
               <ScatterChart margin={{ top: 5, right: 10, bottom: 20, left: 35 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
