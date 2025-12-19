@@ -5,6 +5,32 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { WalletProviderClient } from "@/components/wallet-provider-client";
 import "./globals.css";
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://bitbench.org/#organization",
+      name: "Bitbench",
+      url: "https://bitbench.org",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://bitbench.org/favicon.svg",
+      },
+      sameAs: ["https://github.com/b-open-io/bitbench"],
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://bitbench.org/#website",
+      url: "https://bitbench.org",
+      name: "Bitbench",
+      description:
+        "A donation-funded benchmark platform for comparing AI models on blockchain development tasks.",
+      publisher: { "@id": "https://bitbench.org/#organization" },
+    },
+  ],
+};
+
 export const metadata: Metadata = {
   title: "Bitbench - Blockchain AI Benchmark Platform",
   description:
@@ -55,6 +81,10 @@ html {
   --font-mono: ${GeistMono.variable};
 }
         `}</style>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body>
         <ThemeProvider

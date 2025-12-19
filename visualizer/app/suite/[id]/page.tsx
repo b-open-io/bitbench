@@ -52,9 +52,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Suite Not Found - Bitbench" };
   }
 
+  const title = `${suite.name} Results - Bitbench`;
+  const description = `${suite.description} See how ${suite.modelCount}+ AI models perform on ${suite.testCount} tests.`;
+
   return {
-    title: `${suite.name} Results - Bitbench`,
-    description: suite.description,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://bitbench.org/suite/${id}`,
+      type: "article",
+    },
+    twitter: {
+      title,
+      description,
+    },
   };
 }
 
