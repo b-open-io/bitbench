@@ -332,7 +332,7 @@ export default function ResultsPage() {
             </div>
           </CardHeader>
           <CardContent className="px-2 sm:p-6">
-            <div style={{ height: "250px", width: "100%" }}>
+            <div className="h-[320px] w-full">
               <ChartContainer config={chartConfig} className="h-full w-full">
               <BarChart
                 accessibilityLayer
@@ -345,7 +345,11 @@ export default function ResultsPage() {
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
-                  minTickGap={32}
+                  interval={0}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  tick={{ fontSize: 10 }}
                 />
                 <ChartTooltip
                   content={
