@@ -331,8 +331,7 @@ export default function ResultsPage() {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="px-2 sm:p-6">
-            <div className="h-[320px] w-full">
+          <CardContent className="px-2 sm:p-6 h-[320px]">
               <ChartContainer config={chartConfig} className="h-full w-full">
               <BarChart
                 accessibilityLayer
@@ -374,7 +373,6 @@ export default function ResultsPage() {
                 />
               </BarChart>
               </ChartContainer>
-            </div>
           </CardContent>
         </Card>
       </PageContainer>
