@@ -332,7 +332,8 @@ export default function ResultsPage() {
             </div>
           </CardHeader>
           <CardContent className="px-2 sm:p-6">
-            <ChartContainer config={chartConfig} className="!aspect-auto h-[200px] w-full">
+            <div style={{ height: "250px", width: "100%" }}>
+              <ChartContainer config={chartConfig} className="h-full w-full">
               <BarChart
                 accessibilityLayer
                 data={barChartData}
@@ -368,7 +369,8 @@ export default function ResultsPage() {
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
-            </ChartContainer>
+              </ChartContainer>
+            </div>
           </CardContent>
         </Card>
       </PageContainer>
