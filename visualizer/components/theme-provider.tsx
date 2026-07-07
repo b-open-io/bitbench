@@ -7,6 +7,7 @@ import {
   type ThemeToken,
 } from "@theme-token/sdk"
 import {
+  type Attribute,
   ThemeProvider as NextThemesProvider,
   useTheme as useNextTheme,
 } from "next-themes"
@@ -184,7 +185,7 @@ function ThemeTokenProvider({ children }: { children: ReactNode }) {
 
 interface ThemeProviderProps {
   children: ReactNode
-  attribute?: string
+  attribute?: Attribute | Attribute[]
   defaultTheme?: string
   enableSystem?: boolean
   disableTransitionOnChange?: boolean

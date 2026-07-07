@@ -37,11 +37,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { type Chain, isChain } from "@/lib/types"
 
 interface SuiteRunSummary {
   suiteId: string
   suiteName: string
-  chain: string
+  chain: Chain
   description: string
   timestamp: string
   version: string
@@ -77,6 +78,127 @@ interface AggregatedResults {
 type SortKey = "rank" | "model" | "score" | "cost"
 type SortDir = "asc" | "desc"
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
+}
+
+function readRecord(value: unknown, context: string): Record<string, unknown> {
+  if (!isRecord(value)) {
+    throw new Error(`${context} must be an object`)
+  }
+  return value
+}
+
+function readString(
+  record: Record<string, unknown>,
+  key: string,
+  context: string,
+): string {
+  const value = record[key]
+  if (typeof value !== "string") {
+    throw new Error(`${context}.${key} must be a string`)
+  }
+  return value
+}
+
+function readNumber(
+  record: Record<string, unknown>,
+  key: string,
+  context: string,
+): number {
+  const value = record[key]
+  if (typeof value !== "number") {
+    throw new Error(`${context}.${key} must be a number`)
+  }
+  return value
+}
+
+function readArray(
+  record: Record<string, unknown>,
+  key: string,
+  context: string,
+): unknown[] {
+  const value = record[key]
+  if (!Array.isArray(value)) {
+    throw new Error(`${context}.${key} must be an array`)
+  }
+  return value
+}
+
+function parseTopPerformer(
+  value: unknown,
+  context: string,
+): SuiteRunSummary["topPerformer"] {
+  if (value === null) return null
+  const record = readRecord(value, context)
+  return {
+    model: readString(record, "model", context),
+    score: readNumber(record, "score", context),
+  }
+}
+
+function parseSuiteRunSummary(
+  value: unknown,
+  context: string,
+): SuiteRunSummary {
+  const record = readRecord(value, context)
+  const chain = record.chain
+  if (!isChain(chain)) {
+    throw new Error(`${context}.chain has unknown value "${String(chain)}"`)
+  }
+
+  return {
+    suiteId: readString(record, "suiteId", context),
+    suiteName: readString(record, "suiteName", context),
+    chain,
+    description: readString(record, "description", context),
+    timestamp: readString(record, "timestamp", context),
+    version: readString(record, "version", context),
+    totalModels: readNumber(record, "totalModels", context),
+    totalTests: readNumber(record, "totalTests", context),
+    topPerformer: parseTopPerformer(
+      record.topPerformer,
+      `${context}.topPerformer`,
+    ),
+    totalCost: readNumber(record, "totalCost", context),
+  }
+}
+
+function parseLeaderboardEntry(
+  value: unknown,
+  context: string,
+): LeaderboardEntry {
+  const record = readRecord(value, context)
+  return {
+    model: readString(record, "model", context),
+    averageScore: readNumber(record, "averageScore", context),
+    suitesParticipated: readNumber(record, "suitesParticipated", context),
+    totalCost: readNumber(record, "totalCost", context),
+  }
+}
+
+function parseAggregatedResults(value: unknown): AggregatedResults {
+  const record = readRecord(value, "results")
+  const latestRun =
+    record.latestRun === null
+      ? null
+      : parseSuiteRunSummary(record.latestRun, "results.latestRun")
+
+  return {
+    totalCompletedSuites: readNumber(record, "totalCompletedSuites", "results"),
+    totalModelsEvaluated: readNumber(record, "totalModelsEvaluated", "results"),
+    totalTestsExecuted: readNumber(record, "totalTestsExecuted", "results"),
+    latestRun,
+    suiteRuns: readArray(record, "suiteRuns", "results").map((run, index) =>
+      parseSuiteRunSummary(run, `results.suiteRuns[${index}]`),
+    ),
+    globalLeaderboard: readArray(record, "globalLeaderboard", "results").map(
+      (entry, index) =>
+        parseLeaderboardEntry(entry, `results.globalLeaderboard[${index}]`),
+    ),
+  }
+}
+
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString)
   const now = new Date()
@@ -109,8 +231,8 @@ export default function ResultsPage() {
       try {
         const res = await fetch("/api/results")
         if (res.ok) {
-          const data = await res.json()
-          setResultsData(data)
+          const data: unknown = await res.json()
+          setResultsData(parseAggregatedResults(data))
         }
       } catch (error) {
         console.error("Failed to fetch results:", error)
@@ -420,7 +542,7 @@ export default function ResultsPage() {
                       />
                     }
                   />
-                  <ChartLegend content={<ChartLegendContent />} />
+                  <ChartLegend content={<ChartLegendContent payload={[]} />} />
                   <Bar
                     dataKey="standard"
                     stackId="a"

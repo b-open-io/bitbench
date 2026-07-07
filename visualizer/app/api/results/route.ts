@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
 import { getLatestRun, isRedisConfigured } from "@/lib/kv"
 import { getAllSuites } from "@/lib/suites"
-import type { TestSuite } from "@/lib/types"
+import { type Chain, isChain, type TestSuite } from "@/lib/types"
 
 interface SuiteRunSummary {
   suiteId: string
   suiteName: string
-  chain: string
+  chain: Chain
   description: string
   timestamp: string
   version: string
@@ -17,6 +17,12 @@ interface SuiteRunSummary {
     score: number
   } | null
   totalCost: number
+}
+
+function isSuiteRunSummary(
+  summary: SuiteRunSummary | null,
+): summary is SuiteRunSummary {
+  return summary !== null
 }
 
 interface AggregatedResults {
@@ -52,6 +58,9 @@ export async function GET() {
     // Create a map of suite ID to suite data
     const suiteMap = new Map<string, TestSuite>()
     for (const suite of allSuites) {
+      if (!isChain(suite.chain)) {
+        throw new Error(`Unknown chain "${suite.chain}" for suite ${suite.id}`)
+      }
       suiteMap.set(suite.id, suite)
     }
 
@@ -70,33 +79,34 @@ export async function GET() {
     )
 
     // Transform runs into summaries
-    const suiteRuns: SuiteRunSummary[] = allLatestRuns
-      .map(({ suiteId, run }) => {
-        const suite = suiteMap.get(suiteId)
-        if (!suite) return null
+    const suiteRunSummaries = allLatestRuns.map(({ suiteId, run }) => {
+      const suite = suiteMap.get(suiteId)
+      if (!suite) return null
 
-        const topPerformer =
-          run.rankings.length > 0
-            ? {
-                model: run.rankings[0].model,
-                score: run.rankings[0].score,
-              }
-            : null
+      const topPerformer =
+        run.rankings.length > 0
+          ? {
+              model: run.rankings[0].model,
+              score: run.rankings[0].score,
+            }
+          : null
 
-        return {
-          suiteId,
-          suiteName: suite.name,
-          chain: suite.chain,
-          description: suite.description,
-          timestamp: run.timestamp,
-          version: run.version,
-          totalModels: run.rankings.length,
-          totalTests: run.rankings.reduce((sum, r) => sum + r.total, 0),
-          topPerformer,
-          totalCost: run.totalCost,
-        }
-      })
-      .filter((r): r is SuiteRunSummary => r !== null)
+      return {
+        suiteId,
+        suiteName: suite.name,
+        chain: suite.chain,
+        description: suite.description,
+        timestamp: run.timestamp,
+        version: run.version,
+        totalModels: run.rankings.length,
+        totalTests: run.rankings.reduce((sum, r) => sum + r.total, 0),
+        topPerformer,
+        totalCost: run.totalCost,
+      }
+    })
+
+    const suiteRuns: SuiteRunSummary[] = suiteRunSummaries
+      .filter(isSuiteRunSummary)
       .sort(
         (a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),

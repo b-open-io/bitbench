@@ -20,9 +20,23 @@ export interface TestSuiteFile {
 // Suite status for tracking benchmark state
 export type SuiteStatus = "funding" | "pending" | "completed"
 
+export const CHAIN_VALUES = [
+  "bsv",
+  "btc",
+  "eth",
+  "sol",
+  "bch",
+  "ltc",
+  "ai",
+] as const
+
 // Suite categories: blockchain chains plus "ai" for model-values suites
 // (truthfulness, economic philosophy, bitcoin philosophy)
-export type Chain = "bsv" | "btc" | "eth" | "sol" | "bch" | "ltc" | "ai"
+export type Chain = (typeof CHAIN_VALUES)[number]
+
+export function isChain(value: unknown): value is Chain {
+  return typeof value === "string" && CHAIN_VALUES.some((c) => c === value)
+}
 
 // Chain metadata for display - using theme colors
 export const CHAIN_INFO: Record<

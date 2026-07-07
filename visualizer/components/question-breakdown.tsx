@@ -345,12 +345,8 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
         {/* Questions list */}
         <ScrollArea className="h-[500px]">
           <div className="space-y-1">
-            {displayQuestions.map((question, index) => (
-              <QuestionItem
-                key={question.testIndex}
-                question={question}
-                index={index}
-              />
+            {displayQuestions.map((question) => (
+              <QuestionItem key={question.testIndex} question={question} />
             ))}
           </div>
         </ScrollArea>

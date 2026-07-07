@@ -9,7 +9,7 @@ import {
   TrendingUp,
   Trophy,
 } from "lucide-react"
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 import {
   Bar,
   BarChart,
@@ -21,6 +21,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
+import type { Props as RechartsLabelProps } from "recharts/types/component/Label"
+import type { RenderableText } from "recharts/types/component/Text"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -81,14 +83,6 @@ function currency(n: number) {
   return `$${n.toFixed(2)}`
 }
 
-type LabelRenderProps = {
-  x?: number | string
-  y?: number | string
-  width?: number | string
-  height?: number | string
-  value?: number | string
-}
-
 type PerformancePoint = {
   model: string
   successRate: number
@@ -96,12 +90,46 @@ type PerformancePoint = {
   duration: number
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
+}
+
+function isPerformancePoint(value: unknown): value is PerformancePoint {
+  return (
+    isRecord(value) &&
+    typeof value.model === "string" &&
+    typeof value.successRate === "number" &&
+    typeof value.totalCost === "number" &&
+    typeof value.duration === "number"
+  )
+}
+
+function toFiniteNumber(value: number | string | undefined): number {
+  const numeric = Number(value ?? 0)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function toRenderableNumber(value: RenderableText): number | null {
+  if (typeof value === "boolean" || value == null) return null
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : null
+}
+
+function modelTooltipLabel(label: ReactNode): string {
+  if (typeof label === "string" || typeof label === "number") {
+    return `Model: ${label}`
+  }
+  return "Model"
+}
+
 function barValueLabel(suffix: string, decimals: number) {
-  return (props: LabelRenderProps) => {
-    const x = Number(props?.x ?? 0)
-    const y = Number(props?.y ?? 0)
-    const width = Number(props?.width ?? 0)
-    const value = Number(props?.value ?? 0)
+  return (props: RechartsLabelProps) => {
+    const value = toRenderableNumber(props.value)
+    if (value === null) return null
+
+    const x = toFiniteNumber(props.x)
+    const y = toFiniteNumber(props.y)
+    const width = toFiniteNumber(props.width)
     const cx = x + width / 2
     const cy = y - 6
     return (
@@ -123,12 +151,14 @@ function barValueLabelHorizontalSmart(
   decimals: number,
   maxValue: number,
 ) {
-  return (props: LabelRenderProps) => {
-    const x = Number(props?.x ?? 0)
-    const y = Number(props?.y ?? 0)
-    const width = Number(props?.width ?? 0)
-    const height = Number(props?.height ?? 0)
-    const value = Number(props?.value ?? 0)
+  return (props: RechartsLabelProps) => {
+    const value = toRenderableNumber(props.value)
+    if (value === null) return null
+
+    const x = toFiniteNumber(props.x)
+    const y = toFiniteNumber(props.y)
+    const width = toFiniteNumber(props.width)
+    const height = toFiniteNumber(props.height)
     const ratio = maxValue > 0 ? value / maxValue : 0
     const inside = ratio >= 0.75
     const tx = inside ? x + width - 6 : x + width + 6
@@ -435,7 +465,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 <ChartTooltip
                   content={<ChartTooltipContent />}
                   formatter={(value: unknown) => [`${value}% Success Rate`]}
-                  labelFormatter={(label: string) => `Model: ${label}`}
+                  labelFormatter={modelTooltipLabel}
                 />
                 <Bar
                   dataKey="successRate"
@@ -574,7 +604,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                   formatter={(value: unknown) => [
                     `Avg cost: $${value} per test`,
                   ]}
-                  labelFormatter={(label: string) => `Model: ${label}`}
+                  labelFormatter={modelTooltipLabel}
                 />
                 <Bar
                   dataKey="totalCost"
@@ -713,7 +743,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                   formatter={(value: unknown) => [
                     `Average response time: ${value} seconds`,
                   ]}
-                  labelFormatter={(label: string) => `Model: ${label}`}
+                  labelFormatter={modelTooltipLabel}
                 />
                 <Bar
                   dataKey="duration"
@@ -813,10 +843,8 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 <ChartTooltip
                   cursor={{ strokeDasharray: "3 3" }}
                   content={({ active, payload }) => {
-                    const point = payload?.[0]?.payload as
-                      | PerformancePoint
-                      | undefined
-                    if (active && point) {
+                    const point = payload?.[0]?.payload
+                    if (active && isPerformancePoint(point)) {
                       return (
                         <div className="rounded-lg border border-border bg-popover p-3 shadow-xl backdrop-blur-md">
                           <p className="mb-2 font-medium text-popover-foreground">
@@ -858,15 +886,19 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                   {!isMobile ? (
                     <LabelList
                       dataKey="model"
-                      content={({ x, y, value }: LabelRenderProps) => {
-                        const nx = (typeof x === "number" ? x : Number(x)) || 0
-                        const ny = (typeof y === "number" ? y : Number(y)) || 0
+                      content={(props: RechartsLabelProps) => {
+                        const nx = toFiniteNumber(props.x)
+                        const ny = toFiniteNumber(props.y)
+                        const value = props.value
+                        if (value == null || typeof value === "boolean") {
+                          return null
+                        }
                         return (
                           <text
                             x={nx + 10}
                             y={ny}
                             dy={4}
-                            textAnchor="left"
+                            textAnchor="start"
                             className="pointer-events-none text-xs font-medium fill-foreground"
                             style={{
                               textShadow: "1px 1px 2px hsl(var(--background))",
