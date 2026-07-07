@@ -36,7 +36,13 @@ function BenchmarkVisualizerContent() {
   const [donationModalOpen, setDonationModalOpen] = useState(false)
   const [chainFilter, setChainFilter] = useState<Chain | "all">("all")
 
-  const modelCount = 44 // Could fetch this dynamically
+  const modelCount = useMemo(
+    () =>
+      suites.length > 0
+        ? Math.max(...suites.map((suite) => suite.modelCount))
+        : (resultsSummary?.totalModelsEvaluated ?? 0),
+    [suites, resultsSummary],
+  )
 
   const filteredSuites = useMemo(
     () =>

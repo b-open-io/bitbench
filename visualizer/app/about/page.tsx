@@ -14,10 +14,12 @@ export const metadata: Metadata = {
 
 export default async function AboutPage() {
   const suites = await getAllSuites()
+  const modelCount =
+    suites.length > 0 ? Math.max(...suites.map((suite) => suite.modelCount)) : 0
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader modelCount={44} />
+      <SiteHeader modelCount={modelCount} />
 
       <main className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-3xl font-bold tracking-tight mb-2">

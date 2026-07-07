@@ -1,4 +1,4 @@
-import { ArrowLeft, Clock, Tag } from "lucide-react"
+import { ArrowLeft, Clock, ExternalLink, Tag } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -8,9 +8,18 @@ import { PageContainer } from "@/components/page-container"
 import { QuestionBreakdownCard } from "@/components/question-breakdown"
 import { SiteHeader } from "@/components/site-header"
 import { SuiteSwitcher } from "@/components/suite-switcher"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import { getLatestRun } from "@/lib/kv"
-import { getAllSuites, getSuiteWithBalance } from "@/lib/suites"
+import { getAllSuites, getSuiteFile, getSuiteWithBalance } from "@/lib/suites"
 import type { ModelResult } from "@/lib/types"
 
 interface PageProps {
@@ -45,18 +54,30 @@ function formatDate(dateString: string | null): string {
   })
 }
 
+function formatUsd(amount: number): string {
+  return `$${amount.toFixed(2)}`
+}
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { id } = await params
-  const suite = await getSuiteWithBalance(id)
+  const [suite, latestRun] = await Promise.all([
+    getSuiteWithBalance(id),
+    getLatestRun(id),
+  ])
 
   if (!suite) {
     return { title: "Suite Not Found - Bitbench" }
   }
 
-  const title = `${suite.name} Results - Bitbench`
-  const description = `${suite.description} See how ${suite.modelCount}+ AI models perform on ${suite.testCount} tests.`
+  const hasResults = (latestRun?.rankings ?? []).length > 0
+  const title = hasResults
+    ? `${suite.name} Results - Bitbench`
+    : `${suite.name} - Bitbench`
+  const description = hasResults
+    ? `${suite.description} See how ${suite.modelCount}+ AI models perform on ${suite.testCount} tests.`
+    : `Fund this benchmark to test ${suite.modelCount}+ AI models on ${suite.testCount} ${suite.name} prompts.`
 
   return {
     title,
@@ -77,10 +98,11 @@ export async function generateMetadata({
 export default async function SuiteResultsPage({ params }: PageProps) {
   const { id } = await params
 
-  const [suite, latestRun, allSuites] = await Promise.all([
+  const [suite, latestRun, allSuites, suiteFile] = await Promise.all([
     getSuiteWithBalance(id),
     getLatestRun(id),
     getAllSuites(),
+    getSuiteFile(id),
   ])
 
   if (!suite) {
@@ -88,11 +110,14 @@ export default async function SuiteResultsPage({ params }: PageProps) {
   }
 
   // Check if we have results
-  const hasResults = latestRun?.rankings && latestRun.rankings.length > 0
+  const rankings = latestRun?.rankings ?? []
+  const hasResults = rankings.length > 0
+  const fundingPercent = Math.round(suite.fundingProgress * 100)
+  const preRunStatus = suite.status === "pending" ? "pending" : "funding"
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader modelCount={44} />
+      <SiteHeader modelCount={suite.modelCount} />
 
       {/* Full-width section: Header + Charts */}
       <PageContainer forceWidth="full" className="py-8">
@@ -138,17 +163,84 @@ export default async function SuiteResultsPage({ params }: PageProps) {
 
         {/* Charts - Full Width */}
         {hasResults ? (
-          <BenchmarkCharts rankings={transformRankings(latestRun.rankings)} />
+          <BenchmarkCharts rankings={transformRankings(rankings)} />
         ) : (
-          <div className="rounded-lg border border-border bg-muted/30 p-12 text-center">
-            <h2 className="text-xl font-semibold mb-2">No Results Yet</h2>
-            <p className="text-muted-foreground mb-4">
-              This benchmark hasn&apos;t been run yet. Check back after
-              it&apos;s funded and executed.
-            </p>
-            <Button asChild>
-              <Link href="/">View All Benchmarks</Link>
-            </Button>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <CardTitle>Funding</CardTitle>
+                    <CardDescription>
+                      Results publish automatically after the benchmark runs.
+                    </CardDescription>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="capitalize text-muted-foreground"
+                  >
+                    {preRunStatus}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                    <span className="text-muted-foreground">Progress</span>
+                    <span className="font-medium">{fundingPercent}%</span>
+                  </div>
+                  <Progress value={fundingPercent} className="h-2" />
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                    <span className="text-muted-foreground">
+                      {formatUsd(suite.currentBalanceUsd)} raised
+                    </span>
+                    <span className="text-muted-foreground">
+                      {formatUsd(suite.estimatedCostUsd)} goal
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h2 className="text-sm font-medium">Donation address</h2>
+                  <code className="block rounded-md bg-muted px-3 py-2 text-xs leading-relaxed break-all text-muted-foreground">
+                    {suite.donationAddress}
+                  </code>
+                </div>
+
+                <Button asChild>
+                  <Link href="/">Fund this benchmark</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Questions</CardTitle>
+                <CardDescription>
+                  {suite.testCount} prompts from version {suite.version}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed">
+                  {(suiteFile?.tests ?? []).map((test) => (
+                    <li key={test.prompt}>{test.prompt}</li>
+                  ))}
+                </ol>
+                <p className="text-sm text-muted-foreground">
+                  Expected answers are withheld here; the full open item bank
+                  lives in the repository.{" "}
+                  <a
+                    href="https://github.com/b-open-io/bitbench/tree/master/bench/tests"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-primary transition-colors hover:text-primary/80"
+                  >
+                    View repository
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </p>
+              </CardContent>
+            </Card>
           </div>
         )}
       </PageContainer>

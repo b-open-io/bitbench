@@ -225,6 +225,7 @@ export default function ResultsPage() {
   const [sortKey, setSortKey] = useState<SortKey>("rank")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [searchTerm, setSearchTerm] = useState("")
+  const modelCount = resultsData?.totalModelsEvaluated ?? 0
 
   useEffect(() => {
     async function fetchResults() {
@@ -378,7 +379,7 @@ export default function ResultsPage() {
   if (loading) {
     return (
       <div className="relative min-h-screen bg-background text-foreground">
-        <SiteHeader modelCount={44} />
+        <SiteHeader modelCount={modelCount} />
         <div className="flex items-center justify-center py-24">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -389,7 +390,7 @@ export default function ResultsPage() {
   if (!resultsData || resultsData.totalCompletedSuites === 0) {
     return (
       <div className="relative min-h-screen bg-background text-foreground">
-        <SiteHeader modelCount={44} />
+        <SiteHeader modelCount={modelCount} />
         <main className="mx-auto max-w-7xl px-4 py-8">
           <Link
             href="/"
@@ -418,7 +419,7 @@ export default function ResultsPage() {
 
   return (
     <div className="relative min-h-screen bg-background text-foreground">
-      <SiteHeader modelCount={44} />
+      <SiteHeader modelCount={modelCount} />
 
       {/* Full-width section: Header + Chart */}
       <PageContainer forceWidth="full" className="py-4">

@@ -60,7 +60,14 @@ export function DonationCard({
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg">{suite.name}</CardTitle>
+            <CardTitle className="text-lg">
+              <Link
+                href={`/suite/${suite.id}`}
+                className="transition-colors hover:text-primary"
+              >
+                {suite.name}
+              </Link>
+            </CardTitle>
           </div>
           <ChainBadge chain={suite.chain} size="sm" />
         </div>
@@ -138,8 +145,8 @@ export function DonationCard({
           )}
         </Button>
 
-        {/* Footer: Last Run Results (if available) */}
-        {hasResults && (
+        {/* Footer: Last Run Results or Details Link */}
+        {hasResults ? (
           <div className="mt-1 pt-3 border-t border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
@@ -167,6 +174,16 @@ export function DonationCard({
                 <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
+          </div>
+        ) : (
+          <div className="mt-1 pt-3 border-t border-border">
+            <Link
+              href={`/suite/${suite.id}`}
+              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Details
+              <ArrowRight className="h-3 w-3" />
+            </Link>
           </div>
         )}
       </CardContent>
