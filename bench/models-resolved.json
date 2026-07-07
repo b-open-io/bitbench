@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-07T15:59:56.696Z",
+  "generatedAt": "2026-07-07T16:04:12.783Z",
   "defaultModelCount": 136,
   "suites": {
     "ai-btc-philosophy": {
@@ -29,6 +29,10 @@
     "bsv-protocols": {
       "modelCount": 136,
       "estimatedCostUsd": 12.54
+    },
+    "bsv-runar": {
+      "modelCount": 136,
+      "estimatedCostUsd": 25.08
     },
     "bsv-scrypt": {
       "modelCount": 136,

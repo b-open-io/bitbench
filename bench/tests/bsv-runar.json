@@ -1,0 +1,94 @@
+{
+  "id": "bsv-runar",
+  "chain": "bsv",
+  "name": "Rúnar Smart Contract Language",
+  "description": "Tests knowledge of Rúnar, the multi-language smart-contract compiler for BSV (write contracts in TypeScript, Go, Rust and more; compile to identical Bitcoin Script). Facts are drawn from the project's docs and examples as of mid-2026 (pre-1.0), favoring durable architecture and design decisions over version-specific details.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 25.08,
+  "system_prompt": "You are a BSV smart contract developer expert in the Rúnar language and compiler (runar.build, github.com/icellan/runar). Provide precise technical answers using the exact terms, class names, and opcodes from the Rúnar documentation.",
+  "tests": [
+    {
+      "prompt": "What intermediate representation does the Rúnar compiler use as its canonical conformance boundary between the typed AST and stack-based Bitcoin Script?",
+      "answers": [
+        "ANF",
+        "Administrative Normal Form"
+      ]
+    },
+    {
+      "prompt": "Name the two base classes a Rúnar contract can extend, and what determines which one you must use.",
+      "answers": [
+        "StatefulSmartContract"
+      ]
+    },
+    {
+      "prompt": "What Bitcoin Script pattern does Rúnar's StatefulSmartContract automatically inject so that contract state persists across transactions?",
+      "answers": [
+        "OP_PUSH_TX",
+        "PUSH_TX",
+        "sighash preimage"
+      ]
+    },
+    {
+      "prompt": "What intrinsic method does a Rúnar stateful contract call to emit an additional transaction output, for example when splitting a token balance?",
+      "answers": [
+        "addOutput"
+      ]
+    },
+    {
+      "prompt": "What token accounting model does Rúnar's FungibleToken example use, in explicit contrast to Ethereum's ERC-20 approach?",
+      "answers": [
+        "UTXO"
+      ]
+    },
+    {
+      "prompt": "In Rúnar's FungibleToken merge method, which two BIP-143 preimage-derived commitments are checked to prevent a token-merge inflation attack?",
+      "answers": [
+        "hashPrevouts",
+        "hashOutputs"
+      ]
+    },
+    {
+      "prompt": "Dynamic arrays are disallowed in Rúnar contracts. What generic type does the language provide for fixed-length collections instead?",
+      "answers": [
+        "FixedArray"
+      ]
+    },
+    {
+      "prompt": "Rúnar's && and || logical operators compile to which Bitcoin opcodes, and what evaluation strategy does that imply?",
+      "answers": [
+        "OP_BOOLAND",
+        "OP_BOOLOR",
+        "eager"
+      ]
+    },
+    {
+      "prompt": "What proof assistant is used for the machine-checked correctness proof of Rúnar's compiler backend (ANF to Stack IR to Script)?",
+      "answers": [
+        "lean"
+      ],
+      "negative_answers": [
+        "isabelle",
+        "agda"
+      ]
+    },
+    {
+      "prompt": "In Rúnar's Rust surface, what attribute macro marks a struct as a smart contract?",
+      "answers": [
+        "runar::contract"
+      ]
+    },
+    {
+      "prompt": "How are BSV-21 tokens identified in Rúnar's SDK, in contrast to BSV-20's ticker-based identification?",
+      "answers": [
+        "txid_vout",
+        "origin"
+      ]
+    },
+    {
+      "prompt": "What is the name of the Rúnar SDK provider class that connects to the 1Sat Ordinals indexer for inscriptions and token balance queries?",
+      "answers": [
+        "GorillaPoolProvider"
+      ]
+    }
+  ]
+}

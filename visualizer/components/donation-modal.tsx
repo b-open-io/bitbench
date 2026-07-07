@@ -1,6 +1,5 @@
 "use client"
 
-import { sendBsv } from "@1sat/actions"
 import { AlertCircle, CheckCircle, Loader2, Wallet } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -32,7 +31,8 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
   const isConnected = walletState?.isConnected ?? false
   const addresses = walletState?.addresses ?? null
   const connect = walletState?.connect ?? (async () => {})
-  const ctx = walletState?.ctx ?? null
+  const sendBsv = walletState?.sendBsv
+  const isWalletActive = walletState?.isConnected ?? false
 
   const [amountUsd, setAmountUsd] = useState("")
   const [status, setStatus] = useState<DonationStatus>("idle")
@@ -54,20 +54,15 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
   }
 
   const handleDonate = async () => {
-    if (!suite || !amountSats || !ctx) return
+    if (!suite || !amountSats || !sendBsv || !isWalletActive) return
 
     setStatus("sending")
     setError(null)
 
     try {
-      const result = await sendBsv.execute(ctx, {
-        requests: [
-          {
-            address: suite.donationAddress,
-            satoshis: amountSats,
-          },
-        ],
-      })
+      const result = await sendBsv([
+        { address: suite.donationAddress, satoshis: amountSats },
+      ])
 
       if (result.error) {
         setStatus("error")
