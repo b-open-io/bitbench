@@ -176,7 +176,7 @@ export default async function SuiteResultsPage({ params }: PageProps) {
     <div className="min-h-screen bg-background">
       <SiteHeader modelCount={defaultModels.length} />
 
-      <PageContainer forceWidth="full" className="py-10">
+      <PageContainer forceWidth="default" className="py-10">
         {/* Header */}
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-4">
@@ -262,46 +262,48 @@ export default async function SuiteResultsPage({ params }: PageProps) {
           )}
         </section>
 
-        {/* Funding */}
-        <section className="mt-12 border-t border-border pt-10">
-          <h2 className="mb-6 text-lg font-semibold">Funding</h2>
-          <div className="max-w-md">
-            <FundingPanel suite={suite} hasResults={hasResults} />
-          </div>
-        </section>
+        {/* Body: questions (main) + funding & models (sticky sidebar) */}
+        <div className="mt-12 grid grid-cols-1 gap-x-16 gap-y-12 border-t border-border pt-10 lg:grid-cols-3">
+          {/* Sidebar — first in the DOM so it leads on mobile (funding is
+              the primary action), floated right and made sticky on desktop */}
+          <aside className="space-y-10 lg:sticky lg:top-24 lg:col-start-3 lg:row-start-1 lg:self-start">
+            <div>
+              <h2 className="mb-6 text-lg font-semibold">Funding</h2>
+              <FundingPanel suite={suite} hasResults={hasResults} />
+            </div>
+            <div className="border-t border-border pt-8">
+              <h2 className="mb-6 text-lg font-semibold">Models</h2>
+              <ModelsList
+                models={modelInfo.models}
+                modelCount={modelInfo.modelCount}
+                usesDefaultModels={modelInfo.usesDefaultModels}
+                runDatesByModel={runDatesByModel}
+              />
+            </div>
+          </aside>
 
-        {/* Models */}
-        <section className="mt-12 border-t border-border pt-10">
-          <h2 className="mb-6 text-lg font-semibold">Models</h2>
-          <ModelsList
-            models={modelInfo.models}
-            modelCount={modelInfo.modelCount}
-            usesDefaultModels={modelInfo.usesDefaultModels}
-            runDatesByModel={runDatesByModel}
-          />
-        </section>
-
-        {/* Questions */}
-        <section className="mt-12 border-t border-border pt-10">
-          <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-lg font-semibold">Questions</h2>
-            <span className="text-sm text-muted-foreground">
-              {suite.testCount} prompts, version {suite.version}
-            </span>
+          {/* Main — questions */}
+          <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1">
+            <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-lg font-semibold">Questions</h2>
+              <span className="text-sm text-muted-foreground">
+                {suite.testCount} prompts, version {suite.version}
+              </span>
+            </div>
+            <QuestionList tests={suiteFile?.tests ?? []} />
+            <p className="mt-6">
+              <a
+                href="https://github.com/b-open-io/bitbench/tree/master/bench/tests"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Full item bank in the repository
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </p>
           </div>
-          <QuestionList tests={suiteFile?.tests ?? []} />
-          <p className="mt-6">
-            <a
-              href="https://github.com/b-open-io/bitbench/tree/master/bench/tests"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Full item bank in the repository
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </p>
-        </section>
+        </div>
       </PageContainer>
     </div>
   )
