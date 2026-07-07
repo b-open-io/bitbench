@@ -20,8 +20,9 @@ export interface TestSuiteFile {
 // Suite status for tracking benchmark state
 export type SuiteStatus = "funding" | "pending" | "completed"
 
-// Supported blockchain chains
-export type Chain = "bsv" | "btc" | "eth" | "sol" | "bch" | "ltc"
+// Suite categories: blockchain chains plus "ai" for model-values suites
+// (truthfulness, economic philosophy, bitcoin philosophy)
+export type Chain = "bsv" | "btc" | "eth" | "sol" | "bch" | "ltc" | "ai"
 
 // Chain metadata for display - using theme colors
 export const CHAIN_INFO: Record<
@@ -34,6 +35,7 @@ export const CHAIN_INFO: Record<
   sol: { name: "SOL", color: "text-chart-5", bgColor: "bg-chart-5/10" },
   bch: { name: "BCH", color: "text-chart-2", bgColor: "bg-chart-2/10" },
   ltc: { name: "LTC", color: "text-muted-foreground", bgColor: "bg-muted/50" },
+  ai: { name: "AI", color: "text-primary", bgColor: "bg-primary/10" },
 }
 
 // Runtime state stored in KV (not in JSON files)
