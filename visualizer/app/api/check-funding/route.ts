@@ -9,7 +9,14 @@ import {
   isNotificationsConfigured,
   sendFundingNotification,
 } from "@/lib/notifications"
-import { getAllSuitesWithBalance, usdToSats } from "@/lib/suites"
+import { getBsvPriceUsd } from "@/lib/price"
+import { listRunRequests, setRunRequestStatus } from "@/lib/run-requests"
+import {
+  getAddressBalance,
+  getAllSuitesWithBalance,
+  satsToUsd,
+  usdToSats,
+} from "@/lib/suites"
 
 // Vercel cron protection - only allow requests with correct authorization
 const CRON_SECRET = process.env.CRON_SECRET
@@ -49,6 +56,13 @@ export async function GET(request: Request) {
       funded: boolean
       notified: boolean
       newlyNotified: boolean
+    }> = []
+    const runRequestResults: Array<{
+      requestId: string
+      suiteId: string
+      modelCount: number
+      funded: boolean
+      newlyPending: boolean
     }> = []
 
     for (const suite of suites) {
@@ -101,12 +115,58 @@ export async function GET(request: Request) {
       })
     }
 
+    const bsvPriceUsd = await getBsvPriceUsd()
+    const suiteById = new Map(suites.map((suite) => [suite.id, suite]))
+    const runRequests = await listRunRequests()
+
+    for (const runRequest of runRequests.filter(
+      (request) => request.status === "funding",
+    )) {
+      const suite = suiteById.get(runRequest.suiteId)
+      if (!suite) continue
+
+      const balanceSats = await getAddressBalance(runRequest.donationAddress)
+      const balanceUsd = satsToUsd(balanceSats, bsvPriceUsd)
+      const goalSats = usdToSats(runRequest.estimatedCostUsd, bsvPriceUsd)
+      const isFunded = balanceSats >= goalSats
+      let newlyPending = false
+
+      if (isFunded) {
+        await sendFundingNotification({
+          suiteId: suite.id,
+          suiteName: suite.name,
+          chain: suite.chain,
+          version: runRequest.suiteVersion,
+          balanceSats,
+          balanceUsd,
+          goalUsd: runRequest.estimatedCostUsd,
+          requestId: runRequest.requestId,
+          modelCount: runRequest.modelCount,
+        })
+        await setRunRequestStatus(runRequest.requestId, "pending")
+        newlyPending = true
+      }
+
+      runRequestResults.push({
+        requestId: runRequest.requestId,
+        suiteId: runRequest.suiteId,
+        modelCount: runRequest.modelCount,
+        funded: isFunded,
+        newlyPending,
+      })
+    }
+
     const newlyFunded = results.filter((r) => r.newlyNotified)
 
     return NextResponse.json({
       checked: results.length,
       newlyFunded: newlyFunded.length,
       results,
+      runRequests: {
+        checked: runRequestResults.length,
+        newlyPending: runRequestResults.filter((r) => r.newlyPending).length,
+        results: runRequestResults,
+      },
       timestamp: new Date().toISOString(),
     })
   } catch (error) {

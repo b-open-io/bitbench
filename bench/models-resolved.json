@@ -1,6 +1,688 @@
 {
-  "generatedAt": "2026-07-07T16:04:12.783Z",
+  "generatedAt": "2026-07-07T18:19:24.627Z",
   "defaultModelCount": 136,
+  "defaultModels": [
+    {
+      "name": "claude-sonnet-5",
+      "id": "anthropic/claude-sonnet-5",
+      "estCostPerTest": 0.014
+    },
+    {
+      "name": "claude-fable-5",
+      "id": "anthropic/claude-fable-5",
+      "estCostPerTest": 0.07
+    },
+    {
+      "name": "claude-opus-4.8-fast",
+      "id": "anthropic/claude-opus-4.8-fast",
+      "estCostPerTest": 0.07
+    },
+    {
+      "name": "claude-opus-4.8",
+      "id": "anthropic/claude-opus-4.8",
+      "estCostPerTest": 0.035
+    },
+    {
+      "name": "claude-opus-4.7-fast",
+      "id": "anthropic/claude-opus-4.7-fast",
+      "estCostPerTest": 0.21
+    },
+    {
+      "name": "claude-opus-4.7",
+      "id": "anthropic/claude-opus-4.7",
+      "estCostPerTest": 0.035
+    },
+    {
+      "name": "claude-sonnet-4.6",
+      "id": "anthropic/claude-sonnet-4.6",
+      "estCostPerTest": 0.021
+    },
+    {
+      "name": "claude-opus-4.6",
+      "id": "anthropic/claude-opus-4.6",
+      "estCostPerTest": 0.035
+    },
+    {
+      "name": "claude-4.5-opus",
+      "id": "anthropic/claude-opus-4.5",
+      "estCostPerTest": 0.0094
+    },
+    {
+      "name": "claude-4.5-opus-thinking-high",
+      "id": "anthropic/claude-opus-4.5",
+      "estCostPerTest": 0.0363
+    },
+    {
+      "name": "claude-haiku-4.5",
+      "id": "anthropic/claude-haiku-4.5",
+      "estCostPerTest": 0.007
+    },
+    {
+      "name": "claude-sonnet-4.5",
+      "id": "anthropic/claude-sonnet-4.5",
+      "estCostPerTest": 0.021
+    },
+    {
+      "name": "claude-opus-4.1",
+      "id": "anthropic/claude-opus-4.1",
+      "estCostPerTest": 0.105
+    },
+    {
+      "name": "gpt-chat-latest",
+      "id": "openai/gpt-chat-latest",
+      "estCostPerTest": 0.04
+    },
+    {
+      "name": "gpt-5.5-pro",
+      "id": "openai/gpt-5.5-pro",
+      "estCostPerTest": 0.24
+    },
+    {
+      "name": "gpt-5.5",
+      "id": "openai/gpt-5.5",
+      "estCostPerTest": 0.04
+    },
+    {
+      "name": "gpt-5.4-nano",
+      "id": "openai/gpt-5.4-nano",
+      "estCostPerTest": 0.00165
+    },
+    {
+      "name": "gpt-5.4-mini",
+      "id": "openai/gpt-5.4-mini",
+      "estCostPerTest": 0.006
+    },
+    {
+      "name": "gpt-5.4-pro",
+      "id": "openai/gpt-5.4-pro",
+      "estCostPerTest": 0.24
+    },
+    {
+      "name": "gpt-5.4",
+      "id": "openai/gpt-5.4",
+      "estCostPerTest": 0.02
+    },
+    {
+      "name": "gpt-5.3-chat",
+      "id": "openai/gpt-5.3-chat",
+      "estCostPerTest": 0.0175
+    },
+    {
+      "name": "gpt-5.3-codex",
+      "id": "openai/gpt-5.3-codex",
+      "estCostPerTest": 0.0175
+    },
+    {
+      "name": "gpt-5.2-codex",
+      "id": "openai/gpt-5.2-codex",
+      "estCostPerTest": 0.0175
+    },
+    {
+      "name": "gpt-5.2-chat",
+      "id": "openai/gpt-5.2-chat",
+      "estCostPerTest": 0.0175
+    },
+    {
+      "name": "gpt-5.2-pro",
+      "id": "openai/gpt-5.2-pro",
+      "estCostPerTest": 0.1187
+    },
+    {
+      "name": "gpt-5.2-none",
+      "id": "openai/gpt-5.2",
+      "estCostPerTest": 0.0018
+    },
+    {
+      "name": "gpt-5.2-xhigh",
+      "id": "openai/gpt-5.2",
+      "estCostPerTest": 0.0202
+    },
+    {
+      "name": "gpt-5.2-high",
+      "id": "openai/gpt-5.2",
+      "estCostPerTest": 0.0092
+    },
+    {
+      "name": "gpt-5.1-codex-max",
+      "id": "openai/gpt-5.1-codex-max",
+      "estCostPerTest": 0.0125
+    },
+    {
+      "name": "gpt-5.1-low",
+      "id": "openai/gpt-5.1",
+      "estCostPerTest": 0.0038
+    },
+    {
+      "name": "gpt-5.1-default",
+      "id": "openai/gpt-5.1",
+      "estCostPerTest": 0.0099
+    },
+    {
+      "name": "gpt-5.1-high",
+      "id": "openai/gpt-5.1",
+      "estCostPerTest": 0.0204
+    },
+    {
+      "name": "gpt-5.1-chat",
+      "id": "openai/gpt-5.1-chat",
+      "estCostPerTest": 0.0125
+    },
+    {
+      "name": "gpt-5.1-codex",
+      "id": "openai/gpt-5.1-codex",
+      "estCostPerTest": 0.0125
+    },
+    {
+      "name": "gpt-5.1-codex-mini",
+      "id": "openai/gpt-5.1-codex-mini",
+      "estCostPerTest": 0.0025
+    },
+    {
+      "name": "gpt-oss-safeguard-20b",
+      "id": "openai/gpt-oss-safeguard-20b",
+      "estCostPerTest": 0.00045
+    },
+    {
+      "name": "o3-deep-research",
+      "id": "openai/o3-deep-research",
+      "estCostPerTest": 0.06
+    },
+    {
+      "name": "o4-mini-deep-research",
+      "id": "openai/o4-mini-deep-research",
+      "estCostPerTest": 0.012
+    },
+    {
+      "name": "gpt-5-pro",
+      "id": "openai/gpt-5-pro",
+      "estCostPerTest": 0.15
+    },
+    {
+      "name": "gpt-5-codex",
+      "id": "openai/gpt-5-codex",
+      "estCostPerTest": 0.0125
+    },
+    {
+      "name": "gpt-5-chat",
+      "id": "openai/gpt-5-chat",
+      "estCostPerTest": 0.0125
+    },
+    {
+      "name": "gpt-5-minimal",
+      "id": "openai/gpt-5",
+      "estCostPerTest": 0.0009
+    },
+    {
+      "name": "gpt-5-default",
+      "id": "openai/gpt-5",
+      "estCostPerTest": 0.0177
+    },
+    {
+      "name": "gpt-5-high",
+      "id": "openai/gpt-5",
+      "estCostPerTest": 0.0226
+    },
+    {
+      "name": "gpt-5-mini",
+      "id": "openai/gpt-5-mini",
+      "estCostPerTest": 0.0039
+    },
+    {
+      "name": "gpt-5-nano",
+      "id": "openai/gpt-5-nano",
+      "estCostPerTest": 0.0015
+    },
+    {
+      "name": "gpt-oss-120b",
+      "id": "openai/gpt-oss-120b",
+      "estCostPerTest": 0.0004
+    },
+    {
+      "name": "gpt-oss-20b",
+      "id": "openai/gpt-oss-20b",
+      "estCostPerTest": 0.0004
+    },
+    {
+      "name": "gemini-3.5-flash",
+      "id": "google/gemini-3.5-flash",
+      "estCostPerTest": 0.012
+    },
+    {
+      "name": "gemini-3.1-flash-lite",
+      "id": "google/gemini-3.1-flash-lite",
+      "estCostPerTest": 0.002
+    },
+    {
+      "name": "gemma-4-26b-a4b-it",
+      "id": "google/gemma-4-26b-a4b-it",
+      "estCostPerTest": 0.00045
+    },
+    {
+      "name": "gemma-4-31b-it",
+      "id": "google/gemma-4-31b-it",
+      "estCostPerTest": 0.00059
+    },
+    {
+      "name": "gemini-3.1-flash-lite-preview",
+      "id": "google/gemini-3.1-flash-lite-preview",
+      "estCostPerTest": 0.002
+    },
+    {
+      "name": "gemini-3.1-pro-preview-customtools",
+      "id": "google/gemini-3.1-pro-preview-customtools",
+      "estCostPerTest": 0.016
+    },
+    {
+      "name": "gemini-3.1-pro-preview",
+      "id": "google/gemini-3.1-pro-preview",
+      "estCostPerTest": 0.016
+    },
+    {
+      "name": "gemini-3-flash-high",
+      "id": "google/gemini-3-flash-preview",
+      "estCostPerTest": 0.0059
+    },
+    {
+      "name": "gemini-3-flash-low",
+      "id": "google/gemini-3-flash-preview",
+      "estCostPerTest": 0.0033
+    },
+    {
+      "name": "gemini-2.5-flash-lite-preview-09-2025",
+      "id": "google/gemini-2.5-flash-lite-preview-09-2025",
+      "estCostPerTest": 0.0006
+    },
+    {
+      "name": "gemini-2.5-flash-lite",
+      "id": "google/gemini-2.5-flash-lite",
+      "estCostPerTest": 0.0006
+    },
+    {
+      "name": "grok-build-0.1",
+      "id": "x-ai/grok-build-0.1",
+      "estCostPerTest": 0.004
+    },
+    {
+      "name": "grok-4.3",
+      "id": "x-ai/grok-4.3",
+      "estCostPerTest": 0.005
+    },
+    {
+      "name": "grok-4.20-multi-agent",
+      "id": "x-ai/grok-4.20-multi-agent",
+      "estCostPerTest": 0.005
+    },
+    {
+      "name": "grok-4.20",
+      "id": "x-ai/grok-4.20",
+      "estCostPerTest": 0.005
+    },
+    {
+      "name": "deepseek-v4-pro",
+      "id": "deepseek/deepseek-v4-pro",
+      "estCostPerTest": 0.00174
+    },
+    {
+      "name": "deepseek-v4-flash",
+      "id": "deepseek/deepseek-v4-flash",
+      "estCostPerTest": 0.00036
+    },
+    {
+      "name": "deepseek-v3.2",
+      "id": "deepseek/deepseek-v3.2",
+      "estCostPerTest": 0.0004
+    },
+    {
+      "name": "deepseek-v3.2-thinking-high",
+      "id": "deepseek/deepseek-v3.2",
+      "estCostPerTest": 0.0007
+    },
+    {
+      "name": "deepseek-v3.2-exp",
+      "id": "deepseek/deepseek-v3.2-exp",
+      "estCostPerTest": 0.00095
+    },
+    {
+      "name": "deepseek-v3.1-terminus",
+      "id": "deepseek/deepseek-v3.1-terminus",
+      "estCostPerTest": 0.00149
+    },
+    {
+      "name": "deepseek-v3.1",
+      "id": "deepseek/deepseek-chat-v3.1",
+      "estCostPerTest": 0.0003
+    },
+    {
+      "name": "deepseek-v3.1-thinking",
+      "id": "deepseek/deepseek-chat-v3.1",
+      "estCostPerTest": 0.0005
+    },
+    {
+      "name": "qwen3.7-plus",
+      "id": "qwen/qwen3.7-plus",
+      "estCostPerTest": 0.00192
+    },
+    {
+      "name": "qwen3.7-max",
+      "id": "qwen/qwen3.7-max",
+      "estCostPerTest": 0.00625
+    },
+    {
+      "name": "qwen3.5-plus-20260420",
+      "id": "qwen/qwen3.5-plus-20260420",
+      "estCostPerTest": 0.0024
+    },
+    {
+      "name": "qwen3.6-flash",
+      "id": "qwen/qwen3.6-flash",
+      "estCostPerTest": 0.0015
+    },
+    {
+      "name": "qwen3.6-35b-a3b",
+      "id": "qwen/qwen3.6-35b-a3b",
+      "estCostPerTest": 0.00128
+    },
+    {
+      "name": "qwen3.6-max-preview",
+      "id": "qwen/qwen3.6-max-preview",
+      "estCostPerTest": 0.00832
+    },
+    {
+      "name": "qwen3.6-27b",
+      "id": "qwen/qwen3.6-27b",
+      "estCostPerTest": 0.00297
+    },
+    {
+      "name": "qwen3.6-plus",
+      "id": "qwen/qwen3.6-plus",
+      "estCostPerTest": 0.0026
+    },
+    {
+      "name": "qwen3.5-9b",
+      "id": "qwen/qwen3.5-9b",
+      "estCostPerTest": 0.00035
+    },
+    {
+      "name": "qwen3.5-35b-a3b",
+      "id": "qwen/qwen3.5-35b-a3b",
+      "estCostPerTest": 0.00128
+    },
+    {
+      "name": "qwen3.5-27b",
+      "id": "qwen/qwen3.5-27b",
+      "estCostPerTest": 0.00195
+    },
+    {
+      "name": "qwen3.5-122b-a10b",
+      "id": "qwen/qwen3.5-122b-a10b",
+      "estCostPerTest": 0.0026
+    },
+    {
+      "name": "qwen3.5-flash-02-23",
+      "id": "qwen/qwen3.5-flash-02-23",
+      "estCostPerTest": 0.00039
+    },
+    {
+      "name": "qwen3.5-plus-02-15",
+      "id": "qwen/qwen3.5-plus-02-15",
+      "estCostPerTest": 0.00208
+    },
+    {
+      "name": "qwen3.5-397b-a17b",
+      "id": "qwen/qwen3.5-397b-a17b",
+      "estCostPerTest": 0.00322
+    },
+    {
+      "name": "qwen3-max-thinking",
+      "id": "qwen/qwen3-max-thinking",
+      "estCostPerTest": 0.00546
+    },
+    {
+      "name": "qwen3-coder-next",
+      "id": "qwen/qwen3-coder-next",
+      "estCostPerTest": 0.00102
+    },
+    {
+      "name": "qwen3-vl-32b-instruct",
+      "id": "qwen/qwen3-vl-32b-instruct",
+      "estCostPerTest": 0.000624
+    },
+    {
+      "name": "qwen3-vl-8b-thinking",
+      "id": "qwen/qwen3-vl-8b-thinking",
+      "estCostPerTest": 0.001599
+    },
+    {
+      "name": "qwen3-vl-8b-instruct",
+      "id": "qwen/qwen3-vl-8b-instruct",
+      "estCostPerTest": 0.000689
+    },
+    {
+      "name": "qwen3-vl-30b-a3b-thinking",
+      "id": "qwen/qwen3-vl-30b-a3b-thinking",
+      "estCostPerTest": 0.00182
+    },
+    {
+      "name": "qwen3-vl-30b-a3b-instruct",
+      "id": "qwen/qwen3-vl-30b-a3b-instruct",
+      "estCostPerTest": 0.00078
+    },
+    {
+      "name": "qwen3-vl-235b-a22b-thinking",
+      "id": "qwen/qwen3-vl-235b-a22b-thinking",
+      "estCostPerTest": 0.00312
+    },
+    {
+      "name": "qwen3-vl-235b-a22b-instruct",
+      "id": "qwen/qwen3-vl-235b-a22b-instruct",
+      "estCostPerTest": 0.00128
+    },
+    {
+      "name": "qwen3-max",
+      "id": "qwen/qwen3-max",
+      "estCostPerTest": 0.00546
+    },
+    {
+      "name": "qwen3-coder-plus",
+      "id": "qwen/qwen3-coder-plus",
+      "estCostPerTest": 0.00455
+    },
+    {
+      "name": "qwen3-coder-flash",
+      "id": "qwen/qwen3-coder-flash",
+      "estCostPerTest": 0.001365
+    },
+    {
+      "name": "qwen3-next-80b-a3b-thinking",
+      "id": "qwen/qwen3-next-80b-a3b-thinking",
+      "estCostPerTest": 0.000975
+    },
+    {
+      "name": "qwen3-next-80b-a3b-instruct",
+      "id": "qwen/qwen3-next-80b-a3b-instruct",
+      "estCostPerTest": 0.00128
+    },
+    {
+      "name": "qwen-plus-2025-07-28",
+      "id": "qwen/qwen-plus-2025-07-28",
+      "estCostPerTest": 0.0013
+    },
+    {
+      "name": "qwen-plus-2025-07-28:thinking",
+      "id": "qwen/qwen-plus-2025-07-28:thinking",
+      "estCostPerTest": 0.0013
+    },
+    {
+      "name": "qwen3-30b-a3b-thinking-2507",
+      "id": "qwen/qwen3-30b-a3b-thinking-2507",
+      "estCostPerTest": 0.00182
+    },
+    {
+      "name": "qwen3-coder-30b-a3b-instruct",
+      "id": "qwen/qwen3-coder-30b-a3b-instruct",
+      "estCostPerTest": 0.00041
+    },
+    {
+      "name": "qwen3-30b-a3b-instruct-2507",
+      "id": "qwen/qwen3-30b-a3b-instruct-2507",
+      "estCostPerTest": 0.000289
+    },
+    {
+      "name": "qwen3-235b-a22b-thinking-2507",
+      "id": "qwen/qwen3-235b-a22b-thinking-2507",
+      "estCostPerTest": 0.001794
+    },
+    {
+      "name": "qwen3-coder",
+      "id": "qwen/qwen3-coder",
+      "estCostPerTest": 0.00224
+    },
+    {
+      "name": "qwen3-235b-a22b-2507",
+      "id": "qwen/qwen3-235b-a22b-2507",
+      "estCostPerTest": 0.00028
+    },
+    {
+      "name": "kimi-k2.7-code",
+      "id": "moonshotai/kimi-k2.7-code",
+      "estCostPerTest": 0.00498
+    },
+    {
+      "name": "kimi-k2.6",
+      "id": "moonshotai/kimi-k2.6",
+      "estCostPerTest": 0.00473
+    },
+    {
+      "name": "kimi-k2.5",
+      "id": "moonshotai/kimi-k2.5",
+      "estCostPerTest": 0.002775
+    },
+    {
+      "name": "kimi-k2-thinking",
+      "id": "moonshotai/kimi-k2-thinking",
+      "estCostPerTest": 0.0049
+    },
+    {
+      "name": "kimi-k2-0905",
+      "id": "moonshotai/kimi-k2-0905",
+      "estCostPerTest": 0.0037
+    },
+    {
+      "name": "kimi-k2",
+      "id": "moonshotai/kimi-k2",
+      "estCostPerTest": 0.0006
+    },
+    {
+      "name": "mistral-medium-3-5",
+      "id": "mistralai/mistral-medium-3-5",
+      "estCostPerTest": 0.0105
+    },
+    {
+      "name": "mistral-small-2603",
+      "id": "mistralai/mistral-small-2603",
+      "estCostPerTest": 0.0009
+    },
+    {
+      "name": "devstral-2512",
+      "id": "mistralai/devstral-2512",
+      "estCostPerTest": 0.0028
+    },
+    {
+      "name": "ministral-14b-2512",
+      "id": "mistralai/ministral-14b-2512",
+      "estCostPerTest": 0.0006
+    },
+    {
+      "name": "ministral-8b-2512",
+      "id": "mistralai/ministral-8b-2512",
+      "estCostPerTest": 0.00045
+    },
+    {
+      "name": "ministral-3b-2512",
+      "id": "mistralai/ministral-3b-2512",
+      "estCostPerTest": 0.0003
+    },
+    {
+      "name": "mistral-large-2512",
+      "id": "mistralai/mistral-large-2512",
+      "estCostPerTest": 0.0025
+    },
+    {
+      "name": "voxtral-small-24b-2507",
+      "id": "mistralai/voxtral-small-24b-2507",
+      "estCostPerTest": 0.0005
+    },
+    {
+      "name": "mistral-medium-3.1",
+      "id": "mistralai/mistral-medium-3.1",
+      "estCostPerTest": 0.0028
+    },
+    {
+      "name": "codestral-2508",
+      "id": "mistralai/codestral-2508",
+      "estCostPerTest": 0.0015
+    },
+    {
+      "name": "glm-5.2",
+      "id": "z-ai/glm-5.2",
+      "estCostPerTest": 0.00486
+    },
+    {
+      "name": "glm-5.1",
+      "id": "z-ai/glm-5.1",
+      "estCostPerTest": 0.004968
+    },
+    {
+      "name": "glm-5v-turbo",
+      "id": "z-ai/glm-5v-turbo",
+      "estCostPerTest": 0.0064
+    },
+    {
+      "name": "glm-5-turbo",
+      "id": "z-ai/glm-5-turbo",
+      "estCostPerTest": 0.0064
+    },
+    {
+      "name": "glm-5",
+      "id": "z-ai/glm-5",
+      "estCostPerTest": 0.00312
+    },
+    {
+      "name": "glm-4.7-flash",
+      "id": "z-ai/glm-4.7-flash",
+      "estCostPerTest": 0.00052
+    },
+    {
+      "name": "glm-4.7",
+      "id": "z-ai/glm-4.7",
+      "estCostPerTest": 0.00255
+    },
+    {
+      "name": "glm-4.6v",
+      "id": "z-ai/glm-4.6v",
+      "estCostPerTest": 0.0015
+    },
+    {
+      "name": "glm-4.6",
+      "id": "z-ai/glm-4.6",
+      "estCostPerTest": 0.0026
+    },
+    {
+      "name": "glm-4.5v",
+      "id": "z-ai/glm-4.5v",
+      "estCostPerTest": 0.0004
+    },
+    {
+      "name": "glm-4.5",
+      "id": "z-ai/glm-4.5",
+      "estCostPerTest": 0.0025
+    },
+    {
+      "name": "glm-4.5-air",
+      "id": "z-ai/glm-4.5-air",
+      "estCostPerTest": 0.00111
+    }
+  ],
   "suites": {
     "ai-btc-philosophy": {
       "modelCount": 136,

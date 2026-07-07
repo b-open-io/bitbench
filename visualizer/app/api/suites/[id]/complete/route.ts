@@ -1,7 +1,8 @@
 import { parseAuthToken, verifyAuthToken } from "bitcoin-auth"
 import { type NextRequest, NextResponse } from "next/server"
 import { getMasterPublicKey, isMasterWifConfigured } from "@/lib/addresses"
-import { addBenchmarkRun, isRedisConfigured, setSuiteState } from "@/lib/kv"
+import { appendRun, isRedisConfigured, setSuiteState } from "@/lib/kv"
+import { getRunRequest, setRunRequestStatus } from "@/lib/run-requests"
 import type { BenchmarkRun, SuiteRuntimeState } from "@/lib/types"
 
 interface CompletionPayload {
@@ -26,6 +27,7 @@ interface CompletionPayload {
     overallSuccessRate: number
     totalCost: number
   }
+  requestId?: string
 }
 
 export async function POST(
@@ -122,11 +124,19 @@ export async function POST(
     })),
     totalCost: payload.metadata.totalCost,
     duration: 0, // Not tracked
+    ...(payload.requestId ? { requestId: payload.requestId } : {}),
   }
 
   try {
     // Store benchmark run in KV
-    await addBenchmarkRun(benchmarkRun)
+    await appendRun(suiteId, benchmarkRun)
+
+    if (payload.requestId) {
+      const runRequest = await getRunRequest(payload.requestId)
+      if (runRequest && runRequest.suiteId === suiteId) {
+        await setRunRequestStatus(payload.requestId, "completed")
+      }
+    }
 
     // Update suite state to completed
     const newState: SuiteRuntimeState = {

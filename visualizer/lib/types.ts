@@ -31,6 +31,7 @@ export interface TestSuiteFile {
 
 // Suite status for tracking benchmark state
 export type SuiteStatus = "funding" | "pending" | "completed"
+export type RunRequestStatus = "funding" | "pending" | "completed"
 
 export const CHAIN_VALUES = [
   "bsv",
@@ -110,6 +111,26 @@ export interface ModelResult {
 export interface ModelRegistryEntry {
   name: string
   id: string
+  estCostPerTest: number
+}
+
+export interface RunRequest {
+  requestId: string
+  suiteId: string
+  suiteVersion: string
+  modelIds: string[]
+  modelCount: number
+  estimatedCostUsd: number
+  donationAddress: string
+  createdAt: string
+  status: RunRequestStatus
+}
+
+export interface RunRequestWithBalance extends RunRequest {
+  currentBalanceSats: number
+  currentBalanceUsd: number
+  bsvPriceUsd: number
+  fundingProgress: number
 }
 
 export interface BenchmarkRun {
@@ -120,6 +141,7 @@ export interface BenchmarkRun {
   rankings: ModelResult[]
   totalCost: number
   duration: number
+  requestId?: string
 }
 
 // API response types

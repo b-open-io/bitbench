@@ -17,6 +17,8 @@ export interface FundingNotification {
   balanceSats: number
   balanceUsd: number
   goalUsd: number
+  requestId?: string
+  modelCount?: number
 }
 
 /**
@@ -33,6 +35,10 @@ function getBenchmarkCommand(suiteId: string): string {
   return `cd bench && bun run cli.tsx --suite ${suiteId}`
 }
 
+function getRunRequestCommand(requestId: string): string {
+  return `cd bench && bun run cli.tsx --request ${requestId}`
+}
+
 /**
  * Send Discord webhook notification
  */
@@ -44,11 +50,19 @@ async function sendDiscordNotification(
     return false
   }
 
-  const command = getBenchmarkCommand(notification.suiteId)
+  const command = notification.requestId
+    ? getRunRequestCommand(notification.requestId)
+    : getBenchmarkCommand(notification.suiteId)
+  const title = notification.requestId
+    ? "🎉 Run Request Fully Funded!"
+    : "🎉 Benchmark Fully Funded!"
+  const description = notification.requestId
+    ? `**${notification.suiteName}** run request with ${notification.modelCount ?? "pinned"} models has reached its funding goal.`
+    : `**${notification.suiteName}** has reached its funding goal and is ready to run.`
 
   const embed = {
-    title: "🎉 Benchmark Fully Funded!",
-    description: `**${notification.suiteName}** has reached its funding goal and is ready to run.`,
+    title,
+    description,
     color: 0xf59e0b, // Amber color
     fields: [
       {
@@ -81,6 +95,15 @@ async function sendDiscordNotification(
         value: `\`\`\`bash\n${command}\n\`\`\``,
         inline: false,
       },
+      ...(notification.requestId
+        ? [
+            {
+              name: "Run Request",
+              value: `\`${notification.requestId}\` (${notification.modelCount ?? "unknown"} models)`,
+              inline: false,
+            },
+          ]
+        : []),
     ],
     footer: {
       text: "Bitbench - Bitcoin AI Benchmark Platform",
@@ -127,14 +150,25 @@ async function sendEmailNotification(
     return false
   }
 
-  const command = getBenchmarkCommand(notification.suiteId)
+  const command = notification.requestId
+    ? getRunRequestCommand(notification.requestId)
+    : getBenchmarkCommand(notification.suiteId)
   const suiteUrl = `${SITE_URL}/suite/${notification.suiteId}`
+  const subject = notification.requestId
+    ? `🎉 Run Request Funded: ${notification.suiteName}`
+    : `🎉 Benchmark Funded: ${notification.suiteName}`
+  const intro = notification.requestId
+    ? `<strong>${notification.suiteName}</strong> run request with ${notification.modelCount ?? "pinned"} models has reached its funding goal and is ready to run.`
+    : `<strong>${notification.suiteName}</strong> has reached its funding goal and is ready to run.`
+  const heading = notification.requestId
+    ? "Run Request Fully Funded!"
+    : "Benchmark Fully Funded!"
 
   try {
     const { error } = await resend.emails.send({
       from: "Bitbench <notifications@bitbench.org>",
       to: NOTIFICATION_EMAIL,
-      subject: `🎉 Benchmark Funded: ${notification.suiteName}`,
+      subject,
       html: `
 <!DOCTYPE html>
 <html>
@@ -158,10 +192,10 @@ async function sendEmailNotification(
 </head>
 <body>
   <div class="header">
-    <h1>Benchmark Fully Funded!</h1>
+    <h1>${heading}</h1>
   </div>
   <div class="content">
-    <p><strong>${notification.suiteName}</strong> has reached its funding goal and is ready to run.</p>
+    <p>${intro}</p>
 
     <div class="meta">
       <div class="meta-item">
@@ -180,6 +214,18 @@ async function sendEmailNotification(
         <div class="label">Funding</div>
         <div class="value">$${notification.balanceUsd.toFixed(2)} / $${notification.goalUsd.toFixed(2)}</div>
       </div>
+      ${
+        notification.requestId
+          ? `<div class="meta-item">
+        <div class="label">Run Request</div>
+        <div class="value">${notification.requestId}</div>
+      </div>
+      <div class="meta-item">
+        <div class="label">Pinned Models</div>
+        <div class="value">${notification.modelCount ?? "Unknown"}</div>
+      </div>`
+          : ""
+      }
     </div>
 
     <div class="command-box">
@@ -201,12 +247,13 @@ async function sendEmailNotification(
       text: `
 Benchmark Fully Funded!
 
-${notification.suiteName} has reached its funding goal and is ready to run.
+${notification.requestId ? `${notification.suiteName} run request has reached its funding goal and is ready to run.` : `${notification.suiteName} has reached its funding goal and is ready to run.`}
 
 Suite ID: ${notification.suiteId}
 Chain: ${notification.chain.toUpperCase()}
 Version: v${notification.version}
 Funding: $${notification.balanceUsd.toFixed(2)} / $${notification.goalUsd.toFixed(2)}
+${notification.requestId ? `Run Request: ${notification.requestId}\nPinned Models: ${notification.modelCount ?? "Unknown"}\n` : ""}
 
 Run this command to execute the benchmark:
 ${command}

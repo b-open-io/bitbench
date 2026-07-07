@@ -179,3 +179,5 @@ results/
 .vercel
 .env*.local
 SPEC-*
+skills-lock.json
+.agents/

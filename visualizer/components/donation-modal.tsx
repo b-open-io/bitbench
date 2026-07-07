@@ -20,11 +20,19 @@ interface DonationModalProps {
   suite: SuiteWithBalance | null
   open: boolean
   onClose: () => void
+  // Fires after a broadcast succeeds, with the USD amount just sent, so the
+  // page can optimistically advance funding state without a refetch.
+  onDonated?: (amountUsd: number) => void
 }
 
 type DonationStatus = "idle" | "sending" | "success" | "error"
 
-export function DonationModal({ suite, open, onClose }: DonationModalProps) {
+export function DonationModal({
+  suite,
+  open,
+  onClose,
+  onDonated,
+}: DonationModalProps) {
   // Use reactive wallet state - automatically updates on signedOut/switchAccount events
   const walletState = useWallet()
   const isReady = walletState?.isReady ?? false
@@ -80,6 +88,7 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
 
       setTxid(result.txid)
       setStatus("success")
+      onDonated?.(Number.parseFloat(amountUsd) || 0)
 
       // Record donation to API
       await fetch(`/api/suites/${suite.id}/donate`, {

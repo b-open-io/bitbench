@@ -26,6 +26,7 @@ export interface BenchmarkResultData {
   chain: string;
   version: string;
   timestamp: string;
+  requestId?: string;
   rankings: Array<{
     model: string;
     correct: number;

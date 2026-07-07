@@ -152,6 +152,41 @@ export default async function AboutPage() {
           </div>
         </section>
 
+        {/* Score Comparability */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            How scores stay comparable
+          </h2>
+          <div className="prose prose-neutral dark:prose-invert max-w-none">
+            <p>
+              Every score is a cell: one suite version, one model, and one run
+              date. That makes the table specific about what was tested and when
+              it was tested.
+            </p>
+            <p>
+              When questions change, the suite version changes too. Bitbench
+              starts a fresh table for that version and does not mix older
+              results into the current leaderboard.
+            </p>
+            <p>
+              Leaderboards show the latest run for each model with its date.
+              Providers can change model serving over time, so re-runs add
+              history instead of overwriting the older result.
+            </p>
+            <p>
+              The default funding bucket runs the full current model registry.
+              Custom run requests pin an exact model set at a proportionally
+              smaller price, and each distinct selection gets its own
+              deterministic donation address.
+            </p>
+            <p>
+              Scores are single samples at temperature 1.0. Treat small gaps as
+              noise, especially between models with similar accuracy.
+            </p>
+          </div>
+        </section>
+
         {/* Current Suites */}
         <section className="mb-12">
           <h2 className="text-xl font-semibold mb-4">

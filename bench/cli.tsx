@@ -48,6 +48,47 @@ const stderr = ensureRefUnref(process.stderr as any);
 // Check for --force flag to bypass funding check
 const FORCE_RUN = process.argv.includes("--force");
 
+function getArgValue(flag: string): string | null {
+  const idx = process.argv.indexOf(flag);
+  if (idx === -1) return null;
+  return process.argv[idx + 1] ?? null;
+}
+
+const REQUEST_ID = getArgValue("--request");
+const SUITE_ID = getArgValue("--suite");
+const API_BASE = (getArgValue("--api") ?? "https://bitbench.org").replace(
+  /\/$/,
+  ""
+);
+
+type PendingRunRequest = {
+  requestId: string;
+  suiteId: string;
+  suiteVersion: string;
+  modelIds: string[];
+  modelCount: number;
+  estimatedCostUsd: number;
+  status: "funding" | "pending" | "completed";
+};
+
+async function fetchPendingRunRequest(
+  requestId: string
+): Promise<PendingRunRequest> {
+  const response = await fetch(`${API_BASE}/api/run-requests?status=pending`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch pending run requests: HTTP ${response.status}`);
+  }
+
+  const data = (await response.json()) as { requests?: PendingRunRequest[] };
+  const runRequest = (data.requests ?? []).find(
+    (request) => request.requestId === requestId
+  );
+  if (!runRequest) {
+    throw new Error(`Pending run request not found: ${requestId}`);
+  }
+  return runRequest;
+}
+
 function useBenchRoot() {
   const here = fileURLToPath(import.meta.url);
   return dirname(here);
@@ -287,6 +328,8 @@ const App: React.FC = () => {
   const [fundingStatuses, setFundingStatuses] = useState<FundingStatus[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [activeRunRequest, setActiveRunRequest] =
+    useState<PendingRunRequest | null>(null);
   const [version, setVersion] = useState<string>(formatDefaultVersion());
   const [stage, setStage] = useState<Stage>("menu");
 
@@ -321,6 +364,26 @@ const App: React.FC = () => {
       try {
         const found = await findTestSuites(testsDir);
         setSuites(found);
+        if (REQUEST_ID) {
+          const runRequest = await fetchPendingRunRequest(REQUEST_ID);
+          const suiteIndex = found.findIndex((suite) => suite.id === runRequest.suiteId);
+          if (suiteIndex === -1) {
+            throw new Error(
+              `Run request ${REQUEST_ID} refers to missing suite ${runRequest.suiteId}`
+            );
+          }
+          setActiveRunRequest(runRequest);
+          setSelectedIndex(suiteIndex);
+          setVersion(runRequest.suiteVersion);
+          setStage("selectModels");
+        } else if (SUITE_ID) {
+          const suiteIndex = found.findIndex((suite) => suite.id === SUITE_ID);
+          if (suiteIndex === -1) {
+            throw new Error(`Suite not found: ${SUITE_ID}`);
+          }
+          setSelectedIndex(suiteIndex);
+          setStage("version");
+        }
         setLoading(false);
       } catch (e) {
         setError((e as Error).message);
@@ -353,21 +416,37 @@ const App: React.FC = () => {
       (async () => {
         const entry = suites[selectedIndex];
         const resolvedModels = await resolveModels(entry.suite.model_filter);
-        setAvailableModels(resolvedModels);
-        setSelectedModels(new Set(resolvedModels.map((m) => m.name)));
+        const runnableModels = activeRunRequest
+          ? resolvedModels.filter((model) =>
+              activeRunRequest.modelIds.includes(model.id)
+            )
+          : resolvedModels;
+        if (activeRunRequest) {
+          const resolvedIds = new Set(resolvedModels.map((model) => model.id));
+          const missingIds = activeRunRequest.modelIds.filter(
+            (modelId) => !resolvedIds.has(modelId)
+          );
+          if (missingIds.length > 0) {
+            throw new Error(
+              `Pinned model id(s) no longer in catalog: ${missingIds.join(", ")}`
+            );
+          }
+        }
+        setAvailableModels(runnableModels);
+        setSelectedModels(new Set(runnableModels.map((m) => m.name)));
         setModelCursor(0);
         const status = await getCacheStatus(
           entry.id,
           version,
           entry.suite.tests.length,
-          resolvedModels
+          runnableModels
         );
         setCacheStatus(status);
       })()
         .catch((e) => setError((e as Error).message))
         .finally(() => setModelsLoading(false));
     }
-  }, [stage, selectedIndex, version, suites]);
+  }, [stage, selectedIndex, version, suites, activeRunRequest]);
 
   // Run benchmark
   useEffect(() => {
@@ -499,6 +578,9 @@ const App: React.FC = () => {
           chain: suiteEntry.suite.chain || "unknown",
           version,
           timestamp: new Date().toISOString(),
+          ...(activeRunRequest
+            ? { requestId: activeRunRequest.requestId }
+            : {}),
           rankings: localModelOrder.map((model) => {
             const s = localStats[model];
             const answered = s ? s.correctCount + s.incorrectCount : 0;
@@ -537,7 +619,15 @@ const App: React.FC = () => {
         setStage("completed");
       })();
     }
-  }, [stage, selectedIndex, suites, version, selectedModels, availableModels]);
+  }, [
+    stage,
+    selectedIndex,
+    suites,
+    version,
+    selectedModels,
+    availableModels,
+    activeRunRequest,
+  ]);
 
   // Get funding status for selected suite
   const selectedFunding = useMemo(() => {
@@ -564,7 +654,11 @@ const App: React.FC = () => {
 
       if (key.escape) {
         setCacheStatus(null);
-        setStage("version");
+        if (activeRunRequest) {
+          setStage("menu");
+        } else {
+          setStage("version");
+        }
       } else if (key.upArrow) {
         setModelCursor((c) =>
           c > 0 ? c - 1 : Math.max(availableModels.length - 1, 0)
@@ -573,7 +667,7 @@ const App: React.FC = () => {
       } else if (key.downArrow) {
         setModelCursor((c) => (c < availableModels.length - 1 ? c + 1 : 0));
         setModelSelectionReady(true);
-      } else if (input === " " && availableModels[modelCursor]) {
+      } else if (!activeRunRequest && input === " " && availableModels[modelCursor]) {
         const modelName = availableModels[modelCursor].name;
         setSelectedModels((prev) => {
           const next = new Set(prev);
@@ -585,10 +679,10 @@ const App: React.FC = () => {
           return next;
         });
         setModelSelectionReady(true);
-      } else if (input === "a") {
+      } else if (!activeRunRequest && input === "a") {
         setSelectedModels(new Set(availableModels.map((m) => m.name)));
         setModelSelectionReady(true);
-      } else if (input === "n") {
+      } else if (!activeRunRequest && input === "n") {
         setSelectedModels(new Set());
         setModelSelectionReady(true);
       } else if (input === "s" || input === "S") {
@@ -995,8 +1089,15 @@ const App: React.FC = () => {
         )}
 
         <Text bold color="cyan">
-          Select models to run ({selectedCount}/{availableModels.length} selected)
+          {activeRunRequest
+            ? `Pinned run request ${activeRunRequest.requestId}`
+            : `Select models to run (${selectedCount}/${availableModels.length} selected)`}
         </Text>
+        {activeRunRequest && (
+          <Text color="gray">
+            {selectedCount} funded models pinned for {activeRunRequest.suiteId}@{activeRunRequest.suiteVersion}
+          </Text>
+        )}
         <Text color="gray">
           {numTests} tests × {TEST_RUNS_PER_MODEL} runs = {totalExecutions.toLocaleString()} executions
         </Text>
@@ -1007,7 +1108,9 @@ const App: React.FC = () => {
           )}
         </Text>
         <Text color="gray">
-          [↑↓] navigate • [Space] toggle • [a] all • [n] none • [s] start • [Esc] back
+          {activeRunRequest
+            ? "[↑↓] navigate • [s] start • [Esc] menu"
+            : "[↑↓] navigate • [Space] toggle • [a] all • [n] none • [s] start • [Esc] back"}
         </Text>
         <Box marginTop={1} flexDirection="column">
           {availableModels.map((model, idx) => {
@@ -1307,6 +1410,11 @@ const App: React.FC = () => {
             <Text>
               Version: <Text color="magenta">{benchmarkResults.version}</Text>
             </Text>
+            {benchmarkResults.requestId && (
+              <Text>
+                Run request: <Text color="cyan">{benchmarkResults.requestId}</Text>
+              </Text>
+            )}
             <Text>
               Models tested: <Text color="white">{benchmarkResults.metadata.totalModels}</Text>
             </Text>

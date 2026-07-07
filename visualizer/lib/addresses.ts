@@ -26,6 +26,23 @@ export function getDonationAddress(suiteId: string): string {
 }
 
 /**
+ * Derives a deterministic donation address for a pinned run request.
+ * Keep this in agreement with bench/funding.ts getRunRequestAddress.
+ */
+export function getRunRequestAddress(requestId: string): string {
+  const masterWif = process.env.MASTER_WIF
+  if (!masterWif) {
+    throw new Error("MASTER_WIF environment variable is not set")
+  }
+
+  const masterKey = PrivateKey.fromWif(masterWif)
+  const selfPubKey = masterKey.toPublicKey()
+  const derivedKey = masterKey.deriveChild(selfPubKey, `runreq:${requestId}`)
+
+  return derivedKey.toAddress().toString()
+}
+
+/**
  * Get the derived private key for a suite (for spending donations)
  * Only use server-side, never expose to client
  */

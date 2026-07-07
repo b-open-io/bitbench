@@ -24,10 +24,22 @@ type TestSuiteFile = {
   tests: Array<unknown>;
 };
 
+type SnapshotModel = { name: string; id: string; estCostPerTest: number };
+
 type ResolvedSnapshot = {
   generatedAt: string;
   defaultModelCount: number;
-  suites: Record<string, { modelCount: number; estimatedCostUsd: number }>;
+  defaultModels: SnapshotModel[];
+  suites: Record<
+    string,
+    {
+      modelCount: number;
+      estimatedCostUsd: number;
+      // Present only when the suite declares a model_filter narrowing the
+      // default registry; absent means "runs on the default model set".
+      models?: SnapshotModel[];
+    }
+  >;
 };
 
 const WRITE = process.argv.includes("--write");
@@ -41,6 +53,10 @@ function perMillion(price: number | undefined): string {
 
 function roundCents(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+function roundCents6(value: number): number {
+  return Math.round(value * 1_000_000) / 1_000_000;
 }
 
 async function loadSuites(): Promise<
@@ -102,6 +118,11 @@ const suites = await loadSuites();
 const snapshot: ResolvedSnapshot = {
   generatedAt: new Date().toISOString(),
   defaultModelCount: defaultModels.length,
+  defaultModels: defaultModels.map((m) => ({
+    name: m.name,
+    id: m.id,
+    estCostPerTest: roundCents6(m.avgCostPerTest ?? 0),
+  })),
   suites: {},
 };
 
@@ -114,6 +135,15 @@ for (const { id, suite } of suites) {
   snapshot.suites[id] = {
     modelCount: models.length,
     estimatedCostUsd,
+    ...(suite.model_filter
+      ? {
+          models: models.map((m) => ({
+            name: m.name,
+            id: m.id,
+            estCostPerTest: roundCents6(m.avgCostPerTest ?? 0),
+          })),
+        }
+      : {}),
   };
 
   const current = suite.estimatedCostUsd;

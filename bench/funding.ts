@@ -50,6 +50,25 @@ export function getDonationAddress(suiteId: string): string {
 }
 
 /**
+ * Derive run-request address using Type 42.
+ * Keep this in agreement with visualizer/lib/addresses.ts getRunRequestAddress.
+ */
+export function getRunRequestAddress(requestId: string): string {
+  const masterWif = process.env.MASTER_WIF;
+  if (!masterWif) {
+    throw new Error(
+      "MASTER_WIF environment variable is not set. Add it to bench/.env"
+    );
+  }
+
+  const masterKey = PrivateKey.fromWif(masterWif);
+  const selfPubKey = masterKey.toPublicKey();
+  const derivedKey = masterKey.deriveChild(selfPubKey, `runreq:${requestId}`);
+
+  return derivedKey.toAddress().toString();
+}
+
+/**
  * Check if MASTER_WIF is configured
  */
 export function isMasterWifConfigured(): boolean {

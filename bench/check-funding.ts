@@ -6,6 +6,50 @@
 
 import { getAllFundingStatus, formatFundingRow, isMasterWifConfigured } from "./funding";
 
+interface RunRequest {
+  requestId: string;
+  suiteId: string;
+  suiteVersion: string;
+  modelCount: number;
+  estimatedCostUsd: number;
+  donationAddress: string;
+  status: "funding" | "pending" | "completed";
+}
+
+function getArgValue(flag: string): string | null {
+  const idx = process.argv.indexOf(flag);
+  if (idx === -1) return null;
+  return process.argv[idx + 1] ?? null;
+}
+
+function getApiBase(): string {
+  return (getArgValue("--api") ?? "https://bitbench.org").replace(/\/$/, "");
+}
+
+async function fetchOpenRunRequests(apiBase: string): Promise<
+  | { ok: true; requests: RunRequest[] }
+  | { ok: false; warning: string }
+> {
+  try {
+    const response = await fetch(`${apiBase}/api/run-requests`);
+    if (!response.ok) {
+      return { ok: false, warning: `HTTP ${response.status}` };
+    }
+    const data = (await response.json()) as { requests?: RunRequest[] };
+    return {
+      ok: true,
+      requests: (data.requests ?? []).filter(
+        (request) => request.status !== "completed"
+      ),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      warning: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
 async function main() {
   console.log("\n╔═══════════════════════════════════════════════════════════════════════╗");
   console.log("║                        BITBENCH FUNDING STATUS                        ║");
@@ -17,7 +61,11 @@ async function main() {
 
   console.log("Checking balances via WhatsOnChain...\n");
 
-  const statuses = await getAllFundingStatus();
+  const apiBase = getApiBase();
+  const [statuses, runRequestsResult] = await Promise.all([
+    getAllFundingStatus(),
+    fetchOpenRunRequests(apiBase),
+  ]);
   const rows = statuses.map(formatFundingRow);
 
   // Calculate column widths
@@ -76,6 +124,22 @@ async function main() {
     `Summary: \x1b[32m$${totalRaised.toFixed(2)}\x1b[0m / $${totalGoal.toFixed(2)} raised  •  ` +
     `${fundedCount > 0 ? "\x1b[32m" : "\x1b[33m"}${fundedCount}\x1b[0m/${statuses.length} suites funded`
   );
+
+  console.log("\nOpen run requests:");
+  if (!runRequestsResult.ok) {
+    console.log(
+      `  ⚠ Could not fetch run requests from ${apiBase}: ${runRequestsResult.warning}`
+    );
+  } else if (runRequestsResult.requests.length === 0) {
+    console.log("  None");
+  } else {
+    for (const request of runRequestsResult.requests) {
+      const address = `${request.donationAddress.slice(0, 8)}...${request.donationAddress.slice(-4)}`;
+      console.log(
+        `  ${request.requestId}  ${request.suiteId}@${request.suiteVersion}  ${request.modelCount} models  $${request.estimatedCostUsd.toFixed(2)}  ${request.status}  ${address}`
+      );
+    }
+  }
   console.log("");
 }
 

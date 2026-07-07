@@ -47,7 +47,8 @@ function isModelRegistryEntryArray(
         typeof model === "object" &&
         model !== null &&
         typeof (model as ModelRegistryEntry).name === "string" &&
-        typeof (model as ModelRegistryEntry).id === "string",
+        typeof (model as ModelRegistryEntry).id === "string" &&
+        typeof (model as ModelRegistryEntry).estCostPerTest === "number",
     )
   )
 }
@@ -204,6 +205,33 @@ export async function getSuiteModelInfo(suiteId: string): Promise<{
     models,
     usesDefaultModels,
   }
+}
+
+export async function getRunRequestModelCatalog(
+  suiteId: string,
+): Promise<ModelRegistryEntry[]> {
+  const [snapshot, suiteFile] = await Promise.all([
+    loadModelsResolvedSnapshot(),
+    getSuiteFile(suiteId),
+  ])
+
+  if (!suiteFile) {
+    throw new Error(`Suite "${suiteId}" does not exist.`)
+  }
+
+  const byId = new Map<string, ModelRegistryEntry>()
+  for (const model of snapshot.defaultModels) {
+    byId.set(model.id, model)
+  }
+
+  const suite = snapshot.suites[suiteId]
+  if (suite?.models) {
+    for (const model of suite.models) {
+      byId.set(model.id, model)
+    }
+  }
+
+  return [...byId.values()]
 }
 
 /**
