@@ -66,7 +66,6 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
     wallet,
     status,
     identityKey,
-    availableProviders,
     connect: oneSatConnect,
     disconnect: oneSatDisconnect,
   } = useOneSatWallet()
@@ -85,10 +84,12 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
   const [themeTokens, setThemeTokens] = useState<ThemeToken[]>([])
   const [isLoadingThemes, setIsLoadingThemes] = useState(false)
   const latestIdentityKey = useRef<string | null>(identityKey)
+  const latestStatus = useRef(status)
 
   useEffect(() => {
     latestIdentityKey.current = identityKey
-  }, [identityKey])
+    latestStatus.current = status
+  }, [identityKey, status])
 
   const clearAccountState = useCallback(() => {
     setAddresses(null)
@@ -209,19 +210,24 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("YoursEmitEvent", handler)
   }, [clearAccountState, oneSatConnect, oneSatDisconnect])
 
+  // BRC-100 extension detection only happens INSIDE oneSatConnect()
+  // (availableProviders lists configured providers, never detected
+  // extensions). connect() resolves with status "selecting" when nothing
+  // was found; a fast failure means no wallet is installed, while a slow
+  // one is a user rejection — only the former should route to yours.org.
   const connect = useCallback(async () => {
-    if (availableProviders.length === 0) {
-      window.open("https://yours.org", "_blank")
+    const startedAt = Date.now()
+    try {
+      await oneSatConnect()
+    } catch (error) {
+      console.error("Error connecting wallet:", error)
       return
     }
 
-    try {
-      await oneSatConnect()
-      await refreshState()
-    } catch (error) {
-      console.error("Error connecting wallet:", error)
+    if (latestStatus.current !== "connected" && Date.now() - startedAt < 2000) {
+      window.open("https://yours.org", "_blank")
     }
-  }, [availableProviders.length, oneSatConnect, refreshState])
+  }, [oneSatConnect])
 
   const disconnect = useCallback(async () => {
     try {
@@ -234,7 +240,7 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
   }, [oneSatDisconnect, clearAccountState, themeContext])
 
   const state: WalletState = {
-    isReady: availableProviders.length > 0,
+    isReady: true,
     isConnected: status === "connected",
     addresses,
     balance,
