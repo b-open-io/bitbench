@@ -108,25 +108,25 @@ export const modelsToRun: RunnableModel[] = [
 
   // Grok
   {
-    name: "grok-4",
-    llm: openrouter("x-ai/grok-4", defaultProviderOptions),
+    name: "grok-4.3",
+    llm: openrouter("x-ai/grok-4.3", defaultProviderOptions),
     reasoning: true,
   },
   {
-    name: "grok-4.1-fast",
-    llm: openrouter("x-ai/grok-4.1-fast", defaultProviderOptions),
+    name: "grok-4.20",
+    llm: openrouter("x-ai/grok-4.20", defaultProviderOptions),
     reasoning: true,
   },
   {
-    name: "grok-3-mini",
-    llm: openrouter("x-ai/grok-3-mini-beta", defaultProviderOptions),
+    name: "grok-build-0.1",
+    llm: openrouter("x-ai/grok-build-0.1", defaultProviderOptions),
     reasoning: true,
   },
 
   // Gemini
   {
-    name: "gemini-3-pro-preview",
-    llm: openrouter("google/gemini-3-pro-preview", defaultProviderOptions),
+    name: "gemini-3.1-pro-preview",
+    llm: openrouter("google/gemini-3.1-pro-preview", defaultProviderOptions),
     reasoning: true,
   },
   {
