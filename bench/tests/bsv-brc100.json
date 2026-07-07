@@ -1,0 +1,60 @@
+{
+  "id": "bsv-brc100",
+  "chain": "bsv",
+  "name": "BRC-100 Wallet Interface",
+  "description": "Tests knowledge of the BRC-100 wallet interface standard: action lifecycle, key derivation parameters, baskets/tags/labels, certificates, BEEF serialization, and 1Sat SDK conventions built on top of it.",
+  "version": "1.0.0",
+  "estimatedCostUsd": 25.08,
+  "system_prompt": "You are a BSV wallet developer expert in the BRC-100 wallet interface standard and the 1Sat SDK. Provide precise technical answers using the exact terms, method names, and values from the specification.",
+  "tests": [
+    {
+      "prompt": "In BRC-100, what is the exact shape of the `protocolID` argument passed to methods like getPublicKey and createSignature?",
+      "answers": ["tuple", "two-element", "[securityLevel", "securityLevel, protocol", "array of two", "level and a protocol string"]
+    },
+    {
+      "prompt": "Besides a 33-byte public key, what two special string values can the BRC-100 `counterparty` parameter take?",
+      "answers": ["self' and 'anyone", "self\" and \"anyone", "self and anyone", "'anyone'", "\"anyone\"", "`anyone`"]
+    },
+    {
+      "prompt": "In a BRC-100 protocolID, what does security level 2 require, compared to levels 0 and 1?",
+      "answers": ["counterparty", "per-counterparty"]
+    },
+    {
+      "prompt": "When internalizeAction accepts an incoming transaction, each output must be internalized under one of two protocols. Name them.",
+      "answers": ["wallet payment", "basket insertion"]
+    },
+    {
+      "prompt": "What transaction serialization format does createAction return in its `tx` field, and which BRC defines it?",
+      "answers": ["AtomicBEEF", "atomic BEEF", "BRC-95", "BRC 95"]
+    },
+    {
+      "prompt": "What are the two possible values returned by the BRC-100 getNetwork method?",
+      "answers": ["mainnet"],
+      "negative_answers": ["livenet"]
+    },
+    {
+      "prompt": "In BRC-100 outpoint strings, what character separates the txid from the output index?",
+      "answers": ["period", "dot", "'.'", "\".\"", "`.`"]
+    },
+    {
+      "prompt": "Which BRC-100 method removes an output from a basket without spending it?",
+      "answers": ["relinquishOutput"]
+    },
+    {
+      "prompt": "What object does proveCertificate return that allows a verifier to decrypt the revealed certificate fields?",
+      "answers": ["keyringForVerifier"]
+    },
+    {
+      "prompt": "Every valid BEEF payload begins with which magic-byte prefix (hex)?",
+      "answers": ["0100beef"]
+    },
+    {
+      "prompt": "In the 1Sat SDK's conventions on top of BRC-100, what is the exact basket name used to store ordinals?",
+      "answers": ["p 1sat ordinals"]
+    },
+    {
+      "prompt": "In BRC-100, after createAction returns a signableTransaction, which method completes the flow, and what does its request map unlocking scripts into (the required field name)?",
+      "answers": ["spends"]
+    }
+  ]
+}

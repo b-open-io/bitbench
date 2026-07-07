@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-07T15:28:43.919Z",
+  "generatedAt": "2026-07-07T15:59:56.696Z",
   "defaultModelCount": 136,
   "suites": {
     "ai-btc-philosophy": {
@@ -21,6 +21,10 @@
     "bch-cashtokens": {
       "modelCount": 136,
       "estimatedCostUsd": 10.45
+    },
+    "bsv-brc100": {
+      "modelCount": 136,
+      "estimatedCostUsd": 25.08
     },
     "bsv-protocols": {
       "modelCount": 136,
