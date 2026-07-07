@@ -14,8 +14,9 @@ import {
   syncResultsToWebsite,
   syncQuestionBreakdown,
   buildQuestionBreakdown,
-  modelsToRun,
+  resolveModels,
   estimateBenchmarkCost,
+  estimateModelCostPerTest,
   TEST_RUNS_PER_MODEL,
   getCacheStatus,
   type TestSuite,
@@ -301,8 +302,10 @@ const App: React.FC = () => {
 
   // Model selection - all models enabled by default
   const [selectedModels, setSelectedModels] = useState<Set<string>>(
-    () => new Set(modelsToRun.map((m) => m.name))
+    () => new Set()
   );
+  const [availableModels, setAvailableModels] = useState<RunnableModel[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
   const [modelCursor, setModelCursor] = useState(0);
   // Track if user has interacted with model selection (prevents accidental immediate start)
   const [modelSelectionReady, setModelSelectionReady] = useState(false);
@@ -346,15 +349,23 @@ const App: React.FC = () => {
     if (stage === "selectModels" && selectedIndex != null) {
       // Reset ready state so user must interact before starting
       setModelSelectionReady(false);
+      setModelsLoading(true);
       (async () => {
         const entry = suites[selectedIndex];
+        const resolvedModels = await resolveModels(entry.suite.model_filter);
+        setAvailableModels(resolvedModels);
+        setSelectedModels(new Set(resolvedModels.map((m) => m.name)));
+        setModelCursor(0);
         const status = await getCacheStatus(
           entry.id,
           version,
-          entry.suite.tests.length
+          entry.suite.tests.length,
+          resolvedModels
         );
         setCacheStatus(status);
-      })();
+      })()
+        .catch((e) => setError((e as Error).message))
+        .finally(() => setModelsLoading(false));
     }
   }, [stage, selectedIndex, version, suites]);
 
@@ -370,7 +381,9 @@ const App: React.FC = () => {
         let localStats: Record<string, ModelStats> = {};
 
         // Filter models based on selection
-        const activeModels = modelsToRun.filter((m) => selectedModels.has(m.name));
+        const activeModels = availableModels.filter((m) =>
+          selectedModels.has(m.name)
+        );
 
         await testRunner({
           suite,
@@ -524,7 +537,7 @@ const App: React.FC = () => {
         setStage("completed");
       })();
     }
-  }, [stage, selectedIndex, suites, version]);
+  }, [stage, selectedIndex, suites, version, selectedModels, availableModels]);
 
   // Get funding status for selected suite
   const selectedFunding = useMemo(() => {
@@ -553,13 +566,15 @@ const App: React.FC = () => {
         setCacheStatus(null);
         setStage("version");
       } else if (key.upArrow) {
-        setModelCursor((c) => (c > 0 ? c - 1 : modelsToRun.length - 1));
+        setModelCursor((c) =>
+          c > 0 ? c - 1 : Math.max(availableModels.length - 1, 0)
+        );
         setModelSelectionReady(true);
       } else if (key.downArrow) {
-        setModelCursor((c) => (c < modelsToRun.length - 1 ? c + 1 : 0));
+        setModelCursor((c) => (c < availableModels.length - 1 ? c + 1 : 0));
         setModelSelectionReady(true);
-      } else if (input === " ") {
-        const modelName = modelsToRun[modelCursor].name;
+      } else if (input === " " && availableModels[modelCursor]) {
+        const modelName = availableModels[modelCursor].name;
         setSelectedModels((prev) => {
           const next = new Set(prev);
           if (next.has(modelName)) {
@@ -571,7 +586,7 @@ const App: React.FC = () => {
         });
         setModelSelectionReady(true);
       } else if (input === "a") {
-        setSelectedModels(new Set(modelsToRun.map((m) => m.name)));
+        setSelectedModels(new Set(availableModels.map((m) => m.name)));
         setModelSelectionReady(true);
       } else if (input === "n") {
         setSelectedModels(new Set());
@@ -586,7 +601,7 @@ const App: React.FC = () => {
         setStage("running");
       }
     },
-    { isActive: stage === "selectModels" }
+    { isActive: stage === "selectModels" && !modelsLoading }
   );
 
   // Handle publishing effect - must be before conditional returns
@@ -729,10 +744,14 @@ const App: React.FC = () => {
                 const cacheMap = new Map<string, CacheStatus>();
                 const todayVersion = formatDefaultVersion();
                 for (const suite of suites) {
+                  const resolvedModels = await resolveModels(
+                    suite.suite.model_filter
+                  );
                   const status = await getCacheStatus(
                     suite.id,
                     todayVersion,
-                    suite.suite.tests.length
+                    suite.suite.tests.length,
+                    resolvedModels
                   );
                   if (status.cachedResults > 0) {
                     cacheMap.set(suite.id, status);
@@ -934,11 +953,22 @@ const App: React.FC = () => {
 
   // Model selection
   if (stage === "selectModels") {
-    const selectedCount = selectedModels.size;
+    if (modelsLoading) {
+      return (
+        <Box>
+          <Text color="cyan">Resolving models from OpenRouter catalog...</Text>
+        </Box>
+      );
+    }
+
+    const activeSelectedModels = availableModels.filter((m) =>
+      selectedModels.has(m.name)
+    );
+    const selectedCount = activeSelectedModels.length;
     const numTests = suites[selectedIndex!]?.suite.tests.length ?? 0;
     const totalExecutions = selectedCount * numTests * TEST_RUNS_PER_MODEL;
     const estimatedCost = estimateBenchmarkCost(
-      Array.from(selectedModels),
+      activeSelectedModels,
       numTests,
       TEST_RUNS_PER_MODEL
     );
@@ -965,7 +995,7 @@ const App: React.FC = () => {
         )}
 
         <Text bold color="cyan">
-          Select models to run ({selectedCount}/{modelsToRun.length} selected)
+          Select models to run ({selectedCount}/{availableModels.length} selected)
         </Text>
         <Text color="gray">
           {numTests} tests × {TEST_RUNS_PER_MODEL} runs = {totalExecutions.toLocaleString()} executions
@@ -980,10 +1010,10 @@ const App: React.FC = () => {
           [↑↓] navigate • [Space] toggle • [a] all • [n] none • [s] start • [Esc] back
         </Text>
         <Box marginTop={1} flexDirection="column">
-          {modelsToRun.map((model, idx) => {
+          {availableModels.map((model, idx) => {
             const isSelected = selectedModels.has(model.name);
             const isCursor = idx === modelCursor;
-            const costPerTest = model.avgCostPerTest ?? 0.01;
+            const costPerTest = estimateModelCostPerTest(model);
             const modelCost = costPerTest * numTests * TEST_RUNS_PER_MODEL;
             return (
               <Text key={model.name}>

@@ -1,0 +1,86 @@
+{
+  "generatedAt": "2026-07-07T15:28:43.919Z",
+  "defaultModelCount": 136,
+  "suites": {
+    "ai-btc-philosophy": {
+      "modelCount": 136,
+      "estimatedCostUsd": 50.16
+    },
+    "ai-econ-philosophy": {
+      "modelCount": 136,
+      "estimatedCostUsd": 50.16
+    },
+    "ai-truthfulness": {
+      "modelCount": 136,
+      "estimatedCostUsd": 41.8
+    },
+    "bch-cashscript": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "bch-cashtokens": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "bsv-protocols": {
+      "modelCount": 136,
+      "estimatedCostUsd": 12.54
+    },
+    "bsv-scrypt": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "bsv-sdk": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "bsv-stratum": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "bsv-type42": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "btc-lightning": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "btc-ordinals": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "btc-psbt": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "btc-taproot": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "eth-layer2": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "eth-solidity": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "eth-tokens": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "ltc-mweb": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "sol-anchor": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    },
+    "sol-tokens": {
+      "modelCount": 136,
+      "estimatedCostUsd": 10.45
+    }
+  }
+}

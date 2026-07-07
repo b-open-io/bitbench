@@ -13,9 +13,64 @@ import type {
 
 // Path to test suite JSON files (source of truth)
 const TESTS_DIR = join(process.cwd(), "..", "bench", "tests")
+const MODELS_RESOLVED_PATH = join(
+  process.cwd(),
+  "..",
+  "bench",
+  "models-resolved.json",
+)
 
-// Number of models we test against
-const MODEL_COUNT = 44
+interface ModelsResolvedSnapshot {
+  generatedAt: string
+  defaultModelCount: number
+  suites: Record<string, { modelCount: number; estimatedCostUsd: number }>
+}
+
+let modelsResolvedSnapshot: Promise<ModelsResolvedSnapshot> | null = null
+
+async function loadModelsResolvedSnapshot(): Promise<ModelsResolvedSnapshot> {
+  modelsResolvedSnapshot ??= (async () => {
+    let content: string
+    try {
+      content = await readFile(MODELS_RESOLVED_PATH, "utf-8")
+    } catch (error) {
+      throw new Error(
+        `Missing resolved model snapshot at ${MODELS_RESOLVED_PATH}. Run "cd bench && bun run models --write".`,
+        { cause: error },
+      )
+    }
+
+    const parsed = JSON.parse(content) as unknown
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      !("suites" in parsed) ||
+      typeof (parsed as { suites?: unknown }).suites !== "object" ||
+      (parsed as { suites?: unknown }).suites === null
+    ) {
+      throw new Error(
+        `Invalid resolved model snapshot at ${MODELS_RESOLVED_PATH}: expected suites object.`,
+      )
+    }
+
+    return parsed as ModelsResolvedSnapshot
+  })()
+
+  return modelsResolvedSnapshot
+}
+
+async function getResolvedSuiteInfo(
+  suiteId: string,
+): Promise<{ modelCount: number; estimatedCostUsd: number }> {
+  const snapshot = await loadModelsResolvedSnapshot()
+  const suite = snapshot.suites[suiteId]
+  if (!suite) {
+    throw new Error(
+      `Resolved model snapshot ${MODELS_RESOLVED_PATH} has no entry for suite "${suiteId}". Run "cd bench && bun run models --write".`,
+    )
+  }
+  return suite
+}
 
 /**
  * Load all test suite files from bench/tests/
@@ -66,6 +121,7 @@ async function getRuntimeState(suiteId: string): Promise<SuiteRuntimeState> {
  */
 async function suiteFileToTestSuite(file: TestSuiteFile): Promise<TestSuite> {
   const state = await getRuntimeState(file.id)
+  const resolved = await getResolvedSuiteInfo(file.id)
 
   return {
     id: file.id,
@@ -73,8 +129,8 @@ async function suiteFileToTestSuite(file: TestSuiteFile): Promise<TestSuite> {
     description: file.description,
     version: file.version,
     testCount: file.tests.length,
-    modelCount: MODEL_COUNT,
-    estimatedCostUsd: file.estimatedCostUsd,
+    modelCount: resolved.modelCount,
+    estimatedCostUsd: resolved.estimatedCostUsd,
     donationAddress: isMasterWifConfigured()
       ? getDonationAddress(file.id)
       : `placeholder-address-${file.id}`,

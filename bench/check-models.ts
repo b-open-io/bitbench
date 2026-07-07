@@ -1,105 +1,141 @@
 #!/usr/bin/env bun
 /**
- * Audit the static modelsToRun roster against OpenRouter's live catalog.
+ * Audit the dynamic OpenRouter model registry.
  *
- * Reports:
- *  1. Roster models missing from the catalog (run-breaking; exit 1)
- *  2. Catalog pricing for each roster model (spot inflated/changed costs)
- *  3. Recent notable models from tracked labs not yet in the roster
- *
- * Usage: bun run models
+ * Usage:
+ *   bun run models
+ *   bun run models --write
  */
-import { modelsToRun } from "./constants";
+import { readdir, readFile, writeFile } from "fs/promises";
+import { basename, join } from "path";
+import {
+  DEFAULT_FILTER,
+  estimateBenchmarkCost,
+  fetchCatalog,
+  resolveModels,
+  type ModelFilter,
+} from "./models";
 
-const CATALOG_URL = "https://openrouter.ai/api/v1/models";
-
-// Labs whose new releases are worth surfacing for roster consideration
-const TRACKED_LABS = [
-  "anthropic",
-  "openai",
-  "google",
-  "x-ai",
-  "meta-llama",
-  "deepseek",
-  "qwen",
-  "moonshotai",
-  "mistralai",
-  "z-ai",
-];
-
-const RECENT_DAYS = 90;
-
-interface CatalogModel {
-  id: string;
+type TestSuiteFile = {
+  id?: string;
   name: string;
-  created: number;
-  pricing?: { prompt?: string; completion?: string };
-}
+  estimatedCostUsd?: number;
+  model_filter?: ModelFilter;
+  tests: Array<unknown>;
+};
 
-function perMillion(price: string | undefined): string {
+type ResolvedSnapshot = {
+  generatedAt: string;
+  defaultModelCount: number;
+  suites: Record<string, { modelCount: number; estimatedCostUsd: number }>;
+};
+
+const WRITE = process.argv.includes("--write");
+const testsDir = join(import.meta.dir, "tests");
+const snapshotPath = join(import.meta.dir, "models-resolved.json");
+
+function perMillion(price: number | undefined): string {
   if (price === undefined) return "?";
-  const n = Number(price) * 1_000_000;
-  if (Number.isNaN(n)) return "?";
-  return `$${n.toFixed(2)}/M`;
+  return `$${(price * 1_000_000).toFixed(2)}/M`;
 }
 
-const res = await fetch(CATALOG_URL);
-if (!res.ok) {
-  throw new Error(`OpenRouter catalog fetch failed: ${res.status}`);
+function roundCents(value: number): number {
+  return Math.round(value * 100) / 100;
 }
-const catalog = ((await res.json()) as { data: CatalogModel[] }).data;
-const catalogById = new Map(catalog.map((m) => [m.id, m]));
 
-console.log(
-  `Roster: ${modelsToRun.length} models | Catalog: ${catalog.length} models\n`
-);
+async function loadSuites(): Promise<
+  Array<{ id: string; file: string; suite: TestSuiteFile }>
+> {
+  const entries = await readdir(testsDir, { withFileTypes: true });
+  const suites: Array<{ id: string; file: string; suite: TestSuiteFile }> = [];
 
-// 1. Roster vs catalog
-let missing = 0;
-console.log("── Roster status ──");
-for (const model of modelsToRun) {
-  const id = model.llm.modelId;
-  const entry = catalogById.get(id);
-  if (!entry) {
-    missing++;
-    console.log(`  ✗ MISSING  ${model.name}  (${id}) — not in catalog`);
-  } else {
-    console.log(
-      `  ✓ ${model.name.padEnd(28)} in: ${perMillion(entry.pricing?.prompt).padEnd(10)} out: ${perMillion(entry.pricing?.completion)}`
-    );
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+
+    const file = join(testsDir, entry.name);
+    const parsed = JSON.parse(await readFile(file, "utf-8")) as unknown;
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "name" in parsed &&
+      "tests" in parsed &&
+      Array.isArray((parsed as { tests?: unknown }).tests)
+    ) {
+      const suite = parsed as TestSuiteFile;
+      suites.push({
+        id: suite.id ?? basename(entry.name, ".json"),
+        file,
+        suite,
+      });
+    }
   }
+
+  return suites.sort((a, b) => a.id.localeCompare(b.id));
 }
 
-// 2. Recent tracked-lab models not in the roster
-const rosterIds = new Set(modelsToRun.map((m) => m.llm.modelId));
-const cutoff = Date.now() / 1000 - RECENT_DAYS * 24 * 3600;
-const candidates = catalog
-  .filter(
-    (m) =>
-      m.created > cutoff &&
-      !rosterIds.has(m.id) &&
-      TRACKED_LABS.includes(m.id.split("/")[0]) &&
-      !m.id.endsWith(":free")
-  )
-  .sort((a, b) => b.created - a.created);
+const catalog = await fetchCatalog();
+const defaultModels = await resolveModels();
 
 console.log(
-  `\n── New tracked-lab models (last ${RECENT_DAYS} days, not in roster) ──`
+  `Dynamic registry: ${defaultModels.length} default models | Catalog: ${catalog.length} models`
 );
-if (candidates.length === 0) {
-  console.log("  none");
-}
-for (const m of candidates) {
-  const date = new Date(m.created * 1000).toISOString().slice(0, 10);
-  console.log(
-    `  + ${date}  ${m.id.padEnd(44)} in: ${perMillion(m.pricing?.prompt).padEnd(10)} out: ${perMillion(m.pricing?.completion)}`
+console.log(`Default filter: ${JSON.stringify(DEFAULT_FILTER)}\n`);
+
+if (defaultModels.length <= 10) {
+  throw new Error(
+    `Default model resolver returned only ${defaultModels.length} models; expected > 10`
   );
 }
 
-if (missing > 0) {
-  console.error(
-    `\n${missing} roster model(s) missing from the OpenRouter catalog — benchmark runs will fail for these. Update bench/constants.ts.`
+console.log("── Resolved default models ──");
+for (const model of defaultModels) {
+  console.log(
+    `  ✓ ${model.name.padEnd(38)} ${model.id.padEnd(44)} in: ${perMillion(
+      model.promptPriceUsd
+    ).padEnd(10)} out: ${perMillion(model.completionPriceUsd)}${
+      model.reasoning ? " reasoning" : ""
+    }`
   );
-  process.exit(1);
 }
-console.log("\nRoster is fully resolvable against the live catalog.");
+
+const suites = await loadSuites();
+const snapshot: ResolvedSnapshot = {
+  generatedAt: new Date().toISOString(),
+  defaultModelCount: defaultModels.length,
+  suites: {},
+};
+
+console.log("\n── Suite cost drift ──");
+for (const { id, suite } of suites) {
+  const models = await resolveModels(suite.model_filter);
+  const estimatedCostUsd = roundCents(
+    estimateBenchmarkCost(models, suite.tests.length)
+  );
+  snapshot.suites[id] = {
+    modelCount: models.length,
+    estimatedCostUsd,
+  };
+
+  const current = suite.estimatedCostUsd;
+  const delta = current === undefined ? undefined : estimatedCostUsd - current;
+  const marker =
+    delta === undefined ? "?" : Math.abs(delta) < 0.005 ? " " : delta > 0 ? "+" : "-";
+  const currentLabel =
+    current === undefined ? "missing" : `$${current.toFixed(2)}`;
+  const deltaLabel = delta === undefined ? "" : ` (${delta >= 0 ? "+" : ""}${delta.toFixed(2)})`;
+
+  console.log(
+    `${marker} ${id.padEnd(24)} models=${String(models.length).padStart(
+      3
+    )} suite=${currentLabel.padStart(8)} computed=$${estimatedCostUsd
+      .toFixed(2)
+      .padStart(7)}${deltaLabel}`
+  );
+}
+
+if (WRITE) {
+  await writeFile(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf-8");
+  console.log(`\nWrote ${snapshotPath}`);
+}
+
+console.log("\nDynamic model registry audit completed.");

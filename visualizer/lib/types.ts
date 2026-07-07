@@ -5,6 +5,17 @@ export interface TestQuestion {
   negative_answers?: string[]
 }
 
+export interface ModelFilter {
+  labs?: string[]
+  max_age_days?: number
+  input_modalities?: string[]
+  reasoning?: boolean
+  include?: string[]
+  exclude?: string[]
+  max_prompt_price_per_m?: number
+  max_completion_price_per_m?: number
+}
+
 // JSON file schema - this is the source of truth
 export interface TestSuiteFile {
   id: string
@@ -13,6 +24,7 @@ export interface TestSuiteFile {
   description: string
   version: string
   estimatedCostUsd: number
+  model_filter?: ModelFilter
   system_prompt: string
   tests: TestQuestion[]
 }

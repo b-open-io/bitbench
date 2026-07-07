@@ -1,12 +1,15 @@
 import {
-  modelsToRun,
-  type RunnableModel,
   MAX_CONCURRENCY,
   TEST_RUNS_PER_MODEL,
   TIMEOUT_SECONDS,
   OUTPUT_DIRECTORY,
   STAGGER_DELAY_MS,
 } from "./constants";
+import {
+  resolveModels,
+  type ModelFilter,
+  type RunnableModel,
+} from "./models";
 import { generateText } from "ai";
 import { mkdir, writeFile, readdir, readFile as fsReadFile } from "fs/promises";
 import { existsSync } from "fs";
@@ -24,8 +27,16 @@ export {
   type SyncResult,
 } from "./publish";
 
-// Re-export models for CLI
-export { modelsToRun, type RunnableModel, estimateBenchmarkCost, getModelCostPerTest, TEST_RUNS_PER_MODEL } from "./constants";
+// Re-export models for CLI and maintenance scripts
+export {
+  resolveModels,
+  type ModelFilter,
+  type RunnableModel,
+  estimateBenchmarkCost,
+  estimateModelCostPerTest,
+  getModelCostPerTest,
+} from "./models";
+export { TEST_RUNS_PER_MODEL } from "./constants";
 
 export type TestCase = {
   prompt: string;
@@ -40,6 +51,7 @@ export type TestSuite = {
   description?: string;
   version?: string;
   estimatedCostUsd?: number;
+  model_filter?: ModelFilter;
   system_prompt: string;
   tests: TestCase[];
 };
@@ -55,6 +67,7 @@ type WorkItem = {
 
 type PreviousResultEntry = {
   model: string;
+  modelId?: string;
   prompt: string;
   expectedAnswers: string[];
   negativeAnswers?: string[];
@@ -192,19 +205,7 @@ async function runTest(input: {
       model: model.llm,
       system: system_prompt,
       prompt,
-
       temperature: 1.0,
-      providerOptions: {
-        ...model.providerOptions,
-        // openrouter: {
-        //   reasoning: {
-        //     max_tokens: 2048,
-        //   },
-        // },
-        // xai: {
-        //   reasoningEffort: "high",
-        // },
-      },
     });
 
     const correctness = isCorrect({
@@ -247,6 +248,7 @@ async function runTest(input: {
 
     return {
       model: model.name,
+      modelId: model.id,
       prompt,
       result: testResult,
       correct: correctness,
@@ -333,6 +335,7 @@ async function findPreviousResultsForSuite(options: {
         const negativeAnswers: string[] | undefined =
           r.negativeAnswers || r.negative_answers;
         const model: string | undefined = r.model;
+        const modelId: string | undefined = r.modelId;
         const text = extractTextFromStoredResult(r.result);
         if (!prompt || !expectedAnswers || !model || !text) continue;
 
@@ -345,6 +348,7 @@ async function findPreviousResultsForSuite(options: {
 
         const entry: PreviousResultEntry = {
           model,
+          modelId,
           prompt,
           expectedAnswers,
           negativeAnswers,
@@ -376,6 +380,7 @@ async function findPreviousResultsForSuite(options: {
       const parsed = JSON.parse(raw);
 
       const model: string | undefined = parsed.model;
+      const modelId: string | undefined = parsed.modelId;
       const prompt: string | undefined = parsed.prompt;
       const expectedAnswers: string[] | undefined =
         parsed.answers || parsed.expectedAnswers;
@@ -411,6 +416,7 @@ async function findPreviousResultsForSuite(options: {
 
       const entry: PreviousResultEntry = {
         model,
+        modelId,
         prompt,
         expectedAnswers,
         negativeAnswers,
@@ -438,6 +444,7 @@ async function findPreviousResultsForSuite(options: {
 function generateMarkdownReport(
   results: Array<{
     model: string;
+    modelId?: string;
     testIndex: number;
     runNumber: number;
     prompt: string;
@@ -527,6 +534,7 @@ async function writeCacheEntry(params: {
   suiteName: string;
   version?: string;
   model: string;
+  modelId?: string;
   runNumber: number;
   testIndex: number;
   system_prompt: string;
@@ -543,6 +551,7 @@ async function writeCacheEntry(params: {
     suiteName,
     version,
     model,
+    modelId,
     runNumber,
     testIndex,
     system_prompt,
@@ -584,6 +593,7 @@ async function writeCacheEntry(params: {
     suiteName,
     version: version || null,
     model,
+    modelId,
     runNumber,
     testIndex,
     system_prompt,
@@ -603,7 +613,7 @@ async function writeCacheEntry(params: {
 
 export async function testRunner(options: TestRunnerOptions) {
   const { suite, suiteFilePath, version, onEvent, silent, models } = options;
-  const activeModels = models ?? modelsToRun;
+  const activeModels = models ?? (await resolveModels(suite.model_filter));
   const suiteId = computeSuiteId(
     suite.id ||
       (suiteFilePath
@@ -658,6 +668,7 @@ export async function testRunner(options: TestRunnerOptions) {
 
   const results: Array<{
     model: string;
+    modelId?: string;
     testIndex: number;
     runNumber: number;
     prompt: string;
@@ -745,6 +756,7 @@ export async function testRunner(options: TestRunnerOptions) {
 
             results.push({
               model: reused.model,
+              modelId: reused.modelId ?? testRun.model.id,
               testIndex: testRun.testIndex,
               runNumber: testRun.runNumber,
               prompt: testRun.prompt,
@@ -796,6 +808,7 @@ export async function testRunner(options: TestRunnerOptions) {
 
             results.push({
               model: testRun.model.name,
+              modelId: testRun.model.id,
               testIndex: testRun.testIndex,
               runNumber: testRun.runNumber,
               prompt: testRun.prompt,
@@ -814,6 +827,7 @@ export async function testRunner(options: TestRunnerOptions) {
                 suiteName: suite.name,
                 version,
                 model: testRun.model.name,
+                modelId: testRun.model.id,
                 runNumber: testRun.runNumber,
                 testIndex: testRun.testIndex,
                 system_prompt: testRun.system_prompt,
@@ -859,8 +873,9 @@ export async function testRunner(options: TestRunnerOptions) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
 
-          results.push({
-            model: testRun.model.name,
+            results.push({
+              model: testRun.model.name,
+              modelId: testRun.model.id,
             testIndex: testRun.testIndex,
             runNumber: testRun.runNumber,
             prompt: testRun.prompt,
@@ -1001,6 +1016,7 @@ export async function testRunner(options: TestRunnerOptions) {
 
         results.push({
           model: r.model,
+          modelId: r.modelId ?? testRun.model.id,
           testIndex: testRun.testIndex,
           runNumber: testRun.runNumber,
           prompt: testRun.prompt,
@@ -1038,6 +1054,7 @@ export async function testRunner(options: TestRunnerOptions) {
 
         results.push({
           model: testRun.model.name,
+          modelId: testRun.model.id,
           testIndex: testRun.testIndex,
           runNumber: testRun.runNumber,
           prompt: testRun.prompt,
@@ -1118,6 +1135,7 @@ export async function testRunner(options: TestRunnerOptions) {
         suiteId,
         version: version || null,
         models: activeModels.map((m) => m.name),
+        modelIds: Object.fromEntries(activeModels.map((m) => [m.name, m.id])),
       },
       results,
     };
@@ -1435,7 +1453,7 @@ export async function getCacheStatus(
   testCount: number,
   models?: RunnableModel[]
 ): Promise<CacheStatus> {
-  const activeModels = models ?? modelsToRun;
+  const activeModels = models ?? (await resolveModels());
   const totalExpected = testCount * activeModels.length * TEST_RUNS_PER_MODEL;
 
   const cacheDir = join(OUTPUT_DIRECTORY, "cache", suiteId, version);

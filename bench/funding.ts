@@ -7,9 +7,11 @@ import { PrivateKey } from "@bsv/sdk";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { readdir, readFile } from "fs/promises";
-
-// Model count constant
-const MODEL_COUNT = 44;
+import {
+  estimateBenchmarkCost,
+  resolveModels,
+  type ModelFilter,
+} from "./models";
 
 // WhatsOnChain API for balance checking
 const WOC_API = "https://api.whatsonchain.com/v1/bsv/main";
@@ -134,13 +136,20 @@ export async function loadTestSuites(): Promise<
     try {
       const filePath = join(testsDir, f.name);
       const raw = await readFile(filePath, "utf-8");
-      const json = JSON.parse(raw);
+      const json = JSON.parse(raw) as {
+        name?: string;
+        tests?: unknown[];
+        model_filter?: ModelFilter;
+      };
       if (json && json.name && Array.isArray(json.tests)) {
+        const models = await resolveModels(json.model_filter);
         suites.push({
           id: getSuiteIdFromFilename(f.name),
           name: json.name,
           testCount: json.tests.length,
-          estimatedCostUsd: json.estimatedCostUsd ?? 29,
+          estimatedCostUsd:
+            Math.round(estimateBenchmarkCost(models, json.tests.length) * 100) /
+            100,
           filePath,
         });
       }
