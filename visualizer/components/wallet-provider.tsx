@@ -23,6 +23,20 @@ interface WalletBalance {
   satoshis: number
 }
 
+interface WalletProfile {
+  bapId: string | null
+  name: string | null
+  avatarUrl: string | null
+}
+
+type AccountSliceStatus = "idle" | "loading" | "loaded" | "error"
+
+interface AccountLoadState {
+  address: AccountSliceStatus
+  balance: AccountSliceStatus
+  profile: AccountSliceStatus
+}
+
 export interface SendBsvRequest {
   address: string
   satoshis: number
@@ -38,6 +52,8 @@ export interface WalletState {
   isConnected: boolean
   addresses: WalletAddresses | null
   balance: WalletBalance | null
+  profile: WalletProfile | null
+  accountLoadState: AccountLoadState
   themeTokens: ThemeToken[]
   isLoadingThemes: boolean
   connect: () => Promise<void>
@@ -58,6 +74,12 @@ const disconnectedDefaults: WalletState = {
   isConnected: false,
   addresses: null,
   balance: null,
+  profile: null,
+  accountLoadState: {
+    address: "idle",
+    balance: "idle",
+    profile: "idle",
+  },
   themeTokens: [],
   isLoadingThemes: false,
   connect: async () => {},

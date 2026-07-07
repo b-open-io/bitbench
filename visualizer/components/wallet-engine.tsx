@@ -4,6 +4,7 @@ import {
   createContext as createOneSatContext,
   deriveDepositAddresses,
   getOrdinals,
+  getProfile,
   sendBsv as sendBsvAction,
 } from "@1sat/actions"
 import { OneSatServices } from "@1sat/client"
@@ -35,6 +36,20 @@ interface WalletBalance {
   satoshis: number
 }
 
+interface WalletProfile {
+  bapId: string | null
+  name: string | null
+  avatarUrl: string | null
+}
+
+type AccountSliceStatus = "idle" | "loading" | "loaded" | "error"
+
+interface AccountLoadState {
+  address: AccountSliceStatus
+  balance: AccountSliceStatus
+  profile: AccountSliceStatus
+}
+
 interface WalletEngineProps {
   onState: (state: WalletState) => void
 }
@@ -47,6 +62,25 @@ function parseThemeToken(data: Uint8Array): ThemeToken | null {
   } catch {
     return null
   }
+}
+
+function resolveProfileAvatarUrl(
+  image: unknown,
+  services: OneSatServices,
+): string | null {
+  if (typeof image !== "string") return null
+
+  const trimmedImage = image.trim()
+  if (!trimmedImage) return null
+
+  if (trimmedImage.startsWith("1sat://")) {
+    const outpoint = trimmedImage.slice("1sat://".length)
+    return outpoint ? services.ordfs.getContentUrl(outpoint) : null
+  }
+
+  if (trimmedImage.startsWith("https://")) return trimmedImage
+
+  return null
 }
 
 function WalletStateEngine({ onState }: WalletEngineProps) {
@@ -69,6 +103,12 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
 
   const [addresses, setAddresses] = useState<WalletAddresses | null>(null)
   const [balance, setBalance] = useState<WalletBalance | null>(null)
+  const [profile, setProfile] = useState<WalletProfile | null>(null)
+  const [accountLoadState, setAccountLoadState] = useState<AccountLoadState>({
+    address: "idle",
+    balance: "idle",
+    profile: "idle",
+  })
   const [themeTokens, setThemeTokens] = useState<ThemeToken[]>([])
   const [isLoadingThemes, setIsLoadingThemes] = useState(false)
   const latestIdentityKey = useRef<string | null>(identityKey)
@@ -82,6 +122,12 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
   const clearAccountState = useCallback(() => {
     setAddresses(null)
     setBalance(null)
+    setProfile(null)
+    setAccountLoadState({
+      address: "idle",
+      balance: "idle",
+      profile: "idle",
+    })
     setThemeTokens([])
     setIsLoadingThemes(false)
     themeContext.setAvailableThemes([])
@@ -145,26 +191,73 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
 
     const requestIdentityKey = identityKey
 
-    try {
-      const [{ outputs }, { derivations }] = await Promise.all([
+    setAccountLoadState({
+      address: "loading",
+      balance: "loading",
+      profile: "loading",
+    })
+
+    const [balanceResult, addressResult, profileResult] =
+      await Promise.allSettled([
         wallet.listOutputs({ basket: "default", limit: 10000 }),
         deriveDepositAddresses.execute(ctx, { count: 1 }),
+        getProfile.execute(ctx, {}),
       ])
-      const satoshis = outputs.reduce((sum, output) => sum + output.satoshis, 0)
-      const bsvAddress = derivations[0]?.address ?? null
 
-      if (latestIdentityKey.current !== requestIdentityKey) return
+    if (latestIdentityKey.current !== requestIdentityKey) return
 
+    if (balanceResult.status === "fulfilled") {
+      const satoshis = balanceResult.value.outputs.reduce(
+        (sum, output) => sum + output.satoshis,
+        0,
+      )
       setBalance({ satoshis })
-      setAddresses({ bsvAddress })
-      await fetchThemeTokens()
-    } catch (error) {
-      console.error("Error refreshing wallet state:", error)
-      if (latestIdentityKey.current === requestIdentityKey) {
-        clearAccountState()
-      }
+      setAccountLoadState((current) => ({ ...current, balance: "loaded" }))
+    } else {
+      console.error("listOutputs failed:", balanceResult.reason)
+      setAccountLoadState((current) => ({ ...current, balance: "error" }))
     }
-  }, [wallet, ctx, status, identityKey, clearAccountState, fetchThemeTokens])
+
+    if (addressResult.status === "fulfilled") {
+      setAddresses({
+        bsvAddress: addressResult.value.derivations[0]?.address ?? null,
+      })
+      setAccountLoadState((current) => ({ ...current, address: "loaded" }))
+    } else {
+      console.error("deriveDepositAddresses failed:", addressResult.reason)
+      setAccountLoadState((current) => ({ ...current, address: "error" }))
+    }
+
+    if (profileResult.status === "fulfilled") {
+      if (profileResult.value.error) {
+        console.error("getProfile failed:", profileResult.value.error)
+        setAccountLoadState((current) => ({ ...current, profile: "error" }))
+      } else {
+        const profileData = profileResult.value.profile
+        const name =
+          typeof profileData?.name === "string" ? profileData.name : null
+        setProfile({
+          bapId: profileResult.value.bapId ?? null,
+          name,
+          avatarUrl: resolveProfileAvatarUrl(profileData?.image, services),
+        })
+        setAccountLoadState((current) => ({ ...current, profile: "loaded" }))
+      }
+    } else {
+      console.error("getProfile failed:", profileResult.reason)
+      setAccountLoadState((current) => ({ ...current, profile: "error" }))
+    }
+
+    await fetchThemeTokens()
+  }, [
+    wallet,
+    ctx,
+    status,
+    identityKey,
+    services,
+    clearAccountState,
+    fetchThemeTokens,
+  ])
 
   useEffect(() => {
     if (status === "connected") {
@@ -242,6 +335,8 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
       isConnected: status === "connected",
       addresses,
       balance,
+      profile,
+      accountLoadState,
       themeTokens,
       isLoadingThemes,
       connect,
@@ -257,6 +352,8 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
       status,
       addresses,
       balance,
+      profile,
+      accountLoadState,
       themeTokens,
       isLoadingThemes,
       connect,
