@@ -3,8 +3,8 @@
   "chain": "btc",
   "name": "PSBT & Miniscript",
   "description": "Partially Signed Bitcoin Transactions, Miniscript policy, and descriptor wallets.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are a Bitcoin developer expert in PSBTs and Miniscript. Answer technical questions about transaction signing workflows and policy languages.",
   "tests": [
     {
@@ -18,31 +18,31 @@
     {
       "prompt": "In a PSBT, what is the key type (hex) for a non-witness UTXO?",
       "answers": [
-        "0x00",
-        "00"
+        "0x00"
       ]
     },
     {
       "prompt": "What Miniscript fragment represents a simple public key check?",
       "answers": [
-        "pk(KEY)",
-        "pk",
+        "pk(",
+        "pk_k",
         "c:pk_k"
       ]
     },
     {
       "prompt": "In Miniscript, what wrapper converts a key expression to require a signature?",
       "answers": [
-        "c:",
-        "c:pk"
+        "c:pk",
+        "\"c:\"",
+        "`c:`",
+        "c: wrapper"
       ]
     },
     {
       "prompt": "What is the role of the 'Combiner' in the PSBT workflow?",
       "answers": [
-        "merge",
-        "combine PSBTs",
-        "aggregate signatures"
+        "merg",
+        "union of"
       ]
     }
   ]

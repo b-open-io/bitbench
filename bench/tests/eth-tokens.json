@@ -3,14 +3,21 @@
   "chain": "eth",
   "name": "Token Standards",
   "description": "ERC-20, ERC-721, ERC-1155, and ERC-4337 account abstraction.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are an Ethereum developer expert in token standards and account abstraction. Answer technical questions about ERCs and their implementations.",
   "tests": [
     {
       "prompt": "In ERC-20, what event must be emitted when tokens are transferred?",
       "answers": [
-        "Transfer"
+        "Transfer event",
+        "emits Transfer",
+        "emit Transfer",
+        "event Transfer",
+        "`Transfer`"
+      ],
+      "negative_answers": [
+        "Approval event"
       ]
     },
     {
@@ -36,7 +43,8 @@
       "answers": [
         "ERC-2612",
         "ERC2612",
-        "2612"
+        "EIP-2612",
+        "EIP2612"
       ]
     }
   ]

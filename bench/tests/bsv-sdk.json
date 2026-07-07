@@ -3,8 +3,8 @@
   "chain": "bsv",
   "name": "BSV SDK & Libraries",
   "description": "Tests knowledge of @bsv/sdk, bsv-blockchain/go-sdk, transaction building, and SPV.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are a Bitcoin SV developer expert in @bsv/sdk and the Go SDK. Provide technical answers about these specific libraries.",
   "tests": [
     {
@@ -14,17 +14,19 @@
       ]
     },
     {
-      "prompt": "In `bsv-blockchain/go-sdk`, which sub-package contains the `Lock` and `Unlock` functions for P2PKH scripts?",
+      "prompt": "In `bsv-blockchain/go-sdk`, which sub-package contains the `Lock` and `Unlock` functions for pay-to-pubkey-hash scripts?",
       "answers": [
         "p2pkh",
         "template/p2pkh"
       ]
     },
     {
-      "prompt": "Using `@bsv/sdk`, what method on the `Transaction` class allows you to verify a transaction using a `ChainTracker`?",
+      "prompt": "Using `@bsv/sdk`, which method on the `Transaction` class performs SPV validation of the transaction against a `ChainTracker`?",
       "answers": [
-        "verify",
-        ".verify()"
+        "verify()",
+        ".verify",
+        "`verify`",
+        "verify method"
       ]
     },
     {

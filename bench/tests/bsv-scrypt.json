@@ -3,8 +3,8 @@
   "chain": "bsv",
   "name": "sCrypt Smart Contracts",
   "description": "Tests knowledge of sCrypt language, decorators, and Bitcoin SV smart contract patterns.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are an expert sCrypt developer. You understand the syntax, decorators, and standard library of the sCrypt language (TypeScript-based).",
   "tests": [
     {
@@ -32,15 +32,8 @@
     {
       "prompt": "What does `SigHashType(b'c1')` represent in Bitcoin script signature hashing, often used in sCrypt contracts?",
       "answers": [
-        "ANYONECANPAY | FORKID",
-        "ANYONECANPAY | SIGHASH_FORKID",
-        "0xc1",
-        "193"
-      ],
-      "negative_answers": [
-        "ALL",
-        "NONE",
-        "SINGLE"
+        "ANYONECANPAY",
+        "0xc1"
       ]
     },
     {
@@ -57,13 +50,12 @@
     {
       "prompt": "What keyword is used in sCrypt to define a method that can be called from outside the contract (i.e., an entry point)?",
       "answers": [
-        "public",
-        "public function"
+        "public function",
+        "public method",
+        "@method"
       ],
       "negative_answers": [
-        "static function",
-        "function",
-        "entry"
+        "static function"
       ]
     }
   ]

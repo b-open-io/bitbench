@@ -3,8 +3,8 @@
   "chain": "bch",
   "name": "CashScript",
   "description": "CashScript smart contracts, libauth, and Bitcoin Cash scripting.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are a Bitcoin Cash developer expert in CashScript and libauth. Answer technical questions about BCH smart contracts and scripting.",
   "tests": [
     {
@@ -14,9 +14,13 @@
       ]
     },
     {
-      "prompt": "In CashScript, what keyword is used to define a contract's constructor?",
+      "prompt": "In CashScript, is there a dedicated `constructor` function, or what plays that role?",
       "answers": [
-        "contract"
+        "no separate constructor",
+        "no dedicated constructor",
+        "contract declaration",
+        "parameter list",
+        "parameters of the contract"
       ]
     },
     {
@@ -27,11 +31,22 @@
       ]
     },
     {
-      "prompt": "What opcode enables native introspection of transaction data in Bitcoin Cash?",
+      "prompt": "Name one of the opcodes added to Bitcoin Cash in the May 2022 upgrade that lets a script natively inspect its spending transaction.",
       "answers": [
+        "OP_INPUTINDEX",
+        "OP_ACTIVEBYTECODE",
+        "OP_TXVERSION",
         "OP_TXINPUTCOUNT",
+        "OP_TXOUTPUTCOUNT",
+        "OP_TXLOCKTIME",
         "OP_UTXOVALUE",
-        "native introspection opcodes"
+        "OP_UTXOBYTECODE",
+        "OP_OUTPOINTTXHASH",
+        "OP_OUTPOINTINDEX",
+        "OP_INPUTBYTECODE",
+        "OP_INPUTSEQUENCENUMBER",
+        "OP_OUTPUTVALUE",
+        "OP_OUTPUTBYTECODE"
       ]
     },
     {

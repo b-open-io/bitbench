@@ -9,7 +9,8 @@
     "funding": "bun --bun run ./check-funding.ts",
     "update-costs": "bun --bun run ./update-model-costs.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "models": "bun --bun run ./check-models.ts"
+    "models": "bun --bun run ./check-models.ts",
+    "suites": "bun --bun run ./check-suites.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",

@@ -3,46 +3,56 @@
   "chain": "btc",
   "name": "Taproot & Schnorr",
   "description": "BIP-340 Schnorr signatures, Tapscript, SegWit, and MAST.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are a Bitcoin protocol engineer specializing in Script and Taproot. Answer technical questions about transaction structures and opcodes.",
   "tests": [
     {
-      "prompt": "What opcode was introduced in Tapscript to verify Schnorr signatures?",
+      "prompt": "Which opcode is newly introduced by Tapscript (BIP 342), replacing OP_CHECKMULTISIG-style multisig?",
       "answers": [
-        "OP_CHECKSIGADD",
-        "OP_CHECKSIG"
-      ],
-      "negative_answers": [
-        "OP_CHECKSIGVERIFY"
+        "OP_CHECKSIGADD"
       ]
     },
     {
-      "prompt": "What is the Bech32m checksum used for in Taproot addresses, as opposed to the original Bech32?",
+      "prompt": "What weakness in the original Bech32 checksum led Taproot (v1) addresses to use Bech32m instead?",
       "answers": [
+        "malleability",
+        "insertion",
+        "length extension",
+        "checksum flaw",
+        "checksum weakness",
         "BIP350",
-        "constant 0x2be810b1"
+        "BIP-350",
+        "BIP 350"
       ]
     },
     {
-      "prompt": "What is the maximum size of an OP_RETURN data payload allowed by default in Bitcoin Core?",
+      "prompt": "Historically (Bitcoin Core releases up to and including v29, before the 2025 datacarrier policy change), what was the default maximum OP_RETURN data payload size under Core’s standardness rules?",
       "answers": [
         "80 bytes",
+        "80-byte",
         "83 bytes"
       ]
     },
     {
       "prompt": "What is the weight (in weight units) of a single witness byte in a SegWit transaction?",
       "answers": [
-        "1",
-        "1 WU"
+        "1 WU",
+        "1 wu",
+        "1 weight unit",
+        "one weight unit",
+        "weight of 1"
       ]
     },
     {
-      "prompt": "Which BIP defined Taproot (BIP341) and Tapscript (BIP342)?",
+      "prompt": "Which two BIPs defined Taproot and Tapscript, respectively?",
       "answers": [
         "BIP 341",
-        "BIP 342"
+        "BIP 342",
+        "BIP341",
+        "BIP342",
+        "BIP-341",
+        "BIP-342"
       ]
     }
   ]

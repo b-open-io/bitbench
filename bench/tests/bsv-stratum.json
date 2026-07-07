@@ -3,8 +3,8 @@
   "chain": "bsv",
   "name": "Stratum Mining Protocol",
   "description": "Mining pool protocol, puzzle construction, byte manipulation, and Miningcore internals.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are a low-level Bitcoin protocol engineer and Stratum expert. Answer these specific puzzles related to byte order, serialization, and SDK internals.",
   "tests": [
     {
@@ -20,22 +20,13 @@
         "ReverseInPlace",
         "byte reversal",
         "endian swap"
-      ],
-      "negative_answers": [
-        "hash",
-        "sha256",
-        "none"
       ]
     },
     {
-      "prompt": "When serializing the block header in `BitcoinJob.cs`, specifically for the `HashPrevBlock` field in the `BlockHeader` struct, is the byte order big-endian or little-endian?",
+      "prompt": "When serializing the block header in `BitcoinJob.cs`, what byte order is used for the `HashPrevBlock` field in the `BlockHeader` struct?",
       "answers": [
         "little-endian",
         "little endian"
-      ],
-      "negative_answers": [
-        "big-endian",
-        "big endian"
       ]
     },
     {

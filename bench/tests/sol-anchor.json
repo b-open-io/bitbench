@@ -3,8 +3,8 @@
   "chain": "sol",
   "name": "Anchor & Programs",
   "description": "Anchor framework, Rust programs, PDAs, CPIs, and Solana runtime.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are a Solana developer expert in Anchor and native programs. Answer technical questions about program development and the Solana runtime.",
   "tests": [
     {
@@ -16,8 +16,9 @@
     {
       "prompt": "What Anchor constraint ensures an account is owned by a specific program?",
       "answers": [
-        "owner",
-        "#[account(owner = ...)]"
+        "owner = ",
+        "owner=",
+        "#[account(owner"
       ]
     },
     {
@@ -30,9 +31,9 @@
     {
       "prompt": "In Anchor, what attribute validates that an account matches a specific public key?",
       "answers": [
-        "address",
-        "constraint",
-        "#[account(address = ...)]"
+        "address = ",
+        "address=",
+        "#[account(address"
       ]
     },
     {

@@ -3,8 +3,8 @@
   "chain": "bch",
   "name": "CashTokens",
   "description": "Fungible tokens, NFTs, BCMR metadata, and token-aware contracts.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are a Bitcoin Cash developer expert in CashTokens. Answer technical questions about BCH token standards and metadata.",
   "tests": [
     {
@@ -17,8 +17,8 @@
       "prompt": "In CashTokens, what determines the token category?",
       "answers": [
         "genesis transaction",
-        "outpoint",
-        "txid:vout"
+        "genesis txid",
+        "txid of the genesis"
       ]
     },
     {
@@ -32,14 +32,19 @@
       "prompt": "In CashTokens, can a single UTXO hold both fungible tokens and an NFT?",
       "answers": [
         "yes",
-        "true"
+        "can hold both",
+        "coexist"
+      ],
+      "negative_answers": [
+        "cannot hold both",
+        "mutually exclusive",
+        "not possible"
       ]
     },
     {
-      "prompt": "What is the name for NFT tokens that can have their commitment data modified?",
+      "prompt": "Which NFT capability level in CashTokens allows an NFT to create new NFTs of the same category?",
       "answers": [
-        "mutable",
-        "mutable NFT"
+        "minting"
       ]
     }
   ]

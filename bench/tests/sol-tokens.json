@@ -3,8 +3,8 @@
   "chain": "sol",
   "name": "SPL & Metaplex",
   "description": "SPL tokens, Metaplex NFTs, Token-2022, and compressed NFTs.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are a Solana developer expert in SPL tokens and Metaplex. Answer technical questions about token programs and NFT standards.",
   "tests": [
     {
@@ -14,9 +14,10 @@
       ]
     },
     {
-      "prompt": "In Metaplex, what account stores the NFT's name, symbol, and URI?",
+      "prompt": "In the Metaplex Token Metadata program (the original NFT standard, not Metaplex Core), what specific account type is a PDA that stores the NFT’s name, symbol, and URI?",
       "answers": [
-        "Metadata",
+        "Metadata account",
+        "Metadata PDA",
         "metadata account"
       ]
     },

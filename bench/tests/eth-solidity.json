@@ -3,8 +3,8 @@
   "chain": "eth",
   "name": "Solidity & EVM",
   "description": "Solidity patterns, EVM opcodes, gas optimization, and smart contract security.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are an Ethereum smart contract developer expert in Solidity and the EVM. Answer technical questions about contract development and optimization.",
   "tests": [
     {
@@ -18,8 +18,13 @@
     {
       "prompt": "In Solidity, what keyword prevents a function from modifying state?",
       "answers": [
-        "view",
-        "pure"
+        "view function",
+        "view modifier",
+        "marked as view",
+        "`view`",
+        "pure function",
+        "pure modifier",
+        "`pure`"
       ]
     },
     {
@@ -31,8 +36,9 @@
     {
       "prompt": "What is the gas cost of a cold SLOAD operation after EIP-2929?",
       "answers": [
-        "2100",
-        "2100 gas"
+        "2100 gas",
+        "2,100 gas",
+        "2100 for a cold"
       ]
     },
     {
