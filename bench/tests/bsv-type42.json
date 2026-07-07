@@ -3,8 +3,8 @@
   "chain": "bsv",
   "name": "Type 42 Key Derivation",
   "description": "Tests knowledge of Type 42 key derivation, Paymail, and backup formats.",
-  "version": "1.0.0",
-  "estimatedCostUsd": 29.250,
+  "version": "1.1.0",
+  "estimatedCostUsd": 29.25,
   "system_prompt": "You are a Bitcoin SV developer expert in Type 42 key derivation and the bitcoin-backup library. Provide technical answers about key derivation and serialization.",
   "tests": [
     {
@@ -36,10 +36,11 @@
     {
       "prompt": "What are the two key components combined to derive a shared child key in Type 42 derivation, ensuring that both parties can arrive at the same key universe without sharing master secrets?",
       "answers": [
-        "Private Key",
-        "Public Key",
-        "invoice",
-        "invoice number"
+        "private key and invoice",
+        "public key and invoice",
+        "counterparty key and invoice",
+        "key and the invoice number",
+        "shared secret"
       ]
     }
   ]

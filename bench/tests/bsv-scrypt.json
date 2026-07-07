@@ -8,21 +8,18 @@
   "system_prompt": "You are an expert sCrypt developer. You understand the syntax, decorators, and standard library of the sCrypt language (TypeScript-based).",
   "tests": [
     {
-      "prompt": "In sCrypt, what decorator is used to mark a property as part of the contract's state, allowing it to be mutated across transactions?",
+      "prompt": "In scrypt-ts, what decorator (with which argument) marks a contract property as stateful, allowing it to change across contract calls?",
       "answers": [
-        "@state"
+        "@prop(true)"
       ],
       "negative_answers": [
-        "@prop",
-        "static",
-        "const"
+        "@state"
       ]
     },
     {
-      "prompt": "In the `MneeMinter` contract example, what function is used from the `Ordinal` library to create a BSV-20 transfer inscription JSON?",
+      "prompt": "In the scrypt-ord library, what method on a 1Sat ordinal contract inscribes a plain-text payload when deploying it?",
       "answers": [
-        "Ordinal.createInsciption",
-        "createInsciption"
+        "inscribeText"
       ],
       "negative_answers": [
         "JSON.stringify",
@@ -32,6 +29,8 @@
     {
       "prompt": "What does `SigHashType(b'c1')` represent in Bitcoin script signature hashing, often used in sCrypt contracts?",
       "answers": [
+        "ALL | ANYONECANPAY | FORKID",
+        "SIGHASH_ALL",
         "ANYONECANPAY",
         "0xc1"
       ]

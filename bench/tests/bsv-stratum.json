@@ -10,7 +10,7 @@
     {
       "prompt": "In Miningcore's Stratum implementation, if `BlockTemplate.PreviousBlockhash` is `000000004a75d7a3d5e09bb904575a7235eaa5c8e13e9cc4cde8a01839dd47a6`, what is the exact `prevhash` hex string sent in the `mining.notify` message? (Hint: check endianness)",
       "answers": [
-        "a647dd3918a0e8cdc49c3ee1c8a5ea35725a5704b99be0d5a3d7754a00000000"
+        "00000000a3d7754ab99be0d5725a5704c8a5ea35c49c3ee118a0e8cda647dd39"
       ]
     },
     {
@@ -30,10 +30,10 @@
       ]
     },
     {
-      "prompt": "Calculate the difficulty (diff) if the target (hashInt) is `000000004a75d7a3d5e09bb904575a7235eaa5c8e13e9cc4cde8a01839dd47a6` (little-endian interpretation) and `diff1` is `00ffff0000000000000000000000000000000000000000000000000000000000`. Give the result to 6 decimal places.",
+      "prompt": "Calculate the mining difficulty if the 256-bit target is `000000004a75d7a3d5e09bb904575a7235eaa5c8e13e9cc4cde8a01839dd47a6` (interpreted as a big-endian integer) and difficulty 1 corresponds to the standard Bitcoin diff1 target `00000000ffff0000000000000000000000000000000000000000000000000000`. Give the result to 6 decimal places.",
       "answers": [
-        "234384.776606",
-        "234384.776607"
+        "3.438020",
+        "3.43802"
       ]
     },
     {
