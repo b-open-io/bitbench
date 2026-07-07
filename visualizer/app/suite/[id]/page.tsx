@@ -1,20 +1,20 @@
-import { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ArrowLeft, Tag, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ChainBadge } from "@/components/chain-badge";
-import { SuiteSwitcher } from "@/components/suite-switcher";
-import { BenchmarkCharts } from "@/components/benchmark-charts";
-import { QuestionBreakdownCard } from "@/components/question-breakdown";
-import { SiteHeader } from "@/components/site-header";
-import { PageContainer } from "@/components/page-container";
-import { getSuiteWithBalance, getAllSuites } from "@/lib/suites";
-import { getLatestRun } from "@/lib/kv";
-import type { ModelResult, BenchmarkRun } from "@/lib/types";
+import { ArrowLeft, Clock, Tag } from "lucide-react"
+import type { Metadata } from "next"
+import Link from "next/link"
+import { notFound } from "next/navigation"
+import { BenchmarkCharts } from "@/components/benchmark-charts"
+import { ChainBadge } from "@/components/chain-badge"
+import { PageContainer } from "@/components/page-container"
+import { QuestionBreakdownCard } from "@/components/question-breakdown"
+import { SiteHeader } from "@/components/site-header"
+import { SuiteSwitcher } from "@/components/suite-switcher"
+import { Button } from "@/components/ui/button"
+import { getLatestRun } from "@/lib/kv"
+import { getAllSuites, getSuiteWithBalance } from "@/lib/suites"
+import type { ModelResult } from "@/lib/types"
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>
 }
 
 // Transform ModelResult to the format BenchmarkCharts expects
@@ -30,31 +30,33 @@ function transformRankings(rankings: ModelResult[]) {
     averageDuration: r.avgResponseTime,
     totalCost: r.cost,
     averageCostPerTest: r.cost / r.total,
-  }));
+  }))
 }
 
 function formatDate(dateString: string | null): string {
-  if (!dateString) return "Never";
-  const date = new Date(dateString);
+  if (!dateString) return "Never"
+  const date = new Date(dateString)
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  })
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  const suite = await getSuiteWithBalance(id);
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { id } = await params
+  const suite = await getSuiteWithBalance(id)
 
   if (!suite) {
-    return { title: "Suite Not Found - Bitbench" };
+    return { title: "Suite Not Found - Bitbench" }
   }
 
-  const title = `${suite.name} Results - Bitbench`;
-  const description = `${suite.description} See how ${suite.modelCount}+ AI models perform on ${suite.testCount} tests.`;
+  const title = `${suite.name} Results - Bitbench`
+  const description = `${suite.description} See how ${suite.modelCount}+ AI models perform on ${suite.testCount} tests.`
 
   return {
     title,
@@ -69,24 +71,24 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
     },
-  };
+  }
 }
 
 export default async function SuiteResultsPage({ params }: PageProps) {
-  const { id } = await params;
+  const { id } = await params
 
   const [suite, latestRun, allSuites] = await Promise.all([
     getSuiteWithBalance(id),
     getLatestRun(id),
     getAllSuites(),
-  ]);
+  ])
 
   if (!suite) {
-    notFound();
+    notFound()
   }
 
   // Check if we have results
-  const hasResults = latestRun && latestRun.rankings && latestRun.rankings.length > 0;
+  const hasResults = latestRun?.rankings && latestRun.rankings.length > 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -107,8 +109,7 @@ export default async function SuiteResultsPage({ params }: PageProps) {
                 <div className="flex items-center gap-2 mb-1">
                   <ChainBadge chain={suite.chain} />
                   <span className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Tag className="h-3 w-3" />
-                    v{suite.version}
+                    <Tag className="h-3 w-3" />v{suite.version}
                   </span>
                 </div>
                 <h1 className="text-2xl font-bold">{suite.name}</h1>
@@ -142,7 +143,8 @@ export default async function SuiteResultsPage({ params }: PageProps) {
           <div className="rounded-lg border border-border bg-muted/30 p-12 text-center">
             <h2 className="text-xl font-semibold mb-2">No Results Yet</h2>
             <p className="text-muted-foreground mb-4">
-              This benchmark hasn&apos;t been run yet. Check back after it&apos;s funded and executed.
+              This benchmark hasn&apos;t been run yet. Check back after
+              it&apos;s funded and executed.
             </p>
             <Button asChild>
               <Link href="/">View All Benchmarks</Link>
@@ -158,5 +160,5 @@ export default async function SuiteResultsPage({ params }: PageProps) {
         </PageContainer>
       )}
     </div>
-  );
+  )
 }

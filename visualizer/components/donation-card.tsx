@@ -1,37 +1,37 @@
-"use client";
+"use client"
 
-import Link from "next/link";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Loader2,
+  Play,
+  Tag,
+  Trophy,
+  Zap,
+} from "lucide-react"
+import Link from "next/link"
+import { ChainBadge } from "@/components/chain-badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { ChainBadge } from "@/components/chain-badge";
-import { cn } from "@/lib/utils";
-import type { SuiteWithBalance } from "@/lib/types";
-import {
-  Zap,
-  Tag,
-  CheckCircle2,
-  Loader2,
-  Trophy,
-  ArrowRight,
-  Play,
-} from "lucide-react";
+} from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import type { SuiteWithBalance } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 interface DonationCardProps {
-  suite: SuiteWithBalance;
-  onDonate: (suite: SuiteWithBalance) => void;
+  suite: SuiteWithBalance
+  onDonate: (suite: SuiteWithBalance) => void
   /** Optional: top performer from last run */
-  lastRunScore?: number;
+  lastRunScore?: number
 }
 
 function formatUsd(amount: number): string {
-  return `$${amount.toFixed(2)}`;
+  return `$${amount.toFixed(2)}`
 }
 
 export function DonationCard({
@@ -39,21 +39,21 @@ export function DonationCard({
   onDonate,
   lastRunScore,
 }: DonationCardProps) {
-  const progressPercent = Math.round(suite.fundingProgress * 100);
-  const isPending = suite.status === "pending";
-  const hasResults = suite.status === "completed" || suite.lastRunAt;
-  const isFullyFunded = progressPercent >= 100;
+  const progressPercent = Math.round(suite.fundingProgress * 100)
+  const isPending = suite.status === "pending"
+  const hasResults = suite.status === "completed" || suite.lastRunAt
+  const isFullyFunded = progressPercent >= 100
 
   // Determine what run number we're funding
   const runNumber = suite.lastRunVersion
-    ? parseInt(suite.lastRunVersion.split(".")[0] || "1") + 1
-    : 1;
+    ? parseInt(suite.lastRunVersion.split(".")[0] || "1", 10) + 1
+    : 1
 
   return (
     <Card
       className={cn(
         "flex flex-col transition-colors",
-        isPending && "border-chart-4/30 bg-chart-4/5"
+        isPending && "border-chart-4/30 bg-chart-4/5",
       )}
     >
       {/* Header: Name + Chain Badge */}
@@ -118,7 +118,8 @@ export function DonationCard({
           onClick={() => onDonate(suite)}
           className={cn(
             "w-full",
-            isPending && "bg-chart-4 hover:bg-chart-4/90 text-primary-foreground"
+            isPending &&
+              "bg-chart-4 hover:bg-chart-4/90 text-primary-foreground",
           )}
           disabled={isPending}
         >
@@ -170,5 +171,5 @@ export function DonationCard({
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

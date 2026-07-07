@@ -1,65 +1,65 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
-  XCircle,
   ChevronDown,
   ChevronRight,
   Clock,
   DollarSign,
   HelpCircle,
-} from "lucide-react";
+  XCircle,
+} from "lucide-react"
+import { useEffect, useState } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@/components/ui/card"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@/components/ui/collapsible"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import type { SuiteQuestionBreakdown, QuestionBreakdown } from "@/lib/types";
+} from "@/components/ui/tooltip"
+import type { QuestionBreakdown, SuiteQuestionBreakdown } from "@/lib/types"
 
 interface QuestionBreakdownProps {
-  suiteId: string;
+  suiteId: string
 }
 
 function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + "...";
+  if (text.length <= maxLength) return text
+  return `${text.slice(0, maxLength - 3)}...`
 }
 
 function getSuccessRateColor(rate: number): string {
-  if (rate >= 80) return "text-green-500";
-  if (rate >= 60) return "text-yellow-500";
-  if (rate >= 40) return "text-orange-500";
-  return "text-red-500";
+  if (rate >= 80) return "text-green-500"
+  if (rate >= 60) return "text-yellow-500"
+  if (rate >= 40) return "text-orange-500"
+  return "text-red-500"
 }
 
 function getSuccessRateBg(rate: number): string {
-  if (rate >= 80) return "bg-green-500/10";
-  if (rate >= 60) return "bg-yellow-500/10";
-  if (rate >= 40) return "bg-orange-500/10";
-  return "bg-red-500/10";
+  if (rate >= 80) return "bg-green-500/10"
+  if (rate >= 60) return "bg-yellow-500/10"
+  if (rate >= 40) return "bg-orange-500/10"
+  return "bg-red-500/10"
 }
 
-function QuestionItem({ question, index }: { question: QuestionBreakdown; index: number }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const isProblematic = question.successRate < 50;
+function QuestionItem({ question }: { question: QuestionBreakdown }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const isProblematic = question.successRate < 50
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -83,18 +83,22 @@ function QuestionItem({ question, index }: { question: QuestionBreakdown; index:
             ) : (
               <HelpCircle className="h-4 w-4 text-muted-foreground" />
             )}
-            <span className="text-sm text-muted-foreground">Q{question.testIndex + 1}</span>
+            <span className="text-sm text-muted-foreground">
+              Q{question.testIndex + 1}
+            </span>
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm truncate">{truncateText(question.prompt, 100)}</p>
+            <p className="text-sm truncate">
+              {truncateText(question.prompt, 100)}
+            </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <Badge
               variant="secondary"
               className={`${getSuccessRateBg(question.successRate)} ${getSuccessRateColor(
-                question.successRate
+                question.successRate,
               )}`}
             >
               {question.successRate.toFixed(1)}%
@@ -118,10 +122,16 @@ function QuestionItem({ question, index }: { question: QuestionBreakdown; index:
 
           {/* Expected answers */}
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Expected Answers:</p>
+            <p className="text-xs text-muted-foreground mb-1">
+              Expected Answers:
+            </p>
             <div className="flex flex-wrap gap-1">
-              {question.answers.map((answer, i) => (
-                <Badge key={i} variant="outline" className="font-mono text-xs">
+              {question.answers.map((answer) => (
+                <Badge
+                  key={`${question.testIndex}-answer-${answer}`}
+                  variant="outline"
+                  className="font-mono text-xs"
+                >
                   {answer}
                 </Badge>
               ))}
@@ -131,7 +141,8 @@ function QuestionItem({ question, index }: { question: QuestionBreakdown; index:
           {/* Model results */}
           <div>
             <p className="text-xs text-muted-foreground mb-2">
-              Model Results ({question.correctCount} correct, {question.totalModels - question.correctCount} incorrect):
+              Model Results ({question.correctCount} correct,{" "}
+              {question.totalModels - question.correctCount} incorrect):
             </p>
             <div className="grid gap-2">
               {question.modelResults.map((result) => (
@@ -142,15 +153,20 @@ function QuestionItem({ question, index }: { question: QuestionBreakdown; index:
         </div>
       </CollapsibleContent>
     </Collapsible>
-  );
+  )
 }
 
-function ModelResultRow({ result }: { result: QuestionBreakdown["modelResults"][0] }) {
-  const [showResponse, setShowResponse] = useState(false);
+function ModelResultRow({
+  result,
+}: {
+  result: QuestionBreakdown["modelResults"][0]
+}) {
+  const [showResponse, setShowResponse] = useState(false)
 
   return (
     <div className="text-sm">
-      <div
+      <button
+        type="button"
         className={`flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-background/50 ${
           result.correct ? "bg-green-500/5" : "bg-red-500/5"
         }`}
@@ -177,8 +193,7 @@ function ModelResultRow({ result }: { result: QuestionBreakdown["modelResults"][
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <DollarSign className="h-3 w-3" />
-                ${result.cost.toFixed(4)}
+                <DollarSign className="h-3 w-3" />${result.cost.toFixed(4)}
               </span>
             </TooltipTrigger>
             <TooltipContent>Cost</TooltipContent>
@@ -189,52 +204,56 @@ function ModelResultRow({ result }: { result: QuestionBreakdown["modelResults"][
             showResponse ? "rotate-180" : ""
           }`}
         />
-      </div>
+      </button>
       {showResponse && (
         <div className="ml-7 mt-2 p-2 rounded bg-background/50 text-xs font-mono whitespace-pre-wrap max-h-48 overflow-auto">
           {result.response}
         </div>
       )}
     </div>
-  );
+  )
 }
 
 export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
-  const [breakdown, setBreakdown] = useState<SuiteQuestionBreakdown | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  const [breakdown, setBreakdown] = useState<SuiteQuestionBreakdown | null>(
+    null,
+  )
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
     async function fetchBreakdown() {
       try {
-        setLoading(true);
-        const res = await fetch(`/api/suites/${suiteId}/questions`);
+        setLoading(true)
+        const res = await fetch(`/api/suites/${suiteId}/questions`)
         if (!res.ok) {
           if (res.status === 404) {
-            setError("No detailed results available yet");
+            setError("No detailed results available yet")
           } else {
-            throw new Error("Failed to fetch");
+            throw new Error("Failed to fetch")
           }
-          return;
+          return
         }
-        const data = await res.json();
-        setBreakdown(data);
-      } catch (err) {
-        setError("Failed to load question breakdown");
+        const data = await res.json()
+        setBreakdown(data)
+      } catch {
+        setError("Failed to load question breakdown")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
 
-    fetchBreakdown();
-  }, [suiteId]);
+    fetchBreakdown()
+  }, [suiteId])
 
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl font-medium">Question Analysis</CardTitle>
+          <CardTitle className="text-xl font-medium">
+            Question Analysis
+          </CardTitle>
           <CardDescription>Loading detailed results...</CardDescription>
         </CardHeader>
         <CardContent>
@@ -243,27 +262,34 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
           </div>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   if (error || !breakdown) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl font-medium">Question Analysis</CardTitle>
+          <CardTitle className="text-xl font-medium">
+            Question Analysis
+          </CardTitle>
           <CardDescription>{error || "No data available"}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-32 flex items-center justify-center text-muted-foreground">
-            {error || "Detailed question data will appear after syncing results."}
+            {error ||
+              "Detailed question data will appear after syncing results."}
           </div>
         </CardContent>
       </Card>
-    );
+    )
   }
 
-  const problematicCount = breakdown.questions.filter((q) => q.successRate < 50).length;
-  const displayQuestions = showAll ? breakdown.questions : breakdown.questions.slice(0, 10);
+  const problematicCount = breakdown.questions.filter(
+    (q) => q.successRate < 50,
+  ).length
+  const displayQuestions = showAll
+    ? breakdown.questions
+    : breakdown.questions.slice(0, 10)
 
   return (
     <Card className="group relative overflow-hidden transition-all duration-300 hover:border-primary/20">
@@ -271,9 +297,12 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <CardTitle className="text-xl font-medium">Question Analysis</CardTitle>
+            <CardTitle className="text-xl font-medium">
+              Question Analysis
+            </CardTitle>
             <CardDescription>
-              {breakdown.totalQuestions} questions tested across {breakdown.totalModels} models
+              {breakdown.totalQuestions} questions tested across{" "}
+              {breakdown.totalModels} models
               {problematicCount > 0 && (
                 <span className="ml-2 text-red-500">
                   ({problematicCount} problematic questions &lt;50%)
@@ -297,7 +326,11 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
           </div>
           <div className="p-3 rounded-lg bg-yellow-500/10 text-center">
             <div className="text-2xl font-bold text-yellow-500">
-              {breakdown.questions.filter((q) => q.successRate >= 40 && q.successRate < 70).length}
+              {
+                breakdown.questions.filter(
+                  (q) => q.successRate >= 40 && q.successRate < 70,
+                ).length
+              }
             </div>
             <div className="text-xs text-muted-foreground">Medium (40-70%)</div>
           </div>
@@ -313,7 +346,11 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
         <ScrollArea className="h-[500px]">
           <div className="space-y-1">
             {displayQuestions.map((question, index) => (
-              <QuestionItem key={question.testIndex} question={question} index={index} />
+              <QuestionItem
+                key={question.testIndex}
+                question={question}
+                index={index}
+              />
             ))}
           </div>
         </ScrollArea>
@@ -327,5 +364,5 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

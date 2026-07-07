@@ -9,6 +9,7 @@ export function JsonLd<T extends Thing>({ data }: { data: WithContext<T> }) {
   return (
     <script
       type="application/ld+json"
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is serialized with JSON.stringify and escapes < as \u003c per Next.js guidance.
       dangerouslySetInnerHTML={{
         __html: JSON.stringify(data).replace(/</g, "\\u003c"),
       }}

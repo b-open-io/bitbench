@@ -1,88 +1,82 @@
-"use client";
+"use client"
 
-import { Suspense, useState, useEffect, useMemo } from "react";
-import Link from "next/link";
-import { Loader2, Trophy, BarChart3, Target } from "lucide-react";
-
+import { BarChart3, Loader2, Target, Trophy } from "lucide-react"
+import Link from "next/link"
+import { Suspense, useEffect, useMemo, useState } from "react"
+import { DonationModal } from "@/components/donation-modal"
+import { FundingStats } from "@/components/funding-stats"
+import { SiteHeader } from "@/components/site-header"
+import { SponsorSection } from "@/components/sponsor-section"
+import { SuiteGrid } from "@/components/suite-grid"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { SiteHeader } from "@/components/site-header";
-import { FundingStats } from "@/components/funding-stats";
-import { SuiteGrid } from "@/components/suite-grid";
-import { DonationModal } from "@/components/donation-modal";
-import { SponsorSection } from "@/components/sponsor-section";
-import type { SuiteWithBalance, Chain } from "@/lib/types";
-import { CHAIN_INFO } from "@/lib/types";
+} from "@/components/ui/card"
+import type { Chain, SuiteWithBalance } from "@/lib/types"
+import { CHAIN_INFO } from "@/lib/types"
 
 interface ResultsSummary {
-  totalCompletedSuites: number;
-  totalModelsEvaluated: number;
-  topPerformer: { model: string; score: number } | null;
+  totalCompletedSuites: number
+  totalModelsEvaluated: number
+  topPerformer: { model: string; score: number } | null
 }
 
 function BenchmarkVisualizerContent() {
-  const [suites, setSuites] = useState<SuiteWithBalance[]>([]);
-  const [suitesLoading, setSuitesLoading] = useState(true);
+  const [suites, setSuites] = useState<SuiteWithBalance[]>([])
+  const [suitesLoading, setSuitesLoading] = useState(true)
   const [resultsSummary, setResultsSummary] = useState<ResultsSummary | null>(
-    null
-  );
+    null,
+  )
   const [selectedSuite, setSelectedSuite] = useState<SuiteWithBalance | null>(
-    null
-  );
-  const [donationModalOpen, setDonationModalOpen] = useState(false);
-  const [chainFilter, setChainFilter] = useState<Chain | "all">("all");
+    null,
+  )
+  const [donationModalOpen, setDonationModalOpen] = useState(false)
+  const [chainFilter, setChainFilter] = useState<Chain | "all">("all")
 
-  const modelCount = 44; // Could fetch this dynamically
+  const modelCount = 44 // Could fetch this dynamically
 
   const filteredSuites = useMemo(
     () =>
       chainFilter === "all"
         ? suites
         : suites.filter((s) => s.chain === chainFilter),
-    [suites, chainFilter]
-  );
+    [suites, chainFilter],
+  )
 
   // Get unique chains from suites for filter options
   const availableChains = useMemo(() => {
-    const chains = new Set(suites.map((s) => s.chain));
-    return Array.from(chains).sort() as Chain[];
-  }, [suites]);
-
-  const completedSuitesCount = useMemo(
-    () => suites.filter((s) => s.status === "completed" || s.lastRunAt).length,
-    [suites]
-  );
+    const chains = new Set(suites.map((s) => s.chain))
+    return Array.from(chains).sort() as Chain[]
+  }, [suites])
 
   // Fetch suites on mount
   useEffect(() => {
     async function fetchSuites() {
       try {
-        const res = await fetch("/api/suites");
+        const res = await fetch("/api/suites")
         if (res.ok) {
-          const data = await res.json();
-          setSuites(data.suites);
+          const data = await res.json()
+          setSuites(data.suites)
         }
       } catch (error) {
-        console.error("Failed to fetch suites:", error);
+        console.error("Failed to fetch suites:", error)
       } finally {
-        setSuitesLoading(false);
+        setSuitesLoading(false)
       }
     }
-    fetchSuites();
-  }, []);
+    fetchSuites()
+  }, [])
 
   // Fetch results summary for the stats banner
   useEffect(() => {
     async function fetchResultsSummary() {
       try {
-        const res = await fetch("/api/results");
+        const res = await fetch("/api/results")
         if (res.ok) {
-          const data = await res.json();
+          const data = await res.json()
           setResultsSummary({
             totalCompletedSuites: data.totalCompletedSuites,
             totalModelsEvaluated: data.totalModelsEvaluated,
@@ -92,19 +86,19 @@ function BenchmarkVisualizerContent() {
                   score: data.globalLeaderboard[0].averageScore,
                 }
               : null,
-          });
+          })
         }
       } catch (error) {
-        console.error("Failed to fetch results:", error);
+        console.error("Failed to fetch results:", error)
       }
     }
-    fetchResultsSummary();
-  }, []);
+    fetchResultsSummary()
+  }, [])
 
   const handleDonate = (suite: SuiteWithBalance) => {
-    setSelectedSuite(suite);
-    setDonationModalOpen(true);
-  };
+    setSelectedSuite(suite)
+    setDonationModalOpen(true)
+  }
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
@@ -175,6 +169,7 @@ function BenchmarkVisualizerContent() {
             {availableChains.length > 1 && (
               <div className="flex flex-wrap gap-2">
                 <button
+                  type="button"
                   onClick={() => setChainFilter("all")}
                   className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                     chainFilter === "all"
@@ -185,10 +180,11 @@ function BenchmarkVisualizerContent() {
                   All
                 </button>
                 {availableChains.map((chain) => {
-                  const info = CHAIN_INFO[chain];
-                  const isActive = chainFilter === chain;
+                  const info = CHAIN_INFO[chain]
+                  const isActive = chainFilter === chain
                   return (
                     <button
+                      type="button"
                       key={chain}
                       onClick={() => setChainFilter(chain)}
                       className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -199,7 +195,7 @@ function BenchmarkVisualizerContent() {
                     >
                       {info.name}
                     </button>
-                  );
+                  )
                 })}
               </div>
             )}
@@ -221,12 +217,12 @@ function BenchmarkVisualizerContent() {
         suite={selectedSuite}
         open={donationModalOpen}
         onClose={() => {
-          setDonationModalOpen(false);
-          setSelectedSuite(null);
+          setDonationModalOpen(false)
+          setSelectedSuite(null)
         }}
       />
     </div>
-  );
+  )
 }
 
 function LoadingFallback() {
@@ -237,7 +233,7 @@ function LoadingFallback() {
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     </div>
-  );
+  )
 }
 
 export default function BenchmarkVisualizer() {
@@ -245,5 +241,5 @@ export default function BenchmarkVisualizer() {
     <Suspense fallback={<LoadingFallback />}>
       <BenchmarkVisualizerContent />
     </Suspense>
-  );
+  )
 }

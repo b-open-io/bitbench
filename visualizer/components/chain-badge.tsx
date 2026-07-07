@@ -1,14 +1,14 @@
-import { type Chain, CHAIN_INFO } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { CHAIN_INFO, type Chain } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 interface ChainBadgeProps {
-  chain: Chain;
-  size?: "sm" | "md";
-  className?: string;
+  chain: Chain
+  size?: "sm" | "md"
+  className?: string
 }
 
 export function ChainBadge({ chain, size = "md", className }: ChainBadgeProps) {
-  const info = CHAIN_INFO[chain];
+  const info = CHAIN_INFO[chain]
 
   return (
     <span
@@ -18,17 +18,23 @@ export function ChainBadge({ chain, size = "md", className }: ChainBadgeProps) {
         info.color,
         "border-current/20",
         size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs",
-        className
+        className,
       )}
     >
       {info.name}
     </span>
-  );
+  )
 }
 
 // Icon versions for each chain (simplified logos)
-export function ChainIcon({ chain, className }: { chain: Chain; className?: string }) {
-  const info = CHAIN_INFO[chain];
+export function ChainIcon({
+  chain,
+  className,
+}: {
+  chain: Chain
+  className?: string
+}) {
+  const info = CHAIN_INFO[chain]
 
   // Simple circle with first letter for now
   return (
@@ -38,10 +44,10 @@ export function ChainIcon({ chain, className }: { chain: Chain; className?: stri
         info.bgColor,
         info.color,
         "h-5 w-5 text-[10px]",
-        className
+        className,
       )}
     >
       {info.name[0]}
     </span>
-  );
+  )
 }

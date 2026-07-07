@@ -14,8 +14,7 @@ const MODEL_COUNT = 44;
 // WhatsOnChain API for balance checking
 const WOC_API = "https://api.whatsonchain.com/v1/bsv/main";
 
-// Current BSV price estimate (same as visualizer)
-const BSV_PRICE_USD = 50;
+const WOC_EXCHANGE_RATE_URL = `${WOC_API}/exchangerate`;
 
 export interface FundingStatus {
   suiteId: string;
@@ -58,15 +57,32 @@ export function isMasterWifConfigured(): boolean {
 /**
  * Convert satoshis to USD
  */
-export function satsToUsd(sats: number): number {
-  return (sats / 100_000_000) * BSV_PRICE_USD;
+export function satsToUsd(sats: number, priceUsd: number): number {
+  return (sats / 100_000_000) * priceUsd;
 }
 
 /**
  * Convert USD to satoshis
  */
-export function usdToSats(usd: number): number {
-  return Math.ceil((usd / BSV_PRICE_USD) * 100_000_000);
+export function usdToSats(usd: number, priceUsd: number): number {
+  return Math.ceil((usd / priceUsd) * 100_000_000);
+}
+
+/**
+ * Get the current BSV/USD exchange rate from WhatsOnChain
+ */
+export async function getBsvPriceUsd(): Promise<number> {
+  const res = await fetch(WOC_EXCHANGE_RATE_URL);
+  if (!res.ok) {
+    throw new Error(`WOC exchange rate fetch failed: ${res.status}`);
+  }
+
+  const data = (await res.json()) as { rate?: unknown };
+  if (typeof data.rate !== "number" || data.rate <= 0) {
+    throw new Error("Invalid BSV/USD exchange rate from WhatsOnChain");
+  }
+
+  return data.rate;
 }
 
 /**
@@ -143,7 +159,8 @@ export async function getSuiteFundingStatus(
   suiteId: string,
   suiteName: string,
   testCount: number,
-  estimatedCostUsd: number
+  estimatedCostUsd: number,
+  bsvPriceUsd: number
 ): Promise<FundingStatus> {
   let address: string;
   try {
@@ -154,8 +171,8 @@ export async function getSuiteFundingStatus(
 
   const balanceSats =
     address.startsWith("(") ? 0 : await getAddressBalance(address);
-  const balanceUsd = satsToUsd(balanceSats);
-  const goalSats = usdToSats(estimatedCostUsd);
+  const balanceUsd = satsToUsd(balanceSats, bsvPriceUsd);
+  const goalSats = usdToSats(estimatedCostUsd, bsvPriceUsd);
   const goalUsd = estimatedCostUsd;
   const fundingProgress = goalSats > 0 ? Math.min(balanceSats / goalSats, 1) : 0;
 
@@ -178,11 +195,18 @@ export async function getSuiteFundingStatus(
  */
 export async function getAllFundingStatus(): Promise<FundingStatus[]> {
   const suites = await loadTestSuites();
+  const bsvPriceUsd = await getBsvPriceUsd();
 
   // Fetch balances in parallel
   const statuses = await Promise.all(
     suites.map((suite) =>
-      getSuiteFundingStatus(suite.id, suite.name, suite.testCount, suite.estimatedCostUsd)
+      getSuiteFundingStatus(
+        suite.id,
+        suite.name,
+        suite.testCount,
+        suite.estimatedCostUsd,
+        bsvPriceUsd
+      )
     )
   );
 

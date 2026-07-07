@@ -1,42 +1,56 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { ChevronRight, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronRight, Loader2, XCircle } from "lucide-react"
+import { useState } from "react"
+import { ChainBadge } from "@/components/chain-badge"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChainBadge } from "@/components/chain-badge";
-import type { TestSuite, TestSuiteFile, TestQuestion } from "@/lib/types";
+} from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import type { TestQuestion, TestSuite, TestSuiteFile } from "@/lib/types"
 
 interface SuiteListModalProps {
-  suites: TestSuite[];
+  suites: TestSuite[]
 }
 
-function QuestionItem({ question, index }: { question: TestQuestion; index: number }) {
+function QuestionItem({
+  question,
+  index,
+}: {
+  question: TestQuestion
+  index: number
+}) {
   return (
     <div className="rounded-lg border border-border p-4 space-y-3">
       <div className="flex items-start gap-3">
         <span className="shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-medium">
           {index + 1}
         </span>
-        <p className="text-sm font-mono whitespace-pre-wrap">{question.prompt}</p>
+        <p className="text-sm font-mono whitespace-pre-wrap">
+          {question.prompt}
+        </p>
       </div>
 
       <div className="ml-9 space-y-2">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-            <span className="text-xs text-muted-foreground">Expected answers:</span>
+            <span className="text-xs text-muted-foreground">
+              Expected answers:
+            </span>
           </div>
           <div className="flex flex-wrap gap-1">
-            {question.answers.map((answer, i) => (
-              <Badge key={i} variant="secondary" className="text-xs font-mono bg-green-500/10 text-green-600 dark:text-green-400">
+            {question.answers.map((answer) => (
+              <Badge
+                key={`${question.prompt}-answer-${answer}`}
+                variant="secondary"
+                className="text-xs font-mono bg-green-500/10 text-green-600 dark:text-green-400"
+              >
                 {answer}
               </Badge>
             ))}
@@ -47,11 +61,17 @@ function QuestionItem({ question, index }: { question: TestQuestion; index: numb
           <div>
             <div className="flex items-center gap-2 mb-1">
               <XCircle className="h-3.5 w-3.5 text-red-500" />
-              <span className="text-xs text-muted-foreground">Negative answers:</span>
+              <span className="text-xs text-muted-foreground">
+                Negative answers:
+              </span>
             </div>
             <div className="flex flex-wrap gap-1">
-              {question.negative_answers.map((answer, i) => (
-                <Badge key={i} variant="secondary" className="text-xs font-mono bg-red-500/10 text-red-600 dark:text-red-400">
+              {question.negative_answers.map((answer) => (
+                <Badge
+                  key={`${question.prompt}-negative-${answer}`}
+                  variant="secondary"
+                  className="text-xs font-mono bg-red-500/10 text-red-600 dark:text-red-400"
+                >
                   {answer}
                 </Badge>
               ))}
@@ -60,34 +80,34 @@ function QuestionItem({ question, index }: { question: TestQuestion; index: numb
         )}
       </div>
     </div>
-  );
+  )
 }
 
 export function SuiteListModal({ suites }: SuiteListModalProps) {
-  const [selectedSuite, setSelectedSuite] = useState<TestSuiteFile | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedSuite, setSelectedSuite] = useState<TestSuiteFile | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   async function handleSuiteClick(suite: TestSuite) {
-    setLoading(true);
-    setDialogOpen(true);
+    setLoading(true)
+    setDialogOpen(true)
 
     try {
-      const res = await fetch(`/api/suites/${suite.id}/details`);
+      const res = await fetch(`/api/suites/${suite.id}/details`)
       if (res.ok) {
-        const data = await res.json();
-        setSelectedSuite(data);
+        const data = await res.json()
+        setSelectedSuite(data)
       }
     } catch (error) {
-      console.error("Failed to fetch suite details:", error);
+      console.error("Failed to fetch suite details:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   function handleClose() {
-    setDialogOpen(false);
-    setSelectedSuite(null);
+    setDialogOpen(false)
+    setSelectedSuite(null)
   }
 
   return (
@@ -127,7 +147,9 @@ export function SuiteListModal({ suites }: SuiteListModalProps) {
                   {selectedSuite.name}
                   <ChainBadge chain={selectedSuite.chain} size="sm" />
                 </DialogTitle>
-                <DialogDescription>{selectedSuite.description}</DialogDescription>
+                <DialogDescription>
+                  {selectedSuite.description}
+                </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 flex-1 min-h-0">
@@ -142,13 +164,20 @@ export function SuiteListModal({ suites }: SuiteListModalProps) {
                 {/* Version & Stats */}
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span>
-                    Version: <span className="font-mono">{selectedSuite.version}</span>
+                    Version:{" "}
+                    <span className="font-mono">{selectedSuite.version}</span>
                   </span>
                   <span>
-                    Est. Cost: <span className="font-mono">${selectedSuite.estimatedCostUsd.toFixed(2)}</span>
+                    Est. Cost:{" "}
+                    <span className="font-mono">
+                      ${selectedSuite.estimatedCostUsd.toFixed(2)}
+                    </span>
                   </span>
                   <span>
-                    Questions: <span className="font-mono">{selectedSuite.tests.length}</span>
+                    Questions:{" "}
+                    <span className="font-mono">
+                      {selectedSuite.tests.length}
+                    </span>
                   </span>
                 </div>
 
@@ -158,7 +187,11 @@ export function SuiteListModal({ suites }: SuiteListModalProps) {
                   <ScrollArea className="h-[400px] pr-4">
                     <div className="space-y-3">
                       {selectedSuite.tests.map((question, index) => (
-                        <QuestionItem key={index} question={question} index={index} />
+                        <QuestionItem
+                          key={`${selectedSuite.id}-${question.prompt}`}
+                          question={question}
+                          index={index}
+                        />
                       ))}
                     </div>
                   </ScrollArea>
@@ -169,5 +202,5 @@ export function SuiteListModal({ suites }: SuiteListModalProps) {
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

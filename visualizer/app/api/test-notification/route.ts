@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server"
 import {
-  sendTestNotification,
   isNotificationsConfigured,
-} from "@/lib/notifications";
+  sendTestNotification,
+} from "@/lib/notifications"
 
 // Only allow with correct authorization
-const CRON_SECRET = process.env.CRON_SECRET;
+const CRON_SECRET = process.env.CRON_SECRET
 
 /**
  * Send a test notification to verify configuration
@@ -15,12 +15,12 @@ const CRON_SECRET = process.env.CRON_SECRET;
  */
 export async function POST(request: Request) {
   // Verify authorization
-  const authHeader = request.headers.get("authorization");
-  const providedSecret = authHeader?.replace("Bearer ", "");
+  const authHeader = request.headers.get("authorization")
+  const providedSecret = authHeader?.replace("Bearer ", "")
 
   // Allow if CRON_SECRET matches, or if it's not configured (dev mode)
   if (CRON_SECRET && providedSecret !== CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   if (!isNotificationsConfigured()) {
@@ -34,23 +34,23 @@ export async function POST(request: Request) {
         },
         hint: "Set DISCORD_WEBHOOK_URL and/or RESEND_API_KEY + NOTIFICATION_EMAIL",
       },
-      { status: 500 }
-    );
+      { status: 500 },
+    )
   }
 
   try {
-    const results = await sendTestNotification();
+    const results = await sendTestNotification()
 
     return NextResponse.json({
       success: results.discord || results.email,
       results,
       timestamp: new Date().toISOString(),
-    });
+    })
   } catch (error) {
-    console.error("[TestNotification] Error:", error);
+    console.error("[TestNotification] Error:", error)
     return NextResponse.json(
       { error: "Failed to send test notification", details: String(error) },
-      { status: 500 }
-    );
+      { status: 500 },
+    )
   }
 }

@@ -1,199 +1,241 @@
-"use client";
+"use client"
 
 import {
+  createContext as createOneSatContext,
+  deriveDepositAddresses,
+  getOrdinals,
+  type OneSatContext,
+  type WalletInterface,
+} from "@1sat/actions"
+import { OneSatServices } from "@1sat/client"
+import {
+  WalletProvider as OneSatWalletProvider,
+  useWallet as useOneSatWallet,
+} from "@1sat/react"
+import { type ThemeToken, validateThemeToken } from "@theme-token/sdk"
+import {
   createContext,
+  type ReactNode,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
-  useCallback,
-  type ReactNode,
-} from "react";
-import { YoursProvider, useYoursWallet } from "yours-wallet-provider";
-import type { Addresses, Balance } from "yours-wallet-provider";
-import { type ThemeToken, validateThemeToken } from "@theme-token/sdk";
-import { useThemeToken } from "./theme-provider";
+} from "react"
+import { useThemeToken } from "./theme-provider"
 
-interface WalletState {
-  isReady: boolean;
-  isConnected: boolean;
-  addresses: Addresses | null;
-  balance: Balance | null;
-  themeTokens: ThemeToken[];
-  isLoadingThemes: boolean;
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  refreshState: () => Promise<void>;
-  // Pass through the raw wallet for sendBsv, signMessage, etc.
-  wallet: ReturnType<typeof useYoursWallet>;
+interface WalletAddresses {
+  bsvAddress: string | null
 }
 
-const WalletContext = createContext<WalletState | null>(null);
+interface WalletBalance {
+  satoshis: number
+}
+
+interface WalletState {
+  isReady: boolean
+  isConnected: boolean
+  addresses: WalletAddresses | null
+  balance: WalletBalance | null
+  themeTokens: ThemeToken[]
+  isLoadingThemes: boolean
+  connect: () => Promise<void>
+  disconnect: () => Promise<void>
+  refreshState: () => Promise<void>
+  wallet: WalletInterface | null
+  ctx: OneSatContext | null
+  services: OneSatServices
+  identityKey: string | null
+}
+
+const WalletContext = createContext<WalletState | null>(null)
+
+function parseThemeToken(data: Uint8Array): ThemeToken | null {
+  try {
+    const json = JSON.parse(new TextDecoder().decode(data))
+    const result = validateThemeToken(json)
+    return result.valid ? result.theme : null
+  } catch {
+    return null
+  }
+}
 
 function WalletStateProvider({ children }: { children: ReactNode }) {
-  const wallet = useYoursWallet();
-  const [isConnected, setIsConnected] = useState(false);
-  const [addresses, setAddresses] = useState<Addresses | null>(null);
-  const [balance, setBalance] = useState<Balance | null>(null);
-  const [themeTokens, setThemeTokens] = useState<ThemeToken[]>([]);
-  const [isLoadingThemes, setIsLoadingThemes] = useState(false);
+  const {
+    wallet,
+    status,
+    identityKey,
+    availableProviders,
+    connect: oneSatConnect,
+    disconnect: oneSatDisconnect,
+  } = useOneSatWallet()
+  const themeContext = useThemeToken()
+  const services = useMemo(() => new OneSatServices("main"), [])
+  const ctx = useMemo(
+    () =>
+      status === "connected" && wallet
+        ? createOneSatContext(wallet, { chain: "main", services })
+        : null,
+    [wallet, status, services],
+  )
 
-  // Get theme context to set available themes
-  const themeContext = useThemeToken();
+  const [addresses, setAddresses] = useState<WalletAddresses | null>(null)
+  const [balance, setBalance] = useState<WalletBalance | null>(null)
+  const [themeTokens, setThemeTokens] = useState<ThemeToken[]>([])
+  const [isLoadingThemes, setIsLoadingThemes] = useState(false)
+  const latestIdentityKey = useRef<string | null>(identityKey)
 
-  // Fetch theme tokens from wallet ordinals
+  useEffect(() => {
+    latestIdentityKey.current = identityKey
+  }, [identityKey])
+
+  const clearAccountState = useCallback(() => {
+    setAddresses(null)
+    setBalance(null)
+    setThemeTokens([])
+    setIsLoadingThemes(false)
+    themeContext.setAvailableThemes([])
+  }, [themeContext])
+
   const fetchThemeTokens = useCallback(async () => {
-    if (!wallet?.isReady || typeof wallet.getOrdinals !== "function") return;
+    if (!ctx) {
+      setThemeTokens([])
+      themeContext.setAvailableThemes([])
+      return
+    }
 
-    setIsLoadingThemes(true);
+    const requestIdentityKey = identityKey
+    setIsLoadingThemes(true)
 
     try {
-      const response = await wallet.getOrdinals({ limit: 100 });
-      const tokens: ThemeToken[] = [];
+      const { outputs } = await getOrdinals.execute(ctx, { limit: 100 })
+      const outpoints = outputs.map((output) => output.outpoint).filter(Boolean)
+      if (outpoints.length === 0) {
+        if (latestIdentityKey.current === requestIdentityKey) {
+          setThemeTokens([])
+          themeContext.setAvailableThemes([])
+        }
+        return
+      }
 
-      const ordinals = Array.isArray(response)
-        ? response
-        : (response?.ordinals ?? []);
+      const metadata = await services.ordfs.bulkMetadata(outpoints)
+      const themeOutputs = outputs.filter(
+        (output) => metadata[output.outpoint]?.map?.type === "theme",
+      )
+      const tokens: ThemeToken[] = []
 
-      for (const ordinal of ordinals) {
+      for (const output of themeOutputs) {
         try {
-          // Check if it's a theme token by looking at MAP metadata
-          const mapData = ordinal?.origin?.data?.map as
-            | Record<string, string>
-            | undefined;
-
-          // Theme tokens have type: "theme" in MAP metadata
-          if (mapData?.type === "theme") {
-            const content = ordinal?.origin?.data?.insc?.file?.json;
-            if (content && typeof content === "object") {
-              const result = validateThemeToken(content);
-              if (result.valid) {
-                tokens.push(result.theme);
-              }
-            }
-          }
+          const { data } = await services.ordfs.getContent(output.outpoint)
+          const token = parseThemeToken(data)
+          if (token) tokens.push(token)
         } catch {
-          // Skip invalid ordinals
+          // Skip invalid or unavailable theme ordinals.
         }
       }
 
-      setThemeTokens(tokens);
-      themeContext.setAvailableThemes(tokens);
-    } catch (err) {
-      console.error("Error fetching theme tokens:", err);
+      if (latestIdentityKey.current === requestIdentityKey) {
+        setThemeTokens(tokens)
+        themeContext.setAvailableThemes(tokens)
+      }
+    } catch (error) {
+      console.error("Error fetching theme tokens:", error)
     } finally {
-      setIsLoadingThemes(false);
+      if (latestIdentityKey.current === requestIdentityKey) {
+        setIsLoadingThemes(false)
+      }
     }
-  }, [wallet, themeContext]);
+  }, [ctx, identityKey, services, themeContext])
 
   const refreshState = useCallback(async () => {
-    // Check both isReady flag AND that methods exist (wallet is fully loaded)
-    if (!wallet?.isReady || typeof wallet.isConnected !== "function") {
-      setIsConnected(false);
-      setAddresses(null);
-      setBalance(null);
-      return;
+    if (!wallet || !ctx || status !== "connected") {
+      clearAccountState()
+      return
     }
+
+    const requestIdentityKey = identityKey
 
     try {
-      const connected = await wallet.isConnected();
-      setIsConnected(connected);
+      const [{ outputs }, { derivations }] = await Promise.all([
+        wallet.listOutputs({ basket: "default", limit: 10000 }),
+        deriveDepositAddresses.execute(ctx, { count: 1 }),
+      ])
+      const satoshis = outputs.reduce((sum, output) => sum + output.satoshis, 0)
+      const bsvAddress = derivations[0]?.address ?? null
 
-      if (connected) {
-        const [addrs, bal] = await Promise.all([
-          wallet.getAddresses(),
-          wallet.getBalance(),
-        ]);
-        setAddresses(addrs || null);
-        setBalance(bal || null);
+      if (latestIdentityKey.current !== requestIdentityKey) return
 
-        // Fetch theme tokens when connected
-        await fetchThemeTokens();
-      } else {
-        setAddresses(null);
-        setBalance(null);
-        setThemeTokens([]);
-        themeContext.setAvailableThemes([]);
+      setBalance({ satoshis })
+      setAddresses({ bsvAddress })
+      await fetchThemeTokens()
+    } catch (error) {
+      console.error("Error refreshing wallet state:", error)
+      if (latestIdentityKey.current === requestIdentityKey) {
+        clearAccountState()
       }
-    } catch (err) {
-      console.error("Error refreshing wallet state:", err);
-      setIsConnected(false);
-      setAddresses(null);
-      setBalance(null);
     }
-  }, [wallet, fetchThemeTokens, themeContext]);
+  }, [wallet, ctx, status, identityKey, clearAccountState, fetchThemeTokens])
 
-  // Set up event listeners for wallet state changes
   useEffect(() => {
-    // Check that wallet is fully loaded with all methods
-    if (!wallet?.isReady || typeof wallet.on !== "function") return;
+    if (status === "connected") {
+      refreshState()
+    } else {
+      clearAccountState()
+    }
+  }, [status, refreshState, clearAccountState])
 
-    const handleSignedOut = () => {
-      console.log("Wallet signed out");
-      setIsConnected(false);
-      setAddresses(null);
-      setBalance(null);
-      setThemeTokens([]);
-      themeContext.setAvailableThemes([]);
-      themeContext.resetTheme();
-    };
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const action = (event as CustomEvent<{ action?: string }>).detail?.action
 
-    const handleSwitchAccount = () => {
-      console.log("Wallet account switched");
-      // Refresh state to get new account details
-      refreshState();
-    };
-
-    // Subscribe to wallet events
-    wallet.on("signedOut", handleSignedOut);
-    wallet.on("switchAccount", handleSwitchAccount);
-
-    // Initial state refresh
-    refreshState();
-
-    // Cleanup listeners on unmount
-    return () => {
-      if (typeof wallet?.removeListener === "function") {
-        wallet.removeListener("signedOut", handleSignedOut);
-        wallet.removeListener("switchAccount", handleSwitchAccount);
+      if (action === "signedOut") {
+        clearAccountState()
+        return
       }
-    };
-  }, [wallet, wallet?.isReady, refreshState, themeContext]);
+
+      if (action === "switchAccount") {
+        clearAccountState()
+        oneSatDisconnect()
+        window.setTimeout(() => {
+          oneSatConnect().catch((error) => {
+            console.error("Error reconnecting wallet:", error)
+          })
+        }, 500)
+      }
+    }
+
+    window.addEventListener("YoursEmitEvent", handler)
+    return () => window.removeEventListener("YoursEmitEvent", handler)
+  }, [clearAccountState, oneSatConnect, oneSatDisconnect])
 
   const connect = useCallback(async () => {
-    // Check wallet is fully loaded
-    if (!wallet?.isReady || typeof wallet.connect !== "function") {
-      // Open Yours wallet download page if not installed
-      window.open("https://yours.org", "_blank");
-      return;
+    if (availableProviders.length === 0) {
+      window.open("https://yours.org", "_blank")
+      return
     }
 
     try {
-      await wallet.connect();
-      await refreshState();
-    } catch (err) {
-      console.error("Error connecting wallet:", err);
+      await oneSatConnect()
+      await refreshState()
+    } catch (error) {
+      console.error("Error connecting wallet:", error)
     }
-  }, [wallet, refreshState]);
+  }, [availableProviders.length, oneSatConnect, refreshState])
 
   const disconnect = useCallback(async () => {
-    if (!wallet?.isReady || typeof wallet.disconnect !== "function") return;
-
     try {
-      await wallet.disconnect();
-      setIsConnected(false);
-      setAddresses(null);
-      setBalance(null);
-      setThemeTokens([]);
-      themeContext.setAvailableThemes([]);
-      themeContext.resetTheme();
-    } catch (err) {
-      console.error("Error disconnecting wallet:", err);
+      oneSatDisconnect()
+      clearAccountState()
+      themeContext.resetTheme()
+    } catch (error) {
+      console.error("Error disconnecting wallet:", error)
     }
-  }, [wallet, themeContext]);
+  }, [oneSatDisconnect, clearAccountState, themeContext])
 
   const state: WalletState = {
-    isReady: wallet?.isReady ?? false,
-    isConnected,
+    isReady: availableProviders.length > 0,
+    isConnected: status === "connected",
     addresses,
     balance,
     themeTokens,
@@ -202,27 +244,28 @@ function WalletStateProvider({ children }: { children: ReactNode }) {
     disconnect,
     refreshState,
     wallet,
-  };
+    ctx,
+    services,
+    identityKey,
+  }
 
   return (
     <WalletContext.Provider value={state}>{children}</WalletContext.Provider>
-  );
+  )
 }
 
 interface WalletProviderProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
-// Main provider that wraps YoursProvider and our state management
 export function WalletProvider({ children }: WalletProviderProps) {
   return (
-    <YoursProvider>
+    <OneSatWalletProvider autoDetect autoReconnect>
       <WalletStateProvider>{children}</WalletStateProvider>
-    </YoursProvider>
-  );
+    </OneSatWalletProvider>
+  )
 }
 
-// Hook to access wallet state - returns null if not yet mounted (ssr: false)
 export function useWallet(): WalletState | null {
-  return useContext(WalletContext);
+  return useContext(WalletContext)
 }

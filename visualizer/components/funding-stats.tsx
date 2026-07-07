@@ -1,17 +1,23 @@
-"use client";
+"use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { SuiteWithBalance } from "@/lib/types";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import type { SuiteWithBalance } from "@/lib/types"
 
 interface FundingStatsProps {
-  suites: SuiteWithBalance[];
-  modelCount: number;
+  suites: SuiteWithBalance[]
+  modelCount: number
 }
 
 export function FundingStats({ suites, modelCount }: FundingStatsProps) {
-  const totalRaised = suites.reduce((sum, s) => sum + s.currentBalanceUsd, 0);
-  const totalGoal = suites.reduce((sum, s) => sum + s.estimatedCostUsd, 0);
-  const fullyFunded = suites.filter((s) => s.fundingProgress >= 1).length;
+  const totalRaised = suites.reduce((sum, s) => sum + s.currentBalanceUsd, 0)
+  const totalGoal = suites.reduce((sum, s) => sum + s.estimatedCostUsd, 0)
+  const fullyFunded = suites.filter((s) => s.fundingProgress >= 1).length
 
   return (
     <div className="grid gap-4 mb-8 md:grid-cols-3">
@@ -47,5 +53,5 @@ export function FundingStats({ suites, modelCount }: FundingStatsProps) {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

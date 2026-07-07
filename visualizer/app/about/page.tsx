@@ -1,18 +1,19 @@
-import { Metadata } from "next";
-import Link from "next/link";
-import { SiteHeader } from "@/components/site-header";
-import { SuiteListModal } from "@/components/suite-list-modal";
-import { getAllSuites } from "@/lib/suites";
-import { Github, GitPullRequest, Coins, Zap, FileJson } from "lucide-react";
+import { Coins, FileJson, GitPullRequest, Zap } from "lucide-react"
+import type { Metadata } from "next"
+import Link from "next/link"
+import { GitHubIcon } from "@/components/icons/github-icon"
+import { SiteHeader } from "@/components/site-header"
+import { SuiteListModal } from "@/components/suite-list-modal"
+import { getAllSuites } from "@/lib/suites"
 
 export const metadata: Metadata = {
   title: "About - Bitbench",
   description:
     "Learn how Bitbench works: donation-funded AI benchmarks for Bitcoin development.",
-};
+}
 
 export default async function AboutPage() {
-  const suites = await getAllSuites();
+  const suites = await getAllSuites()
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,8 +37,9 @@ export default async function AboutPage() {
           <div className="prose prose-neutral dark:prose-invert max-w-none">
             <p>
               Each test suite has its own BSV donation address. When a suite
-              reaches its funding goal (typically $25-35 to cover API costs for all models), the
-              benchmark runs automatically against 40+ AI models.
+              reaches its funding goal (typically $25-35 to cover API costs for
+              all models), the benchmark runs automatically against 40+ AI
+              models.
             </p>
             <p>
               Results are published publicly, showing which models perform best
@@ -170,7 +172,7 @@ export default async function AboutPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
             >
-              <Github className="h-4 w-4" />
+              <GitHubIcon className="h-4 w-4" />
               GitHub
             </a>
             <Link
@@ -184,5 +186,5 @@ export default async function AboutPage() {
         </section>
       </main>
     </div>
-  );
+  )
 }

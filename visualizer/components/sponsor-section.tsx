@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Heart, ExternalLink, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { SponsorsResponse, Sponsor } from "@/app/api/sponsors/route";
+import { ExternalLink, Heart, Loader2 } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { useEffect, useState } from "react"
+import type { Sponsor, SponsorsResponse } from "@/app/api/sponsors/route"
+import { Button } from "@/components/ui/button"
 
 function SponsorAvatar({
   sponsor,
   size = "md",
 }: {
-  sponsor: Sponsor;
-  size?: "sm" | "md" | "lg";
+  sponsor: Sponsor
+  size?: "sm" | "md" | "lg"
 }) {
   const sizeClasses = {
     sm: "h-6 w-6",
     md: "h-10 w-10",
     lg: "h-16 w-16",
-  };
+  }
 
   return (
     <Image
@@ -28,7 +28,7 @@ function SponsorAvatar({
       height={size === "lg" ? 64 : size === "md" ? 40 : 24}
       className={`${sizeClasses[size]} rounded-full bg-muted`}
     />
-  );
+  )
 }
 
 function DiamondSponsor({ sponsor }: { sponsor: Sponsor }) {
@@ -52,7 +52,7 @@ function DiamondSponsor({ sponsor }: { sponsor: Sponsor }) {
         <p className="text-xs text-muted-foreground">Diamond Sponsor</p>
       </div>
     </Link>
-  );
+  )
 }
 
 function LegendarySponsor({ sponsor }: { sponsor: Sponsor }) {
@@ -72,7 +72,7 @@ function LegendarySponsor({ sponsor }: { sponsor: Sponsor }) {
       </div>
       <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
     </Link>
-  );
+  )
 }
 
 function RegularSponsor({ sponsor }: { sponsor: Sponsor }) {
@@ -88,7 +88,7 @@ function RegularSponsor({ sponsor }: { sponsor: Sponsor }) {
         {sponsor.name || sponsor.login}
       </span>
     </Link>
-  );
+  )
 }
 
 function BackerName({ sponsor }: { sponsor: Sponsor }) {
@@ -101,31 +101,31 @@ function BackerName({ sponsor }: { sponsor: Sponsor }) {
     >
       {sponsor.name || sponsor.login}
     </Link>
-  );
+  )
 }
 
 export function SponsorSection() {
-  const [data, setData] = useState<SponsorsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<SponsorsResponse | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchSponsors() {
       try {
-        const res = await fetch("/api/sponsors");
+        const res = await fetch("/api/sponsors")
         if (res.ok) {
-          const json = await res.json();
-          setData(json);
+          const json = await res.json()
+          setData(json)
         }
       } catch (error) {
-        console.error("Failed to fetch sponsors:", error);
+        console.error("Failed to fetch sponsors:", error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
-    fetchSponsors();
-  }, []);
+    fetchSponsors()
+  }, [])
 
-  const hasSponsors = data && data.sponsors.length > 0;
+  const hasSponsors = data && data.sponsors.length > 0
 
   return (
     <section className="border-t border-border bg-muted/30 py-12">
@@ -241,5 +241,5 @@ export function SponsorSection() {
         )}
       </div>
     </section>
-  );
+  )
 }

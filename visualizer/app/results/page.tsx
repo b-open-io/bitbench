@@ -1,34 +1,34 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import {
-  Loader2,
   ArrowLeft,
   ArrowRight,
-  Trophy,
-  TrendingUp,
-  Clock,
   ChevronDown,
   ChevronUp,
+  Clock,
+  Loader2,
   Search,
-} from "lucide-react";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
-import type { ChartConfig } from "@/components/ui/chart";
+  TrendingUp,
+} from "lucide-react"
+import Link from "next/link"
+import { useEffect, useMemo, useState } from "react"
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import { ChainBadge } from "@/components/chain-badge"
+import { PageContainer } from "@/components/page-container"
+import { SiteHeader } from "@/components/site-header"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { ChartConfig } from "@/components/ui/chart"
 import {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
-} from "@/components/ui/chart";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Table,
   TableBody,
@@ -36,176 +36,174 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { SiteHeader } from "@/components/site-header";
-import { PageContainer } from "@/components/page-container";
-import { ChainBadge } from "@/components/chain-badge";
+} from "@/components/ui/table"
 
 interface SuiteRunSummary {
-  suiteId: string;
-  suiteName: string;
-  chain: string;
-  description: string;
-  timestamp: string;
-  version: string;
-  totalModels: number;
-  totalTests: number;
+  suiteId: string
+  suiteName: string
+  chain: string
+  description: string
+  timestamp: string
+  version: string
+  totalModels: number
+  totalTests: number
   topPerformer: {
-    model: string;
-    score: number;
-  } | null;
-  totalCost: number;
+    model: string
+    score: number
+  } | null
+  totalCost: number
 }
 
 interface LeaderboardEntry {
-  model: string;
-  averageScore: number;
-  suitesParticipated: number;
-  totalCost: number;
+  model: string
+  averageScore: number
+  suitesParticipated: number
+  totalCost: number
 }
 
 interface RankedEntry extends LeaderboardEntry {
-  originalRank: number;
+  originalRank: number
 }
 
 interface AggregatedResults {
-  totalCompletedSuites: number;
-  totalModelsEvaluated: number;
-  totalTestsExecuted: number;
-  latestRun: SuiteRunSummary | null;
-  suiteRuns: SuiteRunSummary[];
-  globalLeaderboard: LeaderboardEntry[];
+  totalCompletedSuites: number
+  totalModelsEvaluated: number
+  totalTestsExecuted: number
+  latestRun: SuiteRunSummary | null
+  suiteRuns: SuiteRunSummary[]
+  globalLeaderboard: LeaderboardEntry[]
 }
 
-type SortKey = "rank" | "model" | "score" | "cost";
-type SortDir = "asc" | "desc";
+type SortKey = "rank" | "model" | "score" | "cost"
+type SortDir = "asc" | "desc"
 
 function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
 
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (diffMins < 1) return "Just now"
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
 }
 
 function formatCost(val: number): string {
-  if (val < 0.01) return `$${val.toFixed(4)}`;
-  return `$${val.toFixed(2)}`;
+  if (val < 0.01) return `$${val.toFixed(4)}`
+  return `$${val.toFixed(2)}`
 }
 
-
 export default function ResultsPage() {
-  const [resultsData, setResultsData] = useState<AggregatedResults | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [sortKey, setSortKey] = useState<SortKey>("rank");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [resultsData, setResultsData] = useState<AggregatedResults | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [sortKey, setSortKey] = useState<SortKey>("rank")
+  const [sortDir, setSortDir] = useState<SortDir>("asc")
+  const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
     async function fetchResults() {
       try {
-        const res = await fetch("/api/results");
+        const res = await fetch("/api/results")
         if (res.ok) {
-          const data = await res.json();
-          setResultsData(data);
+          const data = await res.json()
+          setResultsData(data)
         }
       } catch (error) {
-        console.error("Failed to fetch results:", error);
+        console.error("Failed to fetch results:", error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
-    fetchResults();
-  }, []);
+    fetchResults()
+  }, [])
 
   // Process leaderboard: assign static ranks, filter, then sort
   const processedLeaderboard = useMemo(() => {
-    if (!resultsData) return [];
+    if (!resultsData) return []
 
     // First, assign original rank based on score (descending)
     const rankedList: RankedEntry[] = [...resultsData.globalLeaderboard]
       .sort((a, b) => b.averageScore - a.averageScore)
-      .map((item, index) => ({ ...item, originalRank: index + 1 }));
+      .map((item, index) => ({ ...item, originalRank: index + 1 }))
 
     // Filter by search term
     const filtered = rankedList.filter((item) =>
-      item.model.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      item.model.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
 
     // Sort by user preference
     return filtered.sort((a, b) => {
-      let cmp = 0;
+      let cmp = 0
       switch (sortKey) {
         case "model":
-          cmp = a.model.localeCompare(b.model);
-          break;
+          cmp = a.model.localeCompare(b.model)
+          break
         case "score":
-          cmp = a.averageScore - b.averageScore;
-          break;
+          cmp = a.averageScore - b.averageScore
+          break
         case "cost":
-          cmp = a.totalCost - b.totalCost;
-          break;
-        case "rank":
+          cmp = a.totalCost - b.totalCost
+          break
         default:
-          cmp = a.originalRank - b.originalRank;
-          break;
+          cmp = a.originalRank - b.originalRank
+          break
       }
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-  }, [resultsData, sortKey, sortDir, searchTerm]);
+      return sortDir === "asc" ? cmp : -cmp
+    })
+  }, [resultsData, sortKey, sortDir, searchTerm])
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
     } else {
-      setSortKey(key);
+      setSortKey(key)
       // Default sort direction per column type
-      setSortDir(key === "model" ? "asc" : key === "cost" ? "asc" : "asc");
+      setSortDir(key === "model" ? "asc" : key === "cost" ? "asc" : "asc")
     }
-  };
+  }
 
   // Pair models with their thinking counterparts for stacked chart
   const barChartData = useMemo(() => {
-    if (!resultsData) return [];
+    if (!resultsData) return []
 
     // Get base model name (strip thinking suffixes)
     const getBaseName = (model: string): string => {
       return model
         .replace(/-thinking-high$/, "")
         .replace(/-thinking$/, "")
-        .replace(/-non-thinking$/, "");
-    };
+        .replace(/-non-thinking$/, "")
+    }
 
     // Check if model is a thinking variant
     const isThinking = (model: string): boolean => {
-      const lower = model.toLowerCase();
-      return lower.includes("-thinking") || lower.startsWith("o3") || lower.startsWith("o4");
-    };
+      const lower = model.toLowerCase()
+      return (
+        lower.includes("-thinking") ||
+        lower.startsWith("o3") ||
+        lower.startsWith("o4")
+      )
+    }
 
     // Group by base name, track raw scores
-    const groups = new Map<string, { standard: number; thinkingRaw: number }>();
+    const groups = new Map<string, { standard: number; thinkingRaw: number }>()
 
     for (const m of resultsData.globalLeaderboard) {
-      const base = getBaseName(m.model);
+      const base = getBaseName(m.model)
       if (!groups.has(base)) {
-        groups.set(base, { standard: 0, thinkingRaw: 0 });
+        groups.set(base, { standard: 0, thinkingRaw: 0 })
       }
-      const group = groups.get(base)!;
+      const group = groups.get(base)
+      if (!group) {
+        throw new Error(`Missing leaderboard group for ${base}`)
+      }
       if (isThinking(m.model)) {
-        group.thinkingRaw = m.averageScore;
+        group.thinkingRaw = m.averageScore
       } else {
-        group.standard = m.averageScore;
+        group.standard = m.averageScore
       }
     }
 
@@ -213,8 +211,8 @@ export default function ResultsPage() {
     // but we store thinkingActual for tooltip display
     return Array.from(groups.entries())
       .map(([model, scores]) => {
-        const hasStandard = scores.standard > 0;
-        const hasThinking = scores.thinkingRaw > 0;
+        const hasStandard = scores.standard > 0
+        const hasThinking = scores.thinkingRaw > 0
 
         if (hasStandard && hasThinking) {
           return {
@@ -222,17 +220,17 @@ export default function ResultsPage() {
             standard: scores.standard,
             thinking: Math.max(0, scores.thinkingRaw - scores.standard),
             thinkingActual: scores.thinkingRaw, // For tooltip
-          };
+          }
         }
         return {
           model,
           standard: hasStandard ? scores.standard : scores.thinkingRaw,
           thinking: 0,
           thinkingActual: hasThinking ? scores.thinkingRaw : 0,
-        };
+        }
       })
-      .sort((a, b) => (b.standard + b.thinking) - (a.standard + a.thinking));
-  }, [resultsData]);
+      .sort((a, b) => b.standard + b.thinking - (a.standard + a.thinking))
+  }, [resultsData])
 
   const chartConfig = {
     standard: {
@@ -243,16 +241,16 @@ export default function ResultsPage() {
       label: "Thinking",
       color: "var(--chart-2)",
     },
-  } satisfies ChartConfig;
+  } satisfies ChartConfig
 
   const SortIcon = ({ column }: { column: SortKey }) => {
-    if (sortKey !== column) return null;
+    if (sortKey !== column) return null
     return sortDir === "asc" ? (
       <ChevronUp className="h-3 w-3" />
     ) : (
       <ChevronDown className="h-3 w-3" />
-    );
-  };
+    )
+  }
 
   // Show header while loading - don't block entire page
   if (loading) {
@@ -263,7 +261,7 @@ export default function ResultsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </div>
-    );
+    )
   }
 
   if (!resultsData || resultsData.totalCompletedSuites === 0) {
@@ -281,7 +279,8 @@ export default function ResultsPage() {
           <div className="rounded-lg border border-border bg-muted/30 p-12 text-center">
             <h2 className="text-xl font-semibold mb-2">No Results Yet</h2>
             <p className="text-muted-foreground mb-4">
-              No benchmarks have been completed yet. Fund a benchmark suite to trigger testing.
+              No benchmarks have been completed yet. Fund a benchmark suite to
+              trigger testing.
             </p>
             <Button asChild>
               <Link href="/">
@@ -292,7 +291,7 @@ export default function ResultsPage() {
           </div>
         </main>
       </div>
-    );
+    )
   }
 
   return (
@@ -311,24 +310,32 @@ export default function ResultsPage() {
               <ArrowLeft className="h-4 w-4" />
               Back
             </Link>
-            <h1 className="text-xl font-bold tracking-tight">Benchmark Results</h1>
+            <h1 className="text-xl font-bold tracking-tight">
+              Benchmark Results
+            </h1>
           </div>
 
           {/* Inline Stats */}
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Suites:</span>
-              <span className="font-mono font-medium">{resultsData.totalCompletedSuites}</span>
+              <span className="font-mono font-medium">
+                {resultsData.totalCompletedSuites}
+              </span>
             </div>
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Models:</span>
-              <span className="font-mono font-medium">{resultsData.totalModelsEvaluated}</span>
+              <span className="font-mono font-medium">
+                {resultsData.totalModelsEvaluated}
+              </span>
             </div>
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Tests:</span>
-              <span className="font-mono font-medium">{resultsData.totalTestsExecuted.toLocaleString()}</span>
+              <span className="font-mono font-medium">
+                {resultsData.totalTestsExecuted.toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
@@ -348,75 +355,85 @@ export default function ResultsPage() {
           </CardHeader>
           <CardContent className="px-2 sm:p-6">
             <div style={{ height: 320 }}>
-              <ChartContainer config={chartConfig} className="!aspect-auto h-full w-full">
-              <BarChart
-                accessibilityLayer
-                data={barChartData}
-                margin={{ left: 12, right: 12 }}
+              <ChartContainer
+                config={chartConfig}
+                className="!aspect-auto h-full w-full"
               >
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="model"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  interval={0}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  tick={{ fontSize: 10 }}
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      className="w-[200px]"
-                      labelFormatter={(_, payload) => {
-                        if (payload?.[0]?.payload?.model) {
-                          return payload[0].payload.model;
-                        }
-                        return "";
-                      }}
-                      formatter={(value, name, item) => {
-                        // Show actual scores, not deltas
-                        const displayValue = name === "thinking"
-                          ? item.payload.thinkingActual
-                          : value;
-                        // Don't show thinking row if no thinking score
-                        if (name === "thinking" && !item.payload.thinkingActual) return null;
-                        return (
-                          <>
-                            <div
-                              className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                              style={{ backgroundColor: item.color }}
-                            />
-                            <div className="flex flex-1 items-center justify-between">
-                              <span className="text-muted-foreground">
-                                {name === "standard" ? "Standard" : "Thinking"}
-                              </span>
-                              <span className="font-mono font-medium">
-                                {Number(displayValue).toFixed(1)}%
-                              </span>
-                            </div>
-                          </>
-                        );
-                      }}
-                    />
-                  }
-                />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar
-                  dataKey="standard"
-                  stackId="a"
-                  fill="var(--color-standard)"
-                  radius={[0, 0, 4, 4]}
-                />
-                <Bar
-                  dataKey="thinking"
-                  stackId="a"
-                  fill="var(--color-thinking)"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
+                <BarChart
+                  accessibilityLayer
+                  data={barChartData}
+                  margin={{ left: 12, right: 12 }}
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="model"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    interval={0}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    tick={{ fontSize: 10 }}
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        className="w-[200px]"
+                        labelFormatter={(_, payload) => {
+                          if (payload?.[0]?.payload?.model) {
+                            return payload[0].payload.model
+                          }
+                          return ""
+                        }}
+                        formatter={(value, name, item) => {
+                          // Show actual scores, not deltas
+                          const displayValue =
+                            name === "thinking"
+                              ? item.payload.thinkingActual
+                              : value
+                          // Don't show thinking row if no thinking score
+                          if (
+                            name === "thinking" &&
+                            !item.payload.thinkingActual
+                          )
+                            return null
+                          return (
+                            <>
+                              <div
+                                className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <div className="flex flex-1 items-center justify-between">
+                                <span className="text-muted-foreground">
+                                  {name === "standard"
+                                    ? "Standard"
+                                    : "Thinking"}
+                                </span>
+                                <span className="font-mono font-medium">
+                                  {Number(displayValue).toFixed(1)}%
+                                </span>
+                              </div>
+                            </>
+                          )
+                        }}
+                      />
+                    }
+                  />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar
+                    dataKey="standard"
+                    stackId="a"
+                    fill="var(--color-standard)"
+                    radius={[0, 0, 4, 4]}
+                  />
+                  <Bar
+                    dataKey="thinking"
+                    stackId="a"
+                    fill="var(--color-thinking)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
               </ChartContainer>
             </div>
           </CardContent>
@@ -431,7 +448,9 @@ export default function ResultsPage() {
             <CardHeader className="py-3 px-4 border-b bg-muted/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <CardTitle className="text-base font-semibold">Global Leaderboard</CardTitle>
+                  <CardTitle className="text-base font-semibold">
+                    Global Leaderboard
+                  </CardTitle>
                   <Badge variant="outline" className="text-xs font-normal">
                     {processedLeaderboard.length} models
                   </Badge>
@@ -488,11 +507,16 @@ export default function ResultsPage() {
                 </TableHeader>
                 <TableBody>
                   {processedLeaderboard.map((entry) => (
-                    <TableRow key={entry.model} className="h-10 hover:bg-muted/50">
+                    <TableRow
+                      key={entry.model}
+                      className="h-10 hover:bg-muted/50"
+                    >
                       <TableCell className="text-center font-mono text-xs text-muted-foreground">
                         {entry.originalRank}
                       </TableCell>
-                      <TableCell className="font-medium text-sm">{entry.model}</TableCell>
+                      <TableCell className="font-medium text-sm">
+                        {entry.model}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <span className="font-mono text-xs w-12 text-right">
@@ -513,7 +537,10 @@ export default function ResultsPage() {
                   ))}
                   {processedLeaderboard.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={4}
+                        className="h-24 text-center text-muted-foreground"
+                      >
                         No models found matching "{searchTerm}"
                       </TableCell>
                     </TableRow>
@@ -541,19 +568,24 @@ export default function ResultsPage() {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm truncate">{run.suiteName}</span>
+                        <span className="font-medium text-sm truncate">
+                          {run.suiteName}
+                        </span>
                         <ChainBadge chain={run.chain} size="sm" />
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {run.topPerformer && (
                           <span>
-                            Top: {run.topPerformer.model} ({run.topPerformer.score.toFixed(0)}%)
+                            Top: {run.topPerformer.model} (
+                            {run.topPerformer.score.toFixed(0)}%)
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <span className="text-xs">{formatRelativeTime(run.timestamp)}</span>
+                      <span className="text-xs">
+                        {formatRelativeTime(run.timestamp)}
+                      </span>
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   </Link>
@@ -564,5 +596,5 @@ export default function ResultsPage() {
         </div>
       </PageContainer>
     </div>
-  );
+  )
 }

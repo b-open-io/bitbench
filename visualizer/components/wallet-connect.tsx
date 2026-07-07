@@ -1,30 +1,38 @@
-"use client";
+"use client"
 
-import { useWallet } from "./wallet-provider";
-import { useThemeToken } from "./theme-provider";
-import { Button } from "@/components/ui/button";
+import type { ThemeToken } from "@theme-token/sdk"
+import {
+  CircleCheck,
+  Files,
+  History,
+  LoaderCircle,
+  PaintBucket,
+  Power,
+  WalletMinimal,
+} from "lucide-react"
+import { type MouseEvent, useState } from "react"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu";
-import { WalletMinimal, Power, Files, CircleCheck, PaintBucket, LoaderCircle, History } from "lucide-react";
-import { useState, useEffect, useCallback, type MouseEvent } from "react";
-import type { ThemeToken } from "@theme-token/sdk";
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useThemeToken } from "./theme-provider"
+import { useWallet } from "./wallet-provider"
 
 function formatAddress(address: string): string {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
 function formatBalance(satoshis: number | null): string {
-  if (satoshis === null) return "...";
-  const bsv = satoshis / 100_000_000;
-  return `${bsv.toFixed(4)} BSV`;
+  if (satoshis === null) return "..."
+  const bsv = satoshis / 100_000_000
+  return `${bsv.toFixed(4)} BSV`
 }
 
 // Visual representation of theme colors
@@ -32,122 +40,59 @@ function ThemeStripes({
   styles,
   mode,
 }: {
-  styles: { light: Record<string, string>; dark: Record<string, string> };
-  mode: "light" | "dark";
+  styles: { light: Record<string, string>; dark: Record<string, string> }
+  mode: "light" | "dark"
 }) {
   const colors = [
-    styles[mode].primary,
-    styles[mode].secondary,
-    styles[mode].accent,
-    styles[mode].background,
-  ];
+    ["primary", styles[mode].primary],
+    ["secondary", styles[mode].secondary],
+    ["accent", styles[mode].accent],
+    ["background", styles[mode].background],
+  ] as const
 
   return (
     <div className="flex h-4 w-8 overflow-hidden rounded border border-border">
-      {colors.map((color, i) => (
-        <div key={i} className="flex-1" style={{ backgroundColor: color }} />
+      {colors.map(([slot, color]) => (
+        <div key={slot} className="flex-1" style={{ backgroundColor: color }} />
       ))}
     </div>
-  );
+  )
 }
 
 export function WalletConnect() {
-  const walletState = useWallet();
-  const themeState = useThemeToken();
-  const [isConnected, setIsConnected] = useState(false);
-  const [address, setAddress] = useState<string | null>(null);
-  const [balance, setBalance] = useState<number | null>(null);
-  const [copied, setCopied] = useState(false);
+  const walletState = useWallet()
+  const themeState = useThemeToken()
+  const [copied, setCopied] = useState(false)
 
-  // Get the raw wallet from state (if available)
-  const wallet = walletState?.wallet;
-  const themeTokens = walletState?.themeTokens ?? [];
-  const isLoadingThemes = walletState?.isLoadingThemes ?? false;
-
-  const refreshState = useCallback(async () => {
-    if (!wallet?.isReady || typeof wallet.isConnected !== "function") return;
-
-    try {
-      const connected = await wallet.isConnected();
-      setIsConnected(connected);
-
-      if (connected) {
-        const [addresses, bal] = await Promise.all([
-          wallet.getAddresses(),
-          wallet.getBalance(),
-        ]);
-        setAddress(addresses?.bsvAddress || null);
-        setBalance(bal?.satoshis ?? null);
-      } else {
-        setAddress(null);
-        setBalance(null);
-      }
-    } catch (error) {
-      console.error("Error refreshing wallet state:", error);
-    }
-  }, [wallet]);
-
-  useEffect(() => {
-    refreshState();
-
-    // Listen for wallet events
-    const handleSwitchAccount = () => refreshState();
-    const handleSignedOut = () => {
-      setIsConnected(false);
-      setAddress(null);
-      setBalance(null);
-    };
-
-    if (wallet?.isReady && typeof wallet.on === "function") {
-      wallet.on("switchAccount", handleSwitchAccount);
-      wallet.on("signedOut", handleSignedOut);
-
-      return () => {
-        if (typeof wallet.removeListener === "function") {
-          wallet.removeListener("switchAccount", handleSwitchAccount);
-          wallet.removeListener("signedOut", handleSignedOut);
-        }
-      };
-    }
-  }, [wallet, refreshState]);
+  const isConnected = walletState?.isConnected ?? false
+  const address = walletState?.addresses?.bsvAddress ?? null
+  const balance = walletState?.balance?.satoshis ?? null
+  const themeTokens = walletState?.themeTokens ?? []
+  const isLoadingThemes = walletState?.isLoadingThemes ?? false
 
   const handleConnect = async () => {
-    if (!wallet?.isReady || typeof wallet.connect !== "function") return;
-    try {
-      await wallet.connect();
-      await refreshState();
-    } catch (error) {
-      console.error("Error connecting wallet:", error);
-    }
-  };
+    await walletState?.connect()
+  }
 
   const handleDisconnect = async () => {
-    if (!wallet?.isReady || typeof wallet.disconnect !== "function") return;
-    try {
-      await wallet.disconnect();
-      setIsConnected(false);
-      setAddress(null);
-      setBalance(null);
-    } catch (error) {
-      console.error("Error disconnecting wallet:", error);
-    }
-  };
+    await walletState?.disconnect()
+  }
 
   const copyAddress = async () => {
     if (address) {
-      await navigator.clipboard.writeText(address);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(address)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     }
-  };
+  }
 
   const handleSelectTheme = (theme: ThemeToken, e: MouseEvent) => {
-    themeState.applyThemeAnimated(theme, e);
-  };
+    themeState.applyThemeAnimated(theme, e)
+  }
 
   const handleResetTheme = () => {
-    themeState.resetTheme();
-  };
+    themeState.resetTheme()
+  }
 
   if (!isConnected) {
     return (
@@ -155,7 +100,7 @@ export function WalletConnect() {
         <WalletMinimal className="h-4 w-4 fill-current" />
         Connect Wallet
       </Button>
-    );
+    )
   }
 
   return (
@@ -166,7 +111,9 @@ export function WalletConnect() {
           <span className="hidden sm:inline">
             {formatAddress(address || "")}
           </span>
-          <span className="text-muted-foreground">{formatBalance(balance)}</span>
+          <span className="text-muted-foreground">
+            {formatBalance(balance)}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -188,7 +135,10 @@ export function WalletConnect() {
                     onClick={(e) => handleSelectTheme(theme, e)}
                     className="gap-2 cursor-pointer"
                   >
-                    <ThemeStripes styles={theme.styles} mode={themeState.mode} />
+                    <ThemeStripes
+                      styles={theme.styles}
+                      mode={themeState.mode}
+                    />
                     <span className="flex-1 truncate">{theme.name}</span>
                     {themeState.activeTheme?.name === theme.name && (
                       <CircleCheck className="h-4 w-4 text-primary fill-current" />
@@ -227,5 +177,5 @@ export function WalletConnect() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

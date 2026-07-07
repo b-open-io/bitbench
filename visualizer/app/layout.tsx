@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-import type { WebApplication, WithContext } from "schema-dts";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
-import { ThemeProvider } from "@/components/theme-provider";
-import { WalletProviderClient } from "@/components/wallet-provider-client";
-import { JsonLd } from "@/components/json-ld";
-import "./globals.css";
+import { GeistMono } from "geist/font/mono"
+import { GeistSans } from "geist/font/sans"
+import type { Metadata } from "next"
+import type { WebApplication, WithContext } from "schema-dts"
+import { JsonLd } from "@/components/json-ld"
+import { ThemeProvider } from "@/components/theme-provider"
+import { WalletProvider } from "@/components/wallet-provider"
+import "./globals.css"
 
 const jsonLd: WithContext<WebApplication> = {
   "@context": "https://schema.org",
@@ -32,7 +32,7 @@ const jsonLd: WithContext<WebApplication> = {
     "40+ model comparison",
     "Open source results",
   ],
-};
+}
 
 export const metadata: Metadata = {
   title: "Bitbench - Blockchain AI Benchmark Platform",
@@ -67,12 +67,12 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
     apple: "/favicon.svg",
   },
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -93,9 +93,9 @@ html {
           enableSystem
           disableTransitionOnChange
         >
-          <WalletProviderClient>{children}</WalletProviderClient>
+          <WalletProvider>{children}</WalletProvider>
         </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }

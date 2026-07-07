@@ -1,6 +1,9 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { sendBsv } from "@1sat/actions"
+import { AlertCircle, CheckCircle, Loader2, Wallet } from "lucide-react"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -8,105 +11,115 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useWallet } from "./wallet-provider";
-import type { SuiteWithBalance } from "@/lib/types";
-import { Loader2, CheckCircle, AlertCircle, Wallet } from "lucide-react";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import type { SuiteWithBalance } from "@/lib/types"
+import { useWallet } from "./wallet-provider"
 
 interface DonationModalProps {
-  suite: SuiteWithBalance | null;
-  open: boolean;
-  onClose: () => void;
+  suite: SuiteWithBalance | null
+  open: boolean
+  onClose: () => void
 }
 
-type DonationStatus = "idle" | "sending" | "success" | "error";
-
-// BSV price estimate (could be fetched from API)
-const BSV_PRICE_USD = 50;
-
-function usdToSats(usd: number): number {
-  return Math.ceil((usd / BSV_PRICE_USD) * 100_000_000);
-}
+type DonationStatus = "idle" | "sending" | "success" | "error"
 
 export function DonationModal({ suite, open, onClose }: DonationModalProps) {
   // Use reactive wallet state - automatically updates on signedOut/switchAccount events
-  const walletState = useWallet();
-  const isReady = walletState?.isReady ?? false;
-  const isConnected = walletState?.isConnected ?? false;
-  const addresses = walletState?.addresses ?? null;
-  const connect = walletState?.connect ?? (async () => {});
-  const wallet = walletState?.wallet;
+  const walletState = useWallet()
+  const isReady = walletState?.isReady ?? false
+  const isConnected = walletState?.isConnected ?? false
+  const addresses = walletState?.addresses ?? null
+  const connect = walletState?.connect ?? (async () => {})
+  const ctx = walletState?.ctx ?? null
 
-  const [amountUsd, setAmountUsd] = useState("");
-  const [status, setStatus] = useState<DonationStatus>("idle");
-  const [txid, setTxid] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [amountUsd, setAmountUsd] = useState("")
+  const [status, setStatus] = useState<DonationStatus>("idle")
+  const [txid, setTxid] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const amountSats = amountUsd ? usdToSats(Number.parseFloat(amountUsd)) : 0;
+  const amountSats =
+    suite && amountUsd
+      ? Math.ceil(
+          (Number.parseFloat(amountUsd) / suite.bsvPriceUsd) * 100_000_000,
+        )
+      : 0
   const remainingUsd = suite
     ? suite.estimatedCostUsd - suite.currentBalanceUsd
-    : 0;
+    : 0
 
   const handleConnect = async () => {
-    await connect();
-  };
+    await connect()
+  }
 
   const handleDonate = async () => {
-    if (!suite || !amountSats || !wallet?.isReady) return;
+    if (!suite || !amountSats || !ctx) return
 
-    setStatus("sending");
-    setError(null);
+    setStatus("sending")
+    setError(null)
 
     try {
-      const result = await wallet.sendBsv([
-        {
-          address: suite.donationAddress,
-          satoshis: amountSats,
-        },
-      ]);
+      const result = await sendBsv.execute(ctx, {
+        requests: [
+          {
+            address: suite.donationAddress,
+            satoshis: amountSats,
+          },
+        ],
+      })
 
-      if (result?.txid) {
-        setTxid(result.txid);
-        setStatus("success");
-
-        // Record donation to API
-        await fetch(`/api/suites/${suite.id}/donate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            txid: result.txid,
-            amountSats,
-            fromAddress: addresses?.bsvAddress,
-          }),
-        });
+      if (result.error) {
+        setStatus("error")
+        setError(
+          result.error === "user-rejected"
+            ? "Transaction cancelled"
+            : result.error,
+        )
+        return
       }
+
+      if (!result.txid) {
+        throw new Error("Wallet did not return a transaction ID")
+      }
+
+      setTxid(result.txid)
+      setStatus("success")
+
+      // Record donation to API
+      await fetch(`/api/suites/${suite.id}/donate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          txid: result.txid,
+          amountSats,
+          fromAddress: addresses?.bsvAddress,
+        }),
+      })
     } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : "Transaction failed");
+      setStatus("error")
+      setError(err instanceof Error ? err.message : "Transaction failed")
     }
-  };
+  }
 
   const handleClose = () => {
-    setAmountUsd("");
-    setStatus("idle");
-    setTxid(null);
-    setError(null);
-    onClose();
-  };
+    setAmountUsd("")
+    setStatus("idle")
+    setTxid(null)
+    setError(null)
+    onClose()
+  }
 
   const addAmount = (usd: number) => {
-    const current = Number.parseFloat(amountUsd) || 0;
-    setAmountUsd((current + usd).toFixed(2));
-  };
+    const current = Number.parseFloat(amountUsd) || 0
+    setAmountUsd((current + usd).toFixed(2))
+  }
 
   const resetAmount = () => {
-    setAmountUsd("");
-  };
+    setAmountUsd("")
+  }
 
-  if (!suite) return null;
+  if (!suite) return null
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -200,7 +213,9 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
               {/* Quick amounts - tap to increment */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs text-muted-foreground">Tap to add</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    Tap to add
+                  </Label>
                   {amountUsd && (
                     <Button
                       variant="ghost"
@@ -280,5 +295,5 @@ export function DonationModal({ suite, open, onClose }: DonationModalProps) {
         )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,50 +1,50 @@
-import { Resend } from "resend";
+import { Resend } from "resend"
 
 // Environment variables
-const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL; // Where to send notifications
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://bitbench.org";
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL
+const RESEND_API_KEY = process.env.RESEND_API_KEY
+const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL // Where to send notifications
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://bitbench.org"
 
 // Initialize Resend client
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null
 
 export interface FundingNotification {
-  suiteId: string;
-  suiteName: string;
-  chain: string;
-  version: string;
-  balanceSats: number;
-  balanceUsd: number;
-  goalUsd: number;
+  suiteId: string
+  suiteName: string
+  chain: string
+  version: string
+  balanceSats: number
+  balanceUsd: number
+  goalUsd: number
 }
 
 /**
  * Check if notifications are configured
  */
 export function isNotificationsConfigured(): boolean {
-  return !!(DISCORD_WEBHOOK_URL || (RESEND_API_KEY && NOTIFICATION_EMAIL));
+  return !!(DISCORD_WEBHOOK_URL || (RESEND_API_KEY && NOTIFICATION_EMAIL))
 }
 
 /**
  * Generate the benchmark run command
  */
 function getBenchmarkCommand(suiteId: string): string {
-  return `cd bench && bun run cli.tsx --suite ${suiteId}`;
+  return `cd bench && bun run cli.tsx --suite ${suiteId}`
 }
 
 /**
  * Send Discord webhook notification
  */
 async function sendDiscordNotification(
-  notification: FundingNotification
+  notification: FundingNotification,
 ): Promise<boolean> {
   if (!DISCORD_WEBHOOK_URL) {
-    console.log("[Notifications] Discord webhook not configured");
-    return false;
+    console.log("[Notifications] Discord webhook not configured")
+    return false
   }
 
-  const command = getBenchmarkCommand(notification.suiteId);
+  const command = getBenchmarkCommand(notification.suiteId)
 
   const embed = {
     title: "🎉 Benchmark Fully Funded!",
@@ -86,7 +86,7 @@ async function sendDiscordNotification(
       text: "Bitbench - Bitcoin AI Benchmark Platform",
     },
     timestamp: new Date().toISOString(),
-  };
+  }
 
   try {
     const response = await fetch(DISCORD_WEBHOOK_URL, {
@@ -97,22 +97,22 @@ async function sendDiscordNotification(
         avatar_url: `${SITE_URL}/favicon.svg`,
         embeds: [embed],
       }),
-    });
+    })
 
     if (!response.ok) {
       console.error(
         "[Notifications] Discord webhook failed:",
         response.status,
-        await response.text()
-      );
-      return false;
+        await response.text(),
+      )
+      return false
     }
 
-    console.log("[Notifications] Discord notification sent successfully");
-    return true;
+    console.log("[Notifications] Discord notification sent successfully")
+    return true
   } catch (error) {
-    console.error("[Notifications] Discord webhook error:", error);
-    return false;
+    console.error("[Notifications] Discord webhook error:", error)
+    return false
   }
 }
 
@@ -120,15 +120,15 @@ async function sendDiscordNotification(
  * Send email notification via Resend
  */
 async function sendEmailNotification(
-  notification: FundingNotification
+  notification: FundingNotification,
 ): Promise<boolean> {
   if (!resend || !NOTIFICATION_EMAIL) {
-    console.log("[Notifications] Resend not configured");
-    return false;
+    console.log("[Notifications] Resend not configured")
+    return false
   }
 
-  const command = getBenchmarkCommand(notification.suiteId);
-  const suiteUrl = `${SITE_URL}/suite/${notification.suiteId}`;
+  const command = getBenchmarkCommand(notification.suiteId)
+  const suiteUrl = `${SITE_URL}/suite/${notification.suiteId}`
 
   try {
     const { error } = await resend.emails.send({
@@ -219,18 +219,18 @@ View suite: ${suiteUrl}
 Bitbench - Bitcoin AI Benchmark Platform
 ${SITE_URL}
       `.trim(),
-    });
+    })
 
     if (error) {
-      console.error("[Notifications] Resend error:", error);
-      return false;
+      console.error("[Notifications] Resend error:", error)
+      return false
     }
 
-    console.log("[Notifications] Email notification sent successfully");
-    return true;
+    console.log("[Notifications] Email notification sent successfully")
+    return true
   } catch (error) {
-    console.error("[Notifications] Email error:", error);
-    return false;
+    console.error("[Notifications] Email error:", error)
+    return false
   }
 }
 
@@ -238,26 +238,26 @@ ${SITE_URL}
  * Send funding notification via all configured channels
  */
 export async function sendFundingNotification(
-  notification: FundingNotification
+  notification: FundingNotification,
 ): Promise<{ discord: boolean; email: boolean }> {
   console.log(
-    `[Notifications] Sending funding notification for ${notification.suiteId}`
-  );
+    `[Notifications] Sending funding notification for ${notification.suiteId}`,
+  )
 
   const [discord, email] = await Promise.all([
     sendDiscordNotification(notification),
     sendEmailNotification(notification),
-  ]);
+  ])
 
-  return { discord, email };
+  return { discord, email }
 }
 
 /**
  * Send a test notification to verify configuration
  */
 export async function sendTestNotification(): Promise<{
-  discord: boolean;
-  email: boolean;
+  discord: boolean
+  email: boolean
 }> {
   const testNotification: FundingNotification = {
     suiteId: "test-suite",
@@ -267,7 +267,7 @@ export async function sendTestNotification(): Promise<{
     balanceSats: 5_000_000,
     balanceUsd: 2.5,
     goalUsd: 2.5,
-  };
+  }
 
-  return sendFundingNotification(testNotification);
+  return sendFundingNotification(testNotification)
 }

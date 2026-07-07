@@ -178,3 +178,4 @@ results/
 !visualizer/app/api/results/
 .vercel
 .env*.local
+SPEC-*

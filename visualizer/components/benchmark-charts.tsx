@@ -1,28 +1,41 @@
-"use client";
+"use client"
 
-import { useState } from "react";
 import {
-  Trophy,
-  DollarSign,
+  ChevronDown,
   Clock,
+  DollarSign,
+  Filter,
   Target,
   TrendingUp,
-  Filter,
-  ChevronDown,
-} from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+  Trophy,
+} from "lucide-react"
+import { useState } from "react"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  Scatter,
+  ScatterChart,
+  XAxis,
+  YAxis,
+} from "recharts"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@/components/ui/card"
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,66 +43,67 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ScatterChart,
-  Scatter,
-  Cell,
-  LabelList,
-} from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { useIsMobile } from "@/hooks/use-mobile";
+} from "@/components/ui/dropdown-menu"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface ModelData {
-  model: string;
-  correct: number;
-  incorrect: number;
-  errors: number;
-  totalTests: number;
-  successRate: number;
-  errorRate: number;
-  averageDuration: number;
-  totalCost: number;
-  averageCostPerTest: number;
+  model: string
+  correct: number
+  incorrect: number
+  errors: number
+  totalTests: number
+  successRate: number
+  errorRate: number
+  averageDuration: number
+  totalCost: number
+  averageCostPerTest: number
 }
 
 interface BenchmarkChartsProps {
-  rankings: ModelData[];
+  rankings: ModelData[]
 }
 
 function withAlpha(color: string, alpha: number) {
   if (color.startsWith("hsl("))
-    return color.replace("hsl(", "hsla(").replace(")", `, ${alpha})`);
+    return color.replace("hsl(", "hsla(").replace(")", `, ${alpha})`)
   if (color.startsWith("rgb("))
-    return color.replace("rgb(", "rgba(").replace(")", `, ${alpha})`);
-  return color;
+    return color.replace("rgb(", "rgba(").replace(")", `, ${alpha})`)
+  return color
 }
 
 function getGradientId(prefix: string, model: string) {
-  return `${prefix}-${model.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  return `${prefix}-${model.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
 }
 
 function currency(n: number) {
-  return `$${n.toFixed(2)}`;
+  return `$${n.toFixed(2)}`
+}
+
+type LabelRenderProps = {
+  x?: number | string
+  y?: number | string
+  width?: number | string
+  height?: number | string
+  value?: number | string
+}
+
+type PerformancePoint = {
+  model: string
+  successRate: number
+  totalCost: number
+  duration: number
 }
 
 function barValueLabel(suffix: string, decimals: number) {
-  return (props: any) => {
-    const x = Number(props?.x ?? 0);
-    const y = Number(props?.y ?? 0);
-    const width = Number(props?.width ?? 0);
-    const value = Number(props?.value ?? 0);
-    const cx = x + width / 2;
-    const cy = y - 6;
+  return (props: LabelRenderProps) => {
+    const x = Number(props?.x ?? 0)
+    const y = Number(props?.y ?? 0)
+    const width = Number(props?.width ?? 0)
+    const value = Number(props?.value ?? 0)
+    const cx = x + width / 2
+    const cy = y - 6
     return (
       <text
         x={cx}
@@ -100,54 +114,60 @@ function barValueLabel(suffix: string, decimals: number) {
         {value.toFixed(decimals)}
         {suffix}
       </text>
-    );
-  };
+    )
+  }
 }
 
 function barValueLabelHorizontalSmart(
   suffix: string,
   decimals: number,
-  maxValue: number
+  maxValue: number,
 ) {
-  return (props: any) => {
-    const x = Number(props?.x ?? 0);
-    const y = Number(props?.y ?? 0);
-    const width = Number(props?.width ?? 0);
-    const height = Number(props?.height ?? 0);
-    const value = Number(props?.value ?? 0);
-    const ratio = maxValue > 0 ? value / maxValue : 0;
-    const inside = ratio >= 0.75;
-    const tx = inside ? x + width - 6 : x + width + 6;
-    const anchor: any = inside ? "end" : "start";
+  return (props: LabelRenderProps) => {
+    const x = Number(props?.x ?? 0)
+    const y = Number(props?.y ?? 0)
+    const width = Number(props?.width ?? 0)
+    const height = Number(props?.height ?? 0)
+    const value = Number(props?.value ?? 0)
+    const ratio = maxValue > 0 ? value / maxValue : 0
+    const inside = ratio >= 0.75
+    const tx = inside ? x + width - 6 : x + width + 6
+    const anchor: "end" | "start" = inside ? "end" : "start"
     const cls = inside
       ? "pointer-events-none text-[10px] font-medium fill-foreground"
-      : "pointer-events-none text-[10px] font-medium fill-muted-foreground";
+      : "pointer-events-none text-[10px] font-medium fill-muted-foreground"
     return (
-      <text x={tx} y={y + height / 2} dy={3} textAnchor={anchor} className={cls}>
+      <text
+        x={tx}
+        y={y + height / 2}
+        dy={3}
+        textAnchor={anchor}
+        className={cls}
+      >
         {value.toFixed(decimals)}
         {suffix}
       </text>
-    );
-  };
+    )
+  }
 }
 
 function truncateLabel(input: unknown, max = 14) {
-  const label = String(input ?? "");
-  if (label.length <= max) return label;
-  return label.slice(0, Math.max(1, max - 1)) + "...";
+  const label = String(input ?? "")
+  if (label.length <= max) return label
+  return `${label.slice(0, Math.max(1, max - 1))}...`
 }
 
 export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
   const [selectedModels, setSelectedModels] = useState<string[]>(
-    rankings.map((m) => m.model)
-  );
+    rankings.map((m) => m.model),
+  )
 
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile()
   const filteredRankings = rankings.filter((m) =>
-    selectedModels.includes(m.model)
-  );
-  const mobileBarHeight = Math.max(320, filteredRankings.length * 36 + 120);
-  const totalTestsPerModel = rankings[0]?.totalTests ?? 0;
+    selectedModels.includes(m.model),
+  )
+  const mobileBarHeight = Math.max(320, filteredRankings.length * 36 + 120)
+  const totalTestsPerModel = rankings[0]?.totalTests ?? 0
 
   const successRateData = filteredRankings
     .map((m) => ({
@@ -156,14 +176,14 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
       correct: m.correct,
       total: m.totalTests,
     }))
-    .sort((a, b) => b.successRate - a.successRate);
+    .sort((a, b) => b.successRate - a.successRate)
 
   const costData = filteredRankings
     .map((m) => ({
       model: m.model,
       totalCost: Number(m.totalCost.toFixed(4)),
     }))
-    .sort((a, b) => a.totalCost - b.totalCost);
+    .sort((a, b) => a.totalCost - b.totalCost)
 
   const speedData = filteredRankings
     .map((m) => ({
@@ -171,7 +191,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
       duration: Number((m.averageDuration / 1000).toFixed(2)),
       durationMs: m.averageDuration,
     }))
-    .sort((a, b) => a.duration - b.duration);
+    .sort((a, b) => a.duration - b.duration)
 
   const performanceData = filteredRankings.map((m) => ({
     model: m.model.replace(/-/g, " "),
@@ -179,7 +199,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
     successRate: m.successRate,
     totalCost: m.totalCost,
     duration: m.averageDuration / 1000,
-  }));
+  }))
 
   const getModelColor = (modelName: string) => {
     const colors = [
@@ -188,23 +208,23 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
       "var(--chart-3)",
       "var(--chart-4)",
       "var(--chart-5)",
-    ];
-    const index = rankings.findIndex((r) => r.model === modelName);
-    return colors[(index + colors.length) % colors.length];
-  };
+    ]
+    const index = rankings.findIndex((r) => r.model === modelName)
+    return colors[(index + colors.length) % colors.length]
+  }
 
   const handleModelToggle = (modelName: string) => {
     setSelectedModels((prev) =>
       prev.includes(modelName)
         ? prev.filter((m) => m !== modelName)
-        : [...prev, modelName]
-    );
-  };
-  const handleSelectAll = () => setSelectedModels(rankings.map((m) => m.model));
-  const handleDeselectAll = () => setSelectedModels([]);
+        : [...prev, modelName],
+    )
+  }
+  const handleSelectAll = () => setSelectedModels(rankings.map((m) => m.model))
+  const handleDeselectAll = () => setSelectedModels([])
 
-  const costMax = Math.max(0, ...costData.map((d) => d.totalCost));
-  const speedMax = Math.max(0, ...speedData.map((d) => d.duration));
+  const costMax = Math.max(0, ...costData.map((d) => d.totalCost))
+  const speedMax = Math.max(0, ...speedData.map((d) => d.duration))
 
   return (
     <Tabs defaultValue="accuracy" className="space-y-8">
@@ -290,7 +310,10 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                       {m.model}
                     </label>
                   </div>
-                  <Badge variant="secondary" className="ml-auto font-mono text-xs">
+                  <Badge
+                    variant="secondary"
+                    className="ml-auto font-mono text-xs"
+                  >
                     {m.successRate.toFixed(1)}%
                   </Badge>
                 </DropdownMenuItem>
@@ -300,7 +323,10 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
         </DropdownMenu>
       </div>
 
-      <TabsContent value="accuracy" className="animate-in fade-in-50 duration-300">
+      <TabsContent
+        value="accuracy"
+        className="animate-in fade-in-50 duration-300"
+      >
         <Card className="group relative overflow-hidden transition-all duration-300 hover:border-primary/20">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
           <CardHeader className="pb-2">
@@ -310,8 +336,8 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                   Success Rate by Model
                 </CardTitle>
                 <CardDescription>
-                  Percentage of correct answers out of {totalTestsPerModel} tests
-                  per model
+                  Percentage of correct answers out of {totalTestsPerModel}{" "}
+                  tests per model
                 </CardDescription>
               </div>
               <div className="rounded-lg bg-primary/10 p-2 text-primary">
@@ -338,17 +364,27 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
               >
                 <defs>
                   {successRateData.map((d) => {
-                    const base = getModelColor(d.model);
-                    const id = getGradientId("sr", d.model);
+                    const base = getModelColor(d.model)
+                    const id = getGradientId("sr", d.model)
                     return (
-                      <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient
+                        key={id}
+                        id={id}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
                         <stop offset="0%" stopColor={withAlpha(base, 0.95)} />
                         <stop offset="100%" stopColor={withAlpha(base, 0.55)} />
                       </linearGradient>
-                    );
+                    )
                   })}
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
                 {isMobile ? (
                   <>
                     <XAxis
@@ -366,7 +402,10 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                       type="category"
                       dataKey="model"
                       width={12}
-                      tick={{ fontSize: 12, className: "fill-muted-foreground" }}
+                      tick={{
+                        fontSize: 12,
+                        className: "fill-muted-foreground",
+                      }}
                       tickFormatter={(v: string) => truncateLabel(v)}
                       className="stroke-muted-foreground"
                     />
@@ -395,7 +434,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 )}
                 <ChartTooltip
                   content={<ChartTooltipContent />}
-                  formatter={(value: any) => [`${value}% Success Rate`]}
+                  formatter={(value: unknown) => [`${value}% Success Rate`]}
                   labelFormatter={(label: string) => `Model: ${label}`}
                 />
                 <Bar
@@ -445,7 +484,10 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
           <CardContent>
             <ChartContainer
               config={{
-                totalCost: { label: "Cost per Test", color: "hsl(var(--chart-2))" },
+                totalCost: {
+                  label: "Cost per Test",
+                  color: "hsl(var(--chart-2))",
+                },
               }}
               className="h-[420px] sm:h-[520px] w-full"
               style={isMobile ? { height: mobileBarHeight } : undefined}
@@ -461,17 +503,27 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
               >
                 <defs>
                   {costData.map((d) => {
-                    const base = getModelColor(d.model);
-                    const id = getGradientId("ct", d.model);
+                    const base = getModelColor(d.model)
+                    const id = getGradientId("ct", d.model)
                     return (
-                      <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient
+                        key={id}
+                        id={id}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
                         <stop offset="0%" stopColor={withAlpha(base, 0.95)} />
                         <stop offset="100%" stopColor={withAlpha(base, 0.55)} />
                       </linearGradient>
-                    );
+                    )
                   })}
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
                 {isMobile ? (
                   <>
                     <XAxis
@@ -488,7 +540,10 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                       type="category"
                       dataKey="model"
                       width={12}
-                      tick={{ fontSize: 12, className: "fill-muted-foreground" }}
+                      tick={{
+                        fontSize: 12,
+                        className: "fill-muted-foreground",
+                      }}
                       tickFormatter={(v: string) => truncateLabel(v)}
                       className="stroke-muted-foreground"
                     />
@@ -516,7 +571,9 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 )}
                 <ChartTooltip
                   content={<ChartTooltipContent />}
-                  formatter={(value: any) => [`Avg cost: \$${value} per test`]}
+                  formatter={(value: unknown) => [
+                    `Avg cost: $${value} per test`,
+                  ]}
                   labelFormatter={(label: string) => `Model: ${label}`}
                 />
                 <Bar
@@ -585,17 +642,27 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
               >
                 <defs>
                   {speedData.map((d) => {
-                    const base = getModelColor(d.model);
-                    const id = getGradientId("sp", d.model);
+                    const base = getModelColor(d.model)
+                    const id = getGradientId("sp", d.model)
                     return (
-                      <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient
+                        key={id}
+                        id={id}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
                         <stop offset="0%" stopColor={withAlpha(base, 0.95)} />
                         <stop offset="100%" stopColor={withAlpha(base, 0.55)} />
                       </linearGradient>
-                    );
+                    )
                   })}
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
                 {isMobile ? (
                   <>
                     <XAxis
@@ -612,7 +679,10 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                       type="category"
                       dataKey="model"
                       width={12}
-                      tick={{ fontSize: 12, className: "fill-muted-foreground" }}
+                      tick={{
+                        fontSize: 12,
+                        className: "fill-muted-foreground",
+                      }}
                       tickFormatter={(v: string) => truncateLabel(v)}
                       className="stroke-muted-foreground"
                     />
@@ -640,7 +710,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 )}
                 <ChartTooltip
                   content={<ChartTooltipContent />}
-                  formatter={(value: any) => [
+                  formatter={(value: unknown) => [
                     `Average response time: ${value} seconds`,
                   ]}
                   labelFormatter={(label: string) => `Model: ${label}`}
@@ -671,7 +741,10 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
         </Card>
       </TabsContent>
 
-      <TabsContent value="combined" className="animate-in fade-in-50 duration-300">
+      <TabsContent
+        value="combined"
+        className="animate-in fade-in-50 duration-300"
+      >
         <Card className="group relative overflow-hidden transition-all duration-300 hover:border-primary/20">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
           <CardHeader className="pb-2">
@@ -705,7 +778,10 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                   bottom: isMobile ? 16 : 32,
                 }}
               >
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
                 <XAxis
                   type="number"
                   dataKey="totalCost"
@@ -737,37 +813,39 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 <ChartTooltip
                   cursor={{ strokeDasharray: "3 3" }}
                   content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const d = payload[0].payload as any;
+                    const point = payload?.[0]?.payload as
+                      | PerformancePoint
+                      | undefined
+                    if (active && point) {
                       return (
                         <div className="rounded-lg border border-border bg-popover p-3 shadow-xl backdrop-blur-md">
                           <p className="mb-2 font-medium text-popover-foreground">
-                            {d.model}
+                            {point.model}
                           </p>
                           <div className="space-y-1 text-sm">
                             <p className="flex items-center gap-2 text-muted-foreground">
                               Success:{" "}
                               <span className="font-mono font-bold text-primary">
-                                {d.successRate.toFixed(1)}%
+                                {point.successRate.toFixed(1)}%
                               </span>
                             </p>
                             <p className="flex items-center gap-2 text-muted-foreground">
                               Total cost:{" "}
                               <span className="font-mono font-bold text-primary">
-                                {currency(d.totalCost)}
+                                {currency(point.totalCost)}
                               </span>
                             </p>
                             <p className="flex items-center gap-2 text-muted-foreground">
                               Time:{" "}
                               <span className="font-mono font-bold text-primary">
-                                {d.duration.toFixed(2)}s
+                                {point.duration.toFixed(2)}s
                               </span>
                             </p>
                           </div>
                         </div>
-                      );
+                      )
                     }
-                    return null;
+                    return null
                   }}
                 />
                 <Scatter data={performanceData} isAnimationActive={false}>
@@ -780,9 +858,9 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                   {!isMobile ? (
                     <LabelList
                       dataKey="model"
-                      content={({ x, y, value }: any) => {
-                        const nx = (typeof x === "number" ? x : Number(x)) || 0;
-                        const ny = (typeof y === "number" ? y : Number(y)) || 0;
+                      content={({ x, y, value }: LabelRenderProps) => {
+                        const nx = (typeof x === "number" ? x : Number(x)) || 0
+                        const ny = (typeof y === "number" ? y : Number(y)) || 0
                         return (
                           <text
                             x={nx + 10}
@@ -796,7 +874,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                           >
                             {String(value)}
                           </text>
-                        );
+                        )
                       }}
                     />
                   ) : null}
@@ -807,5 +885,5 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
         </Card>
       </TabsContent>
     </Tabs>
-  );
+  )
 }

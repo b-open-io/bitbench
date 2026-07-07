@@ -1,18 +1,18 @@
-import { NextResponse } from "next/server";
-import { getAllSuitesWithBalance, usdToSats } from "@/lib/suites";
+import { NextResponse } from "next/server"
 import {
   isRedisConfigured,
-  wasFundingNotificationSent,
   markFundingNotificationSent,
   setSuiteState,
-} from "@/lib/kv";
+  wasFundingNotificationSent,
+} from "@/lib/kv"
 import {
-  sendFundingNotification,
   isNotificationsConfigured,
-} from "@/lib/notifications";
+  sendFundingNotification,
+} from "@/lib/notifications"
+import { getAllSuitesWithBalance, usdToSats } from "@/lib/suites"
 
 // Vercel cron protection - only allow requests with correct authorization
-const CRON_SECRET = process.env.CRON_SECRET;
+const CRON_SECRET = process.env.CRON_SECRET
 
 /**
  * Check all suites for funding status and send notifications
@@ -23,12 +23,12 @@ const CRON_SECRET = process.env.CRON_SECRET;
  */
 export async function GET(request: Request) {
   // Verify authorization
-  const authHeader = request.headers.get("authorization");
-  const providedSecret = authHeader?.replace("Bearer ", "");
+  const authHeader = request.headers.get("authorization")
+  const providedSecret = authHeader?.replace("Bearer ", "")
 
   // Allow if CRON_SECRET matches, or if it's not configured (dev mode)
   if (CRON_SECRET && providedSecret !== CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   if (!isNotificationsConfigured()) {
@@ -37,35 +37,37 @@ export async function GET(request: Request) {
         error: "Notifications not configured",
         hint: "Set DISCORD_WEBHOOK_URL and/or RESEND_API_KEY + NOTIFICATION_EMAIL",
       },
-      { status: 500 }
-    );
+      { status: 500 },
+    )
   }
 
   try {
-    const suites = await getAllSuitesWithBalance();
+    const suites = await getAllSuitesWithBalance()
     const results: Array<{
-      suiteId: string;
-      name: string;
-      funded: boolean;
-      notified: boolean;
-      newlyNotified: boolean;
-    }> = [];
+      suiteId: string
+      name: string
+      funded: boolean
+      notified: boolean
+      newlyNotified: boolean
+    }> = []
 
     for (const suite of suites) {
-      const goalSats = usdToSats(suite.estimatedCostUsd);
-      const isFunded = suite.currentBalanceSats >= goalSats;
+      const goalSats = usdToSats(suite.estimatedCostUsd, suite.bsvPriceUsd)
+      const isFunded = suite.currentBalanceSats >= goalSats
 
       // Check if we already notified for this suite
-      let alreadyNotified = false;
+      let alreadyNotified = false
       if (isRedisConfigured()) {
-        alreadyNotified = await wasFundingNotificationSent(suite.id);
+        alreadyNotified = await wasFundingNotificationSent(suite.id)
       }
 
-      let newlyNotified = false;
+      let newlyNotified = false
 
       // If funded and not yet notified, send notification
       if (isFunded && !alreadyNotified && suite.status === "funding") {
-        console.log(`[CheckFunding] Suite ${suite.id} is newly funded, sending notification`);
+        console.log(
+          `[CheckFunding] Suite ${suite.id} is newly funded, sending notification`,
+        )
 
         await sendFundingNotification({
           suiteId: suite.id,
@@ -75,19 +77,19 @@ export async function GET(request: Request) {
           balanceSats: suite.currentBalanceSats,
           balanceUsd: suite.currentBalanceUsd,
           goalUsd: suite.estimatedCostUsd,
-        });
+        })
 
         // Mark as notified and update status
         if (isRedisConfigured()) {
-          await markFundingNotificationSent(suite.id);
+          await markFundingNotificationSent(suite.id)
           await setSuiteState(suite.id, {
             lastRunAt: suite.lastRunAt,
             lastRunVersion: suite.lastRunVersion,
             status: "pending",
-          });
+          })
         }
 
-        newlyNotified = true;
+        newlyNotified = true
       }
 
       results.push({
@@ -96,22 +98,22 @@ export async function GET(request: Request) {
         funded: isFunded,
         notified: alreadyNotified || newlyNotified,
         newlyNotified,
-      });
+      })
     }
 
-    const newlyFunded = results.filter((r) => r.newlyNotified);
+    const newlyFunded = results.filter((r) => r.newlyNotified)
 
     return NextResponse.json({
       checked: results.length,
       newlyFunded: newlyFunded.length,
       results,
       timestamp: new Date().toISOString(),
-    });
+    })
   } catch (error) {
-    console.error("[CheckFunding] Error:", error);
+    console.error("[CheckFunding] Error:", error)
     return NextResponse.json(
       { error: "Failed to check funding", details: String(error) },
-      { status: 500 }
-    );
+      { status: 500 },
+    )
   }
 }

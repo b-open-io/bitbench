@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { DonationCard } from "@/components/donation-card";
-import type { SuiteWithBalance } from "@/lib/types";
+import { DonationCard } from "@/components/donation-card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import type { SuiteWithBalance } from "@/lib/types"
 
 interface SuiteGridProps {
-  suites: SuiteWithBalance[];
-  loading: boolean;
-  onDonate: (suite: SuiteWithBalance) => void;
+  suites: SuiteWithBalance[]
+  loading: boolean
+  onDonate: (suite: SuiteWithBalance) => void
 }
 
 export function SuiteGrid({ suites, loading, onDonate }: SuiteGridProps) {
@@ -27,7 +27,7 @@ export function SuiteGrid({ suites, loading, onDonate }: SuiteGridProps) {
           </Card>
         ))}
       </div>
-    );
+    )
   }
 
   if (suites.length === 0) {
@@ -39,7 +39,7 @@ export function SuiteGrid({ suites, loading, onDonate }: SuiteGridProps) {
           </p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -48,5 +48,5 @@ export function SuiteGrid({ suites, loading, onDonate }: SuiteGridProps) {
         <DonationCard key={suite.id} suite={suite} onDonate={onDonate} />
       ))}
     </div>
-  );
+  )
 }

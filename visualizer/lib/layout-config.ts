@@ -4,12 +4,12 @@ export const WIDTH_CONFIG = {
   results: "max-w-[96rem]",
   suite: "max-w-[96rem]",
   default: "max-w-7xl",
-} as const;
+} as const
 
-export type WidthVariant = keyof typeof WIDTH_CONFIG;
+export type WidthVariant = keyof typeof WIDTH_CONFIG
 
 export function getWidthVariant(pathname: string | null): WidthVariant {
-  if (pathname === "/results") return "results";
-  if (pathname?.startsWith("/suite/")) return "suite";
-  return "default";
+  if (pathname === "/results") return "results"
+  if (pathname?.startsWith("/suite/")) return "suite"
+  return "default"
 }
