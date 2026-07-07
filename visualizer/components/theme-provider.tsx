@@ -18,6 +18,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react"
 import { loadThemeFonts } from "@/lib/fonts"
@@ -145,6 +146,23 @@ function ThemeTokenProvider({ children }: { children: ReactNode }) {
     [applyTheme],
   )
 
+  // Stable, guarded setter: bails when the theme list is equivalent, so
+  // repeated pushes of fresh-but-equal arrays (e.g. [] on every wallet
+  // refresh) don't re-render the provider. An unguarded setter here closed
+  // a feedback loop with wallet callbacks that depend on this context —
+  // flickering the whole tree and starving router transitions.
+  const setAvailableThemesGuarded = useCallback((themes: ThemeToken[]) => {
+    setAvailableThemes((prev) => {
+      if (
+        prev.length === themes.length &&
+        prev.every((t, i) => t.name === themes[i].name)
+      ) {
+        return prev
+      }
+      return themes
+    })
+  }, [])
+
   // Restore saved theme when availableThemes changes (wallet connects)
   useEffect(() => {
     if (availableThemes.length === 0) return
@@ -166,18 +184,29 @@ function ThemeTokenProvider({ children }: { children: ReactNode }) {
     }
   }, [availableThemes, mode])
 
+  const value = useMemo(
+    () => ({
+      activeTheme,
+      mode,
+      availableThemes,
+      setAvailableThemes: setAvailableThemesGuarded,
+      applyTheme,
+      applyThemeAnimated,
+      resetTheme,
+    }),
+    [
+      activeTheme,
+      mode,
+      availableThemes,
+      setAvailableThemesGuarded,
+      applyTheme,
+      applyThemeAnimated,
+      resetTheme,
+    ],
+  )
+
   return (
-    <ThemeTokenContext.Provider
-      value={{
-        activeTheme,
-        mode,
-        availableThemes,
-        setAvailableThemes,
-        applyTheme,
-        applyThemeAnimated,
-        resetTheme,
-      }}
-    >
+    <ThemeTokenContext.Provider value={value}>
       {children}
     </ThemeTokenContext.Provider>
   )

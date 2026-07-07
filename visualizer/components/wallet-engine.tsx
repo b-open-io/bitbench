@@ -92,6 +92,13 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
     disconnect: oneSatDisconnect,
   } = useOneSatWallet()
   const themeContext = useThemeToken()
+  // Callbacks read the theme context through a ref so their identities do
+  // not depend on the context object — a context-identity dependency here
+  // previously closed a re-render feedback loop through setAvailableThemes.
+  const themeCtxRef = useRef(themeContext)
+  useEffect(() => {
+    themeCtxRef.current = themeContext
+  }, [themeContext])
   const services = useMemo(() => new OneSatServices("main"), [])
   const ctx = useMemo(
     () =>
@@ -130,13 +137,13 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
     })
     setThemeTokens([])
     setIsLoadingThemes(false)
-    themeContext.setAvailableThemes([])
-  }, [themeContext])
+    themeCtxRef.current.setAvailableThemes([])
+  }, [])
 
   const fetchThemeTokens = useCallback(async () => {
     if (!ctx) {
       setThemeTokens([])
-      themeContext.setAvailableThemes([])
+      themeCtxRef.current.setAvailableThemes([])
       return
     }
 
@@ -149,7 +156,7 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
       if (outpoints.length === 0) {
         if (latestIdentityKey.current === requestIdentityKey) {
           setThemeTokens([])
-          themeContext.setAvailableThemes([])
+          themeCtxRef.current.setAvailableThemes([])
         }
         return
       }
@@ -172,7 +179,7 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
 
       if (latestIdentityKey.current === requestIdentityKey) {
         setThemeTokens(tokens)
-        themeContext.setAvailableThemes(tokens)
+        themeCtxRef.current.setAvailableThemes(tokens)
       }
     } catch (error) {
       console.error("Error fetching theme tokens:", error)
@@ -181,7 +188,7 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
         setIsLoadingThemes(false)
       }
     }
-  }, [ctx, identityKey, services, themeContext])
+  }, [ctx, identityKey, services])
 
   const refreshState = useCallback(async () => {
     if (!wallet || !ctx || status !== "connected") {
@@ -314,11 +321,11 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
     try {
       oneSatDisconnect()
       clearAccountState()
-      themeContext.resetTheme()
+      themeCtxRef.current.resetTheme()
     } catch (error) {
       console.error("Error disconnecting wallet:", error)
     }
-  }, [oneSatDisconnect, clearAccountState, themeContext])
+  }, [oneSatDisconnect, clearAccountState])
 
   const sendBsv = useCallback(
     async (requests: SendBsvRequest[]): Promise<SendBsvResult> => {
