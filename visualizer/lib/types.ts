@@ -107,6 +107,11 @@ export interface ModelResult {
   tokensPerSecond: number
 }
 
+export interface ModelRegistryEntry {
+  name: string
+  id: string
+}
+
 export interface BenchmarkRun {
   id: string
   suiteId: string

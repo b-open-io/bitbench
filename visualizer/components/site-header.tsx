@@ -3,8 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { GitHubStars } from "@/components/github-stars"
+import { ModelsDialog } from "@/components/models-dialog"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Badge } from "@/components/ui/badge"
 import { WalletConnect } from "@/components/wallet-connect"
 import { getWidthVariant, WIDTH_CONFIG } from "@/lib/layout-config"
 
@@ -73,13 +73,7 @@ export function SiteHeader({ modelCount }: SiteHeaderProps) {
           >
             About
           </Link>
-          <Badge
-            variant="outline"
-            className="hidden md:flex border-border bg-muted/50 px-3 py-1 text-xs font-normal text-muted-foreground"
-          >
-            <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            {modelCount} models
-          </Badge>
+          <ModelsDialog modelCount={modelCount} />
           <GitHubStars />
           <ThemeToggle />
           <WalletConnect />

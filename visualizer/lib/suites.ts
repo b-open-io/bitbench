@@ -5,6 +5,7 @@ import { getSuiteState, isRedisConfigured } from "./kv"
 import { getBsvPriceUsd } from "./price"
 import type {
   Chain,
+  ModelRegistryEntry,
   SuiteRuntimeState,
   SuiteWithBalance,
   TestSuite,
@@ -20,15 +21,38 @@ const MODELS_RESOLVED_PATH = join(
   "models-resolved.json",
 )
 
-interface ModelsResolvedSnapshot {
-  generatedAt: string
-  defaultModelCount: number
-  suites: Record<string, { modelCount: number; estimatedCostUsd: number }>
+interface ResolvedSuiteInfo {
+  modelCount: number
+  estimatedCostUsd: number
+  models?: ModelRegistryEntry[]
 }
 
-let modelsResolvedSnapshot: Promise<ModelsResolvedSnapshot> | null = null
+interface ValidatedModelsResolvedSnapshot {
+  generatedAt: string
+  defaultModelCount: number
+  defaultModels: ModelRegistryEntry[]
+  suites: Record<string, ResolvedSuiteInfo>
+}
 
-async function loadModelsResolvedSnapshot(): Promise<ModelsResolvedSnapshot> {
+let modelsResolvedSnapshot: Promise<ValidatedModelsResolvedSnapshot> | null =
+  null
+
+function isModelRegistryEntryArray(
+  value: unknown,
+): value is ModelRegistryEntry[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (model) =>
+        typeof model === "object" &&
+        model !== null &&
+        typeof (model as ModelRegistryEntry).name === "string" &&
+        typeof (model as ModelRegistryEntry).id === "string",
+    )
+  )
+}
+
+async function loadModelsResolvedSnapshot(): Promise<ValidatedModelsResolvedSnapshot> {
   modelsResolvedSnapshot ??= (async () => {
     let content: string
     try {
@@ -41,19 +65,82 @@ async function loadModelsResolvedSnapshot(): Promise<ModelsResolvedSnapshot> {
     }
 
     const parsed = JSON.parse(content) as unknown
-    if (
-      typeof parsed !== "object" ||
-      parsed === null ||
-      !("suites" in parsed) ||
-      typeof (parsed as { suites?: unknown }).suites !== "object" ||
-      (parsed as { suites?: unknown }).suites === null
-    ) {
+    if (typeof parsed !== "object" || parsed === null) {
       throw new Error(
-        `Invalid resolved model snapshot at ${MODELS_RESOLVED_PATH}: expected suites object.`,
+        `Invalid resolved model snapshot at ${MODELS_RESOLVED_PATH}: expected object.`,
       )
     }
 
-    return parsed as ModelsResolvedSnapshot
+    const snapshot = parsed as {
+      generatedAt?: unknown
+      defaultModelCount?: unknown
+      defaultModels?: unknown
+      suites?: unknown
+    }
+
+    if (
+      typeof snapshot.generatedAt !== "string" ||
+      typeof snapshot.defaultModelCount !== "number" ||
+      !isModelRegistryEntryArray(snapshot.defaultModels) ||
+      typeof snapshot.suites !== "object" ||
+      snapshot.suites === null
+    ) {
+      throw new Error(
+        `Invalid resolved model snapshot at ${MODELS_RESOLVED_PATH}: expected generatedAt, defaultModelCount, defaultModels, and suites.`,
+      )
+    }
+
+    if (snapshot.defaultModels.length !== snapshot.defaultModelCount) {
+      throw new Error(
+        `Invalid resolved model snapshot at ${MODELS_RESOLVED_PATH}: defaultModelCount does not match defaultModels length.`,
+      )
+    }
+
+    const suites: Record<string, ResolvedSuiteInfo> = {}
+    for (const [suiteId, value] of Object.entries(snapshot.suites)) {
+      if (typeof value !== "object" || value === null) {
+        throw new Error(
+          `Invalid resolved model snapshot at ${MODELS_RESOLVED_PATH}: suite "${suiteId}" must be an object.`,
+        )
+      }
+
+      const suite = value as {
+        modelCount?: unknown
+        estimatedCostUsd?: unknown
+        models?: unknown
+      }
+
+      if (
+        typeof suite.modelCount !== "number" ||
+        typeof suite.estimatedCostUsd !== "number"
+      ) {
+        throw new Error(
+          `Invalid resolved model snapshot at ${MODELS_RESOLVED_PATH}: suite "${suiteId}" is missing modelCount or estimatedCostUsd.`,
+        )
+      }
+
+      if (
+        suite.models !== undefined &&
+        !isModelRegistryEntryArray(suite.models)
+      ) {
+        throw new Error(
+          `Invalid resolved model snapshot at ${MODELS_RESOLVED_PATH}: suite "${suiteId}" models must be [{ name, id }].`,
+        )
+      }
+
+      suites[suiteId] = {
+        modelCount: suite.modelCount,
+        estimatedCostUsd: suite.estimatedCostUsd,
+        ...(suite.models ? { models: suite.models } : {}),
+      }
+    }
+
+    return {
+      generatedAt: snapshot.generatedAt,
+      defaultModelCount: snapshot.defaultModelCount,
+      defaultModels: snapshot.defaultModels,
+      suites,
+    }
   })()
 
   return modelsResolvedSnapshot
@@ -70,6 +157,53 @@ async function getResolvedSuiteInfo(
     )
   }
   return suite
+}
+
+export async function getDefaultModels(): Promise<ModelRegistryEntry[]> {
+  const snapshot = await loadModelsResolvedSnapshot()
+  return snapshot.defaultModels
+}
+
+export async function getSuiteModelInfo(suiteId: string): Promise<{
+  modelCount: number
+  models: ModelRegistryEntry[]
+  usesDefaultModels: boolean
+}> {
+  const [snapshot, suiteFile] = await Promise.all([
+    loadModelsResolvedSnapshot(),
+    getSuiteFile(suiteId),
+  ])
+
+  if (!suiteFile) {
+    throw new Error(`Suite "${suiteId}" does not exist.`)
+  }
+
+  const suite = snapshot.suites[suiteId]
+  if (!suite) {
+    throw new Error(
+      `Resolved model snapshot ${MODELS_RESOLVED_PATH} has no entry for suite "${suiteId}". Run "cd bench && bun run models --write".`,
+    )
+  }
+
+  const usesDefaultModels = !suiteFile.model_filter
+  if (!usesDefaultModels && !suite.models) {
+    throw new Error(
+      `Resolved model snapshot ${MODELS_RESOLVED_PATH} suite "${suiteId}" has a model_filter but no models array. Run "cd bench && bun run models --write".`,
+    )
+  }
+
+  const models = suite.models ?? snapshot.defaultModels
+  if (models.length !== suite.modelCount) {
+    throw new Error(
+      `Resolved model snapshot ${MODELS_RESOLVED_PATH} suite "${suiteId}" modelCount does not match the resolved models length.`,
+    )
+  }
+
+  return {
+    modelCount: suite.modelCount,
+    models,
+    usesDefaultModels,
+  }
 }
 
 /**

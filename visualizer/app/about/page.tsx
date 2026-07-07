@@ -3,8 +3,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { GitHubIcon } from "@/components/icons/github-icon"
 import { SiteHeader } from "@/components/site-header"
-import { SuiteListModal } from "@/components/suite-list-modal"
-import { getAllSuites } from "@/lib/suites"
+import { getAllSuites, getDefaultModels } from "@/lib/suites"
 
 export const metadata: Metadata = {
   title: "About - Bitbench",
@@ -13,13 +12,14 @@ export const metadata: Metadata = {
 }
 
 export default async function AboutPage() {
-  const suites = await getAllSuites()
-  const modelCount =
-    suites.length > 0 ? Math.max(...suites.map((suite) => suite.modelCount)) : 0
+  const [suites, defaultModels] = await Promise.all([
+    getAllSuites(),
+    getDefaultModels(),
+  ])
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader modelCount={modelCount} />
+      <SiteHeader modelCount={defaultModels.length} />
 
       <main className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-3xl font-bold tracking-tight mb-2">
@@ -157,7 +157,16 @@ export default async function AboutPage() {
           <h2 className="text-xl font-semibold mb-4">
             Current Test Suites ({suites.length})
           </h2>
-          <SuiteListModal suites={suites} />
+          <p className="text-muted-foreground mb-4">
+            Every suite has its own page with the full question list, funding
+            state, and the models it runs against.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            Browse all {suites.length} benchmarks
+          </Link>
         </section>
 
         {/* Get Involved */}

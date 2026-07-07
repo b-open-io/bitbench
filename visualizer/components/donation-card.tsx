@@ -44,11 +44,6 @@ export function DonationCard({
   const hasResults = suite.status === "completed" || suite.lastRunAt
   const isFullyFunded = progressPercent >= 100
 
-  // Determine what run number we're funding
-  const runNumber = suite.lastRunVersion
-    ? parseInt(suite.lastRunVersion.split(".")[0] || "1", 10) + 1
-    : 1
-
   return (
     <Card
       className={cn(
@@ -92,8 +87,10 @@ export function DonationCard({
                   <CheckCircle2 className="h-3 w-3" />
                   Fully Funded
                 </span>
+              ) : suite.lastRunAt ? (
+                "Funding next run"
               ) : (
-                `Funding Run #${runNumber}`
+                "Funding"
               )}
             </span>
             <span className="font-medium">{progressPercent}%</span>
