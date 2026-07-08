@@ -154,9 +154,14 @@ export function WalletConnect() {
 
   if (!isConnected) {
     return (
-      <Button onClick={handleConnect} variant="outline" className="gap-2">
+      <Button
+        onClick={handleConnect}
+        variant="outline"
+        aria-label="Connect wallet"
+        className="gap-2 px-2.5 sm:px-3"
+      >
         <WalletMinimal className="h-4 w-4 fill-current" />
-        Connect Wallet
+        <span className="hidden sm:inline">Connect</span>
       </Button>
     )
   }

@@ -197,6 +197,9 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
     selectedModels.includes(m.model),
   )
   const mobileBarHeight = Math.max(320, filteredRankings.length * 36 + 120)
+  // Use the vertical (horizontal-bar) layout on mobile OR whenever there
+  // are many models, so x-axis labels never overlap into an unreadable mess.
+  const vertical = isMobile || filteredRankings.length > 14
   const totalTestsPerModel = rankings[0]?.totalTests ?? 0
 
   const successRateData = filteredRankings
@@ -381,13 +384,13 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 successRate: { label: "Success Rate", color: "var(--chart-1)" },
               }}
               className="h-[420px] sm:h-[520px] w-full"
-              style={isMobile ? { height: mobileBarHeight } : undefined}
+              style={vertical ? { height: mobileBarHeight } : undefined}
             >
               <BarChart
                 data={successRateData}
-                layout={isMobile ? "vertical" : "horizontal"}
+                layout={vertical ? "vertical" : "horizontal"}
                 margin={
-                  isMobile
+                  vertical
                     ? { top: 10, right: 24, left: 140, bottom: 24 }
                     : { top: 10, right: 24, left: 12, bottom: 64 }
                 }
@@ -415,7 +418,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                   strokeDasharray="3 3"
                   className="stroke-border"
                 />
-                {isMobile ? (
+                {vertical ? (
                   <>
                     <XAxis
                       type="number"
@@ -469,13 +472,13 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 />
                 <Bar
                   dataKey="successRate"
-                  radius={isMobile ? [0, 6, 6, 0] : [6, 6, 0, 0]}
+                  radius={vertical ? [0, 6, 6, 0] : [6, 6, 0, 0]}
                 >
                   <LabelList
                     dataKey="successRate"
-                    position={isMobile ? "right" : "top"}
+                    position={vertical ? "right" : "top"}
                     content={
-                      isMobile
+                      vertical
                         ? barValueLabelHorizontalSmart("%", 1, 100)
                         : barValueLabel("%", 1)
                     }
@@ -520,13 +523,13 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 },
               }}
               className="h-[420px] sm:h-[520px] w-full"
-              style={isMobile ? { height: mobileBarHeight } : undefined}
+              style={vertical ? { height: mobileBarHeight } : undefined}
             >
               <BarChart
                 data={costData}
-                layout={isMobile ? "vertical" : "horizontal"}
+                layout={vertical ? "vertical" : "horizontal"}
                 margin={
-                  isMobile
+                  vertical
                     ? { top: 10, right: 24, left: 140, bottom: 24 }
                     : { top: 10, right: 24, left: 12, bottom: 64 }
                 }
@@ -554,7 +557,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                   strokeDasharray="3 3"
                   className="stroke-border"
                 />
-                {isMobile ? (
+                {vertical ? (
                   <>
                     <XAxis
                       type="number"
@@ -608,13 +611,13 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 />
                 <Bar
                   dataKey="totalCost"
-                  radius={isMobile ? [0, 6, 6, 0] : [6, 6, 0, 0]}
+                  radius={vertical ? [0, 6, 6, 0] : [6, 6, 0, 0]}
                 >
                   <LabelList
                     dataKey="totalCost"
-                    position={isMobile ? "right" : "top"}
+                    position={vertical ? "right" : "top"}
                     content={
-                      isMobile
+                      vertical
                         ? barValueLabelHorizontalSmart("", 2, costMax || 1)
                         : barValueLabel("", 2)
                     }
@@ -659,13 +662,13 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 },
               }}
               className="h-[420px] sm:h-[520px] w-full"
-              style={isMobile ? { height: mobileBarHeight } : undefined}
+              style={vertical ? { height: mobileBarHeight } : undefined}
             >
               <BarChart
                 data={speedData}
-                layout={isMobile ? "vertical" : "horizontal"}
+                layout={vertical ? "vertical" : "horizontal"}
                 margin={
-                  isMobile
+                  vertical
                     ? { top: 10, right: 24, left: 140, bottom: 24 }
                     : { top: 10, right: 24, left: 12, bottom: 64 }
                 }
@@ -693,7 +696,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                   strokeDasharray="3 3"
                   className="stroke-border"
                 />
-                {isMobile ? (
+                {vertical ? (
                   <>
                     <XAxis
                       type="number"
@@ -747,13 +750,13 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 />
                 <Bar
                   dataKey="duration"
-                  radius={isMobile ? [0, 6, 6, 0] : [6, 6, 0, 0]}
+                  radius={vertical ? [0, 6, 6, 0] : [6, 6, 0, 0]}
                 >
                   <LabelList
                     dataKey="duration"
-                    position={isMobile ? "right" : "top"}
+                    position={vertical ? "right" : "top"}
                     content={
-                      isMobile
+                      vertical
                         ? barValueLabelHorizontalSmart("s", 2, speedMax || 1)
                         : barValueLabel("s", 2)
                     }
@@ -798,14 +801,14 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                 successRate: { label: "Success Rate", color: "var(--chart-1)" },
               }}
               className="h-[420px] sm:h-[520px] w-full"
-              style={isMobile ? { height: 360 } : undefined}
+              style={vertical ? { height: 360 } : undefined}
             >
               <ScatterChart
                 margin={{
                   top: 10,
-                  right: isMobile ? 12 : 120,
+                  right: vertical ? 12 : 120,
                   left: 12,
-                  bottom: isMobile ? 16 : 32,
+                  bottom: vertical ? 16 : 32,
                 }}
               >
                 <CartesianGrid
@@ -883,7 +886,7 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                       fill={getModelColor(entry.originalModel)}
                     />
                   ))}
-                  {!isMobile ? (
+                  {!vertical ? (
                     <LabelList
                       dataKey="model"
                       content={(props: RechartsLabelProps) => {

@@ -174,8 +174,10 @@ dist
 # Finder (MacOS) folder config
 .DS_Store
 
-results/
-!visualizer/app/api/results/
+# Benchmark run output (scoped to bench/ — an unanchored "results/" also
+# matched visualizer/app/results/, which excluded that route from Tailwind's
+# gitignore-aware scanner and silently dropped its utility classes).
+/bench/results/
 .vercel
 .env*.local
 SPEC-*

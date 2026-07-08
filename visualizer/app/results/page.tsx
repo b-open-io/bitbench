@@ -477,112 +477,127 @@ export default function ResultsPage() {
             </div>
           </CardHeader>
           <CardContent className="px-2 sm:p-6">
-            <div style={{ height: 320 }}>
-              <ChartContainer
-                config={chartConfig}
-                className="!aspect-auto h-full w-full"
+            {/* Scroll horizontally when there are enough models that the
+                angled x-axis labels would otherwise overlap. Each model gets
+                a fixed minimum slot so every bar and label stays readable. */}
+            <div className="overflow-x-auto">
+              <div
+                style={{
+                  height: 340,
+                  minWidth: `${Math.max(barChartData.length * 34, 480)}px`,
+                }}
               >
-                <BarChart
-                  accessibilityLayer
-                  data={barChartData}
-                  margin={{ left: 12, right: 12 }}
+                <ChartContainer
+                  config={chartConfig}
+                  className="!aspect-auto h-full w-full"
                 >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="model"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    interval={0}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        className="w-[200px]"
-                        labelFormatter={(_, payload) => {
-                          if (payload?.[0]?.payload?.model) {
-                            return payload[0].payload.model
-                          }
-                          return ""
-                        }}
-                        formatter={(value, name, item) => {
-                          // Show actual scores, not deltas
-                          const displayValue =
-                            name === "thinking"
-                              ? item.payload.thinkingActual
-                              : value
-                          // Don't show thinking row if no thinking score
-                          if (
-                            name === "thinking" &&
-                            !item.payload.thinkingActual
-                          )
-                            return null
-                          return (
-                            <>
-                              <div
-                                className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                                style={{ backgroundColor: item.color }}
-                              />
-                              <div className="flex flex-1 items-center justify-between">
-                                <span className="text-muted-foreground">
-                                  {name === "standard"
-                                    ? "Standard"
-                                    : "Thinking"}
-                                </span>
-                                <span className="font-mono font-medium">
-                                  {Number(displayValue).toFixed(1)}%
-                                </span>
-                              </div>
-                            </>
-                          )
-                        }}
-                      />
-                    }
-                  />
-                  <ChartLegend content={<ChartLegendContent payload={[]} />} />
-                  <Bar
-                    dataKey="standard"
-                    stackId="a"
-                    fill="var(--color-standard)"
-                    radius={[0, 0, 4, 4]}
-                  />
-                  <Bar
-                    dataKey="thinking"
-                    stackId="a"
-                    fill="var(--color-thinking)"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ChartContainer>
+                  <BarChart
+                    accessibilityLayer
+                    data={barChartData}
+                    margin={{ left: 12, right: 12 }}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="model"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      interval={0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={90}
+                      tick={{ fontSize: 11 }}
+                    />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          className="w-[200px]"
+                          labelFormatter={(_, payload) => {
+                            if (payload?.[0]?.payload?.model) {
+                              return payload[0].payload.model
+                            }
+                            return ""
+                          }}
+                          formatter={(value, name, item) => {
+                            // Show actual scores, not deltas
+                            const displayValue =
+                              name === "thinking"
+                                ? item.payload.thinkingActual
+                                : value
+                            // Don't show thinking row if no thinking score
+                            if (
+                              name === "thinking" &&
+                              !item.payload.thinkingActual
+                            )
+                              return null
+                            return (
+                              <>
+                                <div
+                                  className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                <div className="flex flex-1 items-center justify-between">
+                                  <span className="text-muted-foreground">
+                                    {name === "standard"
+                                      ? "Standard"
+                                      : "Thinking"}
+                                  </span>
+                                  <span className="font-mono font-medium">
+                                    {Number(displayValue).toFixed(1)}%
+                                  </span>
+                                </div>
+                              </>
+                            )
+                          }}
+                        />
+                      }
+                    />
+                    <ChartLegend
+                      content={<ChartLegendContent payload={[]} />}
+                    />
+                    <Bar
+                      dataKey="standard"
+                      stackId="a"
+                      fill="var(--color-standard)"
+                      radius={[0, 0, 4, 4]}
+                    />
+                    <Bar
+                      dataKey="thinking"
+                      stackId="a"
+                      fill="var(--color-thinking)"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </div>
             </div>
           </CardContent>
         </Card>
       </PageContainer>
 
       {/* Centered section: Leaderboard + Completed Suites */}
-      <PageContainer forceWidth="default" className="pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <PageContainer forceWidth="default" className="pb-16">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {/* LEFT: Leaderboard Table */}
-          <Card className="lg:col-span-8 flex flex-col overflow-hidden">
+          <Card className="flex flex-col overflow-hidden lg:col-span-2">
             <CardHeader className="py-3 px-4 border-b bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <CardTitle className="text-base font-semibold">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="whitespace-nowrap text-base font-semibold">
                     Global Leaderboard
                   </CardTitle>
-                  <Badge variant="outline" className="text-xs font-normal">
+                  <Badge
+                    variant="outline"
+                    className="whitespace-nowrap text-xs font-normal"
+                  >
                     {processedLeaderboard.length} models
                   </Badge>
                 </div>
-                <div className="relative">
+                <div className="relative w-full sm:w-64">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Filter..."
-                    className="pl-8 h-8 w-40"
+                    className="h-8 w-full pl-8"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -674,7 +689,7 @@ export default function ResultsPage() {
           </Card>
 
           {/* RIGHT: Completed Suites */}
-          <Card className="lg:col-span-4">
+          <Card className="lg:col-span-1">
             <CardHeader className="py-3 px-4 border-b bg-muted/30">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
