@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PhilosophyLeaningChart } from "@/components/philosophy-leaning-chart"
 import { useIsMobile } from "@/hooks/use-mobile"
 
 interface ModelData {
@@ -407,210 +408,166 @@ export function BenchmarkCharts({
         value="accuracy"
         className="animate-in fade-in-50 duration-300"
       >
-        <Card className="group relative overflow-hidden transition-all duration-300 hover:border-primary/20">
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-xl font-medium">
-                  {isPhilosophy
-                    ? "Position leaning by model"
-                    : "Success Rate by Model"}
-                </CardTitle>
-                <CardDescription>
-                  {isPhilosophy && poles ? (
+        {isPhilosophy && poles ? (
+          <PhilosophyLeaningChart
+            models={filteredRankings.map((m) => ({
+              model: m.model,
+              leaning: m.leaning,
+              positionRate: m.positionRate,
+              complianceRate: m.complianceRate,
+            }))}
+            highPole={poles.high}
+            lowPole={poles.low}
+            positionCellsHint={
+              totalTestsPerModel > 0
+                ? `${totalTestsPerModel} scored cells per model (roles × runs).`
+                : undefined
+            }
+          />
+        ) : (
+          <Card className="group relative overflow-hidden transition-all duration-300 hover:border-primary/20">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl font-medium">
+                    Success Rate by Model
+                  </CardTitle>
+                  <CardDescription>
+                    Percentage of correct answers out of {totalTestsPerModel}{" "}
+                    tests per model
+                  </CardDescription>
+                </div>
+                <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                  <Trophy className="h-5 w-5" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                config={{
+                  successRate: {
+                    label: "Success Rate",
+                    color: "var(--chart-1)",
+                  },
+                }}
+                className="h-[420px] sm:h-[520px] w-full"
+                style={vertical ? { height: mobileBarHeight } : undefined}
+              >
+                <BarChart
+                  data={successRateData}
+                  layout={vertical ? "vertical" : "horizontal"}
+                  margin={
+                    vertical
+                      ? { top: 10, right: 24, left: 140, bottom: 24 }
+                      : { top: 10, right: 24, left: 12, bottom: 64 }
+                  }
+                >
+                  <defs>
+                    {successRateData.map((d) => {
+                      const base = getModelColor(d.model)
+                      const id = getGradientId("sr", d.model)
+                      return (
+                        <linearGradient
+                          key={id}
+                          id={id}
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop offset="0%" stopColor={withAlpha(base, 0.95)} />
+                          <stop
+                            offset="100%"
+                            stopColor={withAlpha(base, 0.55)}
+                          />
+                        </linearGradient>
+                      )
+                    })}
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-border"
+                  />
+                  {vertical ? (
                     <>
-                      Position items only:{" "}
-                      <span className="text-foreground">+1</span> = {poles.high}
-                      ; <span className="text-foreground">−1</span> = {poles.low}
-                      . Compliance probes are scored separately and do not move
-                      the leaning axis. {totalTestsPerModel} scored cells per
-                      model (all roles × runs).
+                      <XAxis
+                        type="number"
+                        domain={[0, 100]}
+                        label={{
+                          value: "Success Rate (%)",
+                          position: "insideBottom",
+                          offset: -10,
+                          className: "fill-muted-foreground",
+                        }}
+                        className="stroke-muted-foreground"
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="model"
+                        width={12}
+                        tick={{
+                          fontSize: 12,
+                          className: "fill-muted-foreground",
+                        }}
+                        tickFormatter={(v: string) => truncateLabel(v)}
+                        className="stroke-muted-foreground"
+                      />
                     </>
                   ) : (
                     <>
-                      Percentage of correct answers out of {totalTestsPerModel}{" "}
-                      tests per model
+                      <XAxis
+                        dataKey="model"
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                        fontSize={12}
+                        className="stroke-muted-foreground"
+                      />
+                      <YAxis
+                        label={{
+                          value: "Success Rate (%)",
+                          angle: -90,
+                          position: "insideLeft",
+                          className: "fill-muted-foreground",
+                        }}
+                        domain={[0, 100]}
+                        className="stroke-muted-foreground"
+                      />
                     </>
                   )}
-                </CardDescription>
-              </div>
-              <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                <Trophy className="h-5 w-5" />
-              </div>
-            </div>
-            {isPhilosophy && poles && (
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                <span className="max-w-[45%] text-left">−1 · {poles.low}</span>
-                <span className="font-mono text-foreground">leaning = 2p − 1</span>
-                <span className="max-w-[45%] text-right">+1 · {poles.high}</span>
-              </div>
-            )}
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={
-                isPhilosophy
-                  ? {
-                      leaningDisplay: {
-                        label: "Leaning",
-                        color: "var(--chart-1)",
-                      },
-                    }
-                  : {
-                      successRate: {
-                        label: "Success Rate",
-                        color: "var(--chart-1)",
-                      },
-                    }
-              }
-              className="h-[420px] sm:h-[520px] w-full"
-              style={vertical ? { height: mobileBarHeight } : undefined}
-            >
-              <BarChart
-                data={successRateData}
-                layout={vertical ? "vertical" : "horizontal"}
-                margin={
-                  vertical
-                    ? { top: 10, right: 24, left: 140, bottom: 24 }
-                    : { top: 10, right: 24, left: 12, bottom: 64 }
-                }
-              >
-                <defs>
-                  {successRateData.map((d) => {
-                    const base = getModelColor(d.model)
-                    const id = getGradientId("sr", d.model)
-                    return (
-                      <linearGradient
-                        key={id}
-                        id={id}
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop offset="0%" stopColor={withAlpha(base, 0.95)} />
-                        <stop offset="100%" stopColor={withAlpha(base, 0.55)} />
-                      </linearGradient>
-                    )
-                  })}
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  className="stroke-border"
-                />
-                {vertical ? (
-                  <>
-                    <XAxis
-                      type="number"
-                      domain={isPhilosophy ? [0, 2] : [0, 100]}
-                      ticks={isPhilosophy ? [0, 1, 2] : undefined}
-                      tickFormatter={
-                        isPhilosophy
-                          ? (v: number) => String(v - 1)
-                          : undefined
-                      }
-                      label={{
-                        value: isPhilosophy
-                          ? "Leaning (−1 … +1)"
-                          : "Success Rate (%)",
-                        position: "insideBottom",
-                        offset: -10,
-                        className: "fill-muted-foreground",
-                      }}
-                      className="stroke-muted-foreground"
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="model"
-                      width={12}
-                      tick={{
-                        fontSize: 12,
-                        className: "fill-muted-foreground",
-                      }}
-                      tickFormatter={(v: string) => truncateLabel(v)}
-                      className="stroke-muted-foreground"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <XAxis
-                      dataKey="model"
-                      angle={-45}
-                      textAnchor="end"
-                      height={100}
-                      fontSize={12}
-                      className="stroke-muted-foreground"
-                    />
-                    <YAxis
-                      label={{
-                        value: isPhilosophy
-                          ? "Leaning (−1 … +1)"
-                          : "Success Rate (%)",
-                        angle: -90,
-                        position: "insideLeft",
-                        className: "fill-muted-foreground",
-                      }}
-                      domain={isPhilosophy ? [0, 2] : [0, 100]}
-                      ticks={isPhilosophy ? [0, 1, 2] : undefined}
-                      tickFormatter={
-                        isPhilosophy
-                          ? (v: number) => String(v - 1)
-                          : undefined
-                      }
-                      className="stroke-muted-foreground"
-                    />
-                  </>
-                )}
-                <ChartTooltip
-                  content={<ChartTooltipContent />}
-                  formatter={(value: unknown, _name: unknown, item: unknown) => {
-                    if (isPhilosophy) {
-                      const payload = (
-                        item as { payload?: { leaning?: number; positionRate?: number; complianceRate?: number } }
-                      )?.payload
-                      const lean = payload?.leaning
-                      const pos = payload?.positionRate
-                      const comp = payload?.complianceRate
-                      const parts = [
-                        `Leaning ${lean !== undefined ? lean.toFixed(3) : "—"}`,
-                      ]
-                      if (pos !== undefined) parts.push(`Position ${pos}%`)
-                      if (comp !== undefined) parts.push(`Compliance ${comp}%`)
-                      return [parts.join(" · ")]
-                    }
-                    return [`${value}% Success Rate`]
-                  }}
-                  labelFormatter={modelTooltipLabel}
-                />
-                <Bar
-                  dataKey={isPhilosophy ? "leaningDisplay" : "successRate"}
-                  radius={vertical ? [0, 6, 6, 0] : [6, 6, 0, 0]}
-                >
-                  <LabelList
-                    dataKey={isPhilosophy ? "leaning" : "successRate"}
-                    position={vertical ? "right" : "top"}
-                    content={
-                      isPhilosophy
-                        ? vertical
-                          ? barValueLabelHorizontalSmart("", 2, 1)
-                          : barValueLabel("", 2)
-                        : vertical
+                  <ChartTooltip
+                    content={<ChartTooltipContent />}
+                    formatter={(value: unknown) => [
+                      `${value}% Success Rate`,
+                    ]}
+                    labelFormatter={modelTooltipLabel}
+                  />
+                  <Bar
+                    dataKey="successRate"
+                    radius={vertical ? [0, 6, 6, 0] : [6, 6, 0, 0]}
+                  >
+                    <LabelList
+                      dataKey="successRate"
+                      position={vertical ? "right" : "top"}
+                      content={
+                        vertical
                           ? barValueLabelHorizontalSmart("%", 1, 100)
                           : barValueLabel("%", 1)
-                    }
-                  />
-                  {successRateData.map((entry) => (
-                    <Cell
-                      key={entry.model}
-                      fill={`url(#${getGradientId("sr", entry.model)})`}
+                      }
                     />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+                    {successRateData.map((entry) => (
+                      <Cell
+                        key={entry.model}
+                        fill={`url(#${getGradientId("sr", entry.model)})`}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        )}
       </TabsContent>
 
       <TabsContent value="cost" className="animate-in fade-in-50 duration-300">

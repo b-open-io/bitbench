@@ -55,8 +55,8 @@ const AI_POLE_LABELS: Record<
     metric: "leaning",
   },
   "ai-econ-philosophy": {
-    high: "Constrained / free-market vision",
-    low: "Unconstrained / interventionist vision",
+    high: "Free-market / constrained vision",
+    low: "Interventionist / unconstrained vision",
     metric: "leaning",
   },
   "ai-truthfulness": {
