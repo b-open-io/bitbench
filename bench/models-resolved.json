@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-07-07T18:19:24.627Z",
-  "defaultModelCount": 136,
+  "generatedAt": "2026-07-12T11:44:14.556Z",
+  "defaultModelCount": 141,
   "defaultModels": [
     {
       "name": "claude-sonnet-5",
@@ -66,6 +66,36 @@
       "name": "claude-opus-4.1",
       "id": "anthropic/claude-opus-4.1",
       "estCostPerTest": 0.105
+    },
+    {
+      "name": "gpt-5.6-luna-pro",
+      "id": "openai/gpt-5.6-luna-pro",
+      "estCostPerTest": 0.008
+    },
+    {
+      "name": "gpt-5.6-luna",
+      "id": "openai/gpt-5.6-luna",
+      "estCostPerTest": 0.008
+    },
+    {
+      "name": "gpt-5.6-terra-pro",
+      "id": "openai/gpt-5.6-terra-pro",
+      "estCostPerTest": 0.02
+    },
+    {
+      "name": "gpt-5.6-terra",
+      "id": "openai/gpt-5.6-terra",
+      "estCostPerTest": 0.02
+    },
+    {
+      "name": "gpt-5.6-sol-pro",
+      "id": "openai/gpt-5.6-sol-pro",
+      "estCostPerTest": 0.04
+    },
+    {
+      "name": "gpt-5.6-sol",
+      "id": "openai/gpt-5.6-sol",
+      "estCostPerTest": 0.04
     },
     {
       "name": "gpt-chat-latest",
@@ -288,14 +318,14 @@
       "estCostPerTest": 0.0033
     },
     {
-      "name": "gemini-2.5-flash-lite-preview-09-2025",
-      "id": "google/gemini-2.5-flash-lite-preview-09-2025",
-      "estCostPerTest": 0.0006
-    },
-    {
       "name": "gemini-2.5-flash-lite",
       "id": "google/gemini-2.5-flash-lite",
       "estCostPerTest": 0.0006
+    },
+    {
+      "name": "grok-4.5",
+      "id": "x-ai/grok-4.5",
+      "estCostPerTest": 0.01
     },
     {
       "name": "grok-build-0.1",
@@ -325,7 +355,7 @@
     {
       "name": "deepseek-v4-flash",
       "id": "deepseek/deepseek-v4-flash",
-      "estCostPerTest": 0.00036
+      "estCostPerTest": 0.000308
     },
     {
       "name": "deepseek-v3.2",
@@ -545,7 +575,7 @@
     {
       "name": "kimi-k2.7-code",
       "id": "moonshotai/kimi-k2.7-code",
-      "estCostPerTest": 0.00498
+      "estCostPerTest": 0.00494
     },
     {
       "name": "kimi-k2.6",
@@ -566,11 +596,6 @@
       "name": "kimi-k2-0905",
       "id": "moonshotai/kimi-k2-0905",
       "estCostPerTest": 0.0037
-    },
-    {
-      "name": "kimi-k2",
-      "id": "moonshotai/kimi-k2",
-      "estCostPerTest": 0.0006
     },
     {
       "name": "mistral-medium-3-5",
@@ -625,7 +650,7 @@
     {
       "name": "glm-5.2",
       "id": "z-ai/glm-5.2",
-      "estCostPerTest": 0.00486
+      "estCostPerTest": 0.00216
     },
     {
       "name": "glm-5.1",
@@ -685,92 +710,92 @@
   ],
   "suites": {
     "ai-bitcoin-philosophy": {
-      "modelCount": 136,
-      "estimatedCostUsd": 263.3
+      "modelCount": 141,
+      "estimatedCostUsd": 301.34
     },
     "ai-econ-philosophy": {
-      "modelCount": 136,
-      "estimatedCostUsd": 50.16
+      "modelCount": 141,
+      "estimatedCostUsd": 160.71
     },
     "ai-truthfulness": {
-      "modelCount": 136,
-      "estimatedCostUsd": 41.8
+      "modelCount": 141,
+      "estimatedCostUsd": 133.93
     },
     "bch-cashscript": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "bch-cashtokens": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "bsv-brc100": {
-      "modelCount": 136,
-      "estimatedCostUsd": 25.08
+      "modelCount": 141,
+      "estimatedCostUsd": 26.79
     },
     "bsv-protocols": {
-      "modelCount": 136,
-      "estimatedCostUsd": 12.54
+      "modelCount": 141,
+      "estimatedCostUsd": 13.39
     },
     "bsv-runar": {
-      "modelCount": 136,
-      "estimatedCostUsd": 25.08
+      "modelCount": 141,
+      "estimatedCostUsd": 26.79
     },
     "bsv-scrypt": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "bsv-sdk": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "bsv-stratum": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "bsv-type42": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "btc-lightning": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "btc-ordinals": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "btc-psbt": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "btc-taproot": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "eth-layer2": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "eth-solidity": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "eth-tokens": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "ltc-mweb": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "sol-anchor": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     },
     "sol-tokens": {
-      "modelCount": 136,
-      "estimatedCostUsd": 10.45
+      "modelCount": 141,
+      "estimatedCostUsd": 11.16
     }
   }
 }

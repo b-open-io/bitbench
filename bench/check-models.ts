@@ -20,6 +20,8 @@ type TestSuiteFile = {
   id?: string;
   name: string;
   estimatedCostUsd?: number;
+  /** Per-model run count; defaults to TEST_RUNS_PER_MODEL when omitted. */
+  runs?: number;
   model_filter?: ModelFilter;
   tests: Array<unknown>;
 };
@@ -129,8 +131,15 @@ const snapshot: ResolvedSnapshot = {
 console.log("\n── Suite cost drift ──");
 for (const { id, suite } of suites) {
   const models = await resolveModels(suite.model_filter);
+  const runsPerModel =
+    suite.runs !== undefined
+      ? suite.runs
+      : 1; /* match constants.TEST_RUNS_PER_MODEL default */
+  if (suite.runs !== undefined && (!Number.isInteger(suite.runs) || suite.runs < 1)) {
+    throw new Error(`Suite ${id}: runs must be a positive integer, got ${suite.runs}`);
+  }
   const estimatedCostUsd = roundCents(
-    estimateBenchmarkCost(models, suite.tests.length)
+    estimateBenchmarkCost(models, suite.tests.length, runsPerModel)
   );
   snapshot.suites[id] = {
     modelCount: models.length,

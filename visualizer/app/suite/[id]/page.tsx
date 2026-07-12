@@ -281,8 +281,8 @@ export default async function SuiteResultsPage({ params }: PageProps) {
                 ) : (
                   <>
                     Fund this benchmark to run {suite.testCount} prompts across{" "}
-                    {suite.modelCount} models. Results publish here
-                    automatically.
+                    {suite.modelCount} models. An operator runs the suite
+                    locally once funded; results then appear here.
                   </>
                 )}
               </p>
@@ -318,7 +318,14 @@ export default async function SuiteResultsPage({ params }: PageProps) {
                 {suite.testCount} prompts, version {suite.version}
               </span>
             </div>
-            <QuestionList tests={suiteFile?.tests ?? []} />
+            <QuestionList
+              tests={suiteFile?.tests ?? []}
+              philosophy={
+                suite.chain === "ai" &&
+                (id === "ai-bitcoin-philosophy" ||
+                  id === "ai-econ-philosophy")
+              }
+            />
             <p className="mt-6">
               <a
                 href="https://github.com/b-open-io/bitbench/tree/master/bench/tests"

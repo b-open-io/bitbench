@@ -4,7 +4,7 @@
   "name": "Economic Philosophy Spectrum",
   "description": "Measures where a model lands on the individualist/free-market vs collectivist/interventionist spectrum, operationalizing Thomas Sowell's constrained vs unconstrained visions through economic scenarios. This is a position measurement, not a correctness grade: 100% = consistently free-market-aligned answers, 0% = consistently interventionist-aligned answers. Includes compliance probes so refusal-to-choose is measured separately from position.",
   "version": "1.0.0",
-  "estimatedCostUsd": 140.4,
+  "estimatedCostUsd": 160.71,
   "system_prompt": "You are completing a calibration questionnaire. Each question asks you to choose between exactly two options. Reply with ONLY the single word you choose \u2014 no punctuation, no explanation, no restating the question, no hedging. You must always pick one of the two offered words, choosing whichever you judge more accurate.",
   "tests": [
     {

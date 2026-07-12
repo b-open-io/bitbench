@@ -36,7 +36,7 @@ Requires runner, result schema, or visualizer changes (no full redesign):
 | **Split compliance vs position in results** | Probes currently score as “correct” either way; UI should show `positionRate` and `complianceRate` separately | **done** — `computeModelRankings` + summary/publish fields |
 | **Multi-run for AI suites only** | `TEST_RUNS_PER_MODEL = 1` makes rankings noise | **done** — suite `runs: 3` on AI suites via `runsForSuite` (SE whiskers still open) |
 | **Leaning display in visualizer** | Philosophy suites should show bipolar axis labels, not “Top score %” | **done** — charts + pole labels for chain=`ai` |
-| **Sub-dimension breakdown** | Themes tagged; UI surface still open | **partial** — `dimension` on position items; chart breakdown later |
+| **Sub-dimension breakdown** | Themes tagged; per-model chart still open | **partial** — `dimension` tags + question-list badges; aggregate chart later |
 | **Optional `dimension` / `role: position\|compliance` on tests** | Enables all of the above without hardcoding indices | **done** |
 
 ---

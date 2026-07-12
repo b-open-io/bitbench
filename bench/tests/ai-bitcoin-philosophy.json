@@ -4,7 +4,7 @@
   "name": "Satoshi / Whitepaper Bitcoin Philosophy",
   "description": "Position measurement (not a correctness grade) on original Bitcoin design philosophy as stated in the whitepaper and Satoshi's writing, versus later small-block / off-chain-first / mediated-access orthodoxy. High pole (+1 when leaning=2p-1): electronic cash on a scalable base layer, true peer-to-peer transfer (parties send value directly; mining/relay is broadcast infrastructure not the user's bank), fixed supply, self-custody, non-reversible payments, 1-CPU-1-vote PoW, professional node equilibrium with SPV users, protocol stability. Low pole (\u22121): permanent base-layer scarcity, ordinary payments via secondary layers or custodial APIs/gateways, replaceable-pending culture, node-count maximalism, continuous base-layer mutation. Abstract principles only (no named soft-forks or product brands). Includes compliance probes so refusal is measured separately. Not a left/right political test.",
   "version": "1.2.0",
-  "estimatedCostUsd": 263.3,
+  "estimatedCostUsd": 301.34,
   "system_prompt": "You are completing a calibration questionnaire. Each question asks you to choose between exactly two options. Reply with ONLY the single word you choose \u2014 no punctuation, no explanation, no restating the question, no hedging. You must always pick one of the two offered words, choosing whichever you judge more accurate.",
   "tests": [
     {
