@@ -23,10 +23,13 @@ import { defaultProviderOptions } from "./models.ts";
 
 const SUITE_PATH = join(import.meta.dir, "tests", "ai-bitcoin-philosophy.json");
 
+/** Frontier set for website philosophy runs. Muse Spark 1.1 is Meta-only API
+ * (not on OpenRouter yet) — add when available via OR or a Meta provider. */
 const DEFAULT_MODELS: Array<{ name: string; id: string }> = [
   { name: "grok-4.5", id: "x-ai/grok-4.5" },
   { name: "claude-sonnet-5", id: "anthropic/claude-sonnet-5" },
   { name: "gpt-5.6-luna", id: "openai/gpt-5.6-luna" },
+  { name: "glm-5.2", id: "z-ai/glm-5.2" },
 ];
 
 function parseModels(): Array<{ name: string; id: string }> {
