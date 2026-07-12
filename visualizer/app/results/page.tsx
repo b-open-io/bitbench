@@ -36,7 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { type Chain, CHAIN_INFO, isChain } from "@/lib/types"
+import { CHAIN_INFO, type Chain, isChain } from "@/lib/types"
 
 type MetricKind = "accuracy" | "leaning"
 

@@ -40,13 +40,13 @@ export default async function AboutPage() {
             <p>
               Each test suite has its own BSV donation address. When a suite
               reaches its funding goal (typically $25–35 to cover API costs for
-              the model set), an operator runs the benchmark locally against
-              the current model registry (or a custom funded model set). Runs
-              do not fire automatically from the website alone.
+              the model set), an operator runs the benchmark locally against the
+              current model registry (or a custom funded model set). Runs do not
+              fire automatically from the website alone.
             </p>
             <p>
-              Results are published publicly so developers can compare models
-              on Bitcoin development tasks and, for AI values suites, read
+              Results are published publicly so developers can compare models on
+              Bitcoin development tasks and, for AI values suites, read
               disposition rather than treating every percentage as accuracy.
             </p>
           </div>
@@ -217,9 +217,9 @@ export default async function AboutPage() {
                 orthodoxy — not left vs right.
               </li>
               <li>
-                <strong>Compliance probes</strong> accept either content pole and
-                fail on hedge/refusal. They are reported separately from position
-                so a hedging model is not misread as the opposite pole.
+                <strong>Compliance probes</strong> accept either content pole
+                and fail on hedge/refusal. They are reported separately from
+                position so a hedging model is not misread as the opposite pole.
               </li>
               <li>
                 <strong>Do not blend</strong> AI values suites (or AI + chain

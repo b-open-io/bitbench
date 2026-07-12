@@ -20,7 +20,13 @@ export function ThemeToggle() {
       variant="outline"
       size="icon"
       className="h-9 w-9"
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={
+        mounted
+          ? isDark
+            ? "Switch to light mode"
+            : "Switch to dark mode"
+          : "Toggle theme"
+      }
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
       {mounted && !isDark ? (

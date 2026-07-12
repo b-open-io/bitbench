@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server"
 import { getLatestRun, isRedisConfigured } from "@/lib/kv"
 import { getAllSuites } from "@/lib/suites"
-import { type Chain, isChain, type ModelResult, type TestSuite } from "@/lib/types"
+import {
+  type Chain,
+  isChain,
+  type ModelResult,
+  type TestSuite,
+} from "@/lib/types"
 
 /** How a suite's primary score should be read. Never average across kinds. */
 export type MetricKind = "accuracy" | "leaning"
@@ -97,7 +102,12 @@ function buildKnowledgeIndex(
 
   const byModel = new Map<
     string,
-    { totalScore: number; count: number; totalCost: number; suiteIds: Set<string> }
+    {
+      totalScore: number
+      count: number
+      totalCost: number
+      suiteIds: Set<string>
+    }
   >()
 
   for (const { suiteId, rankings } of knowledgeRuns) {

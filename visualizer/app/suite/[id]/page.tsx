@@ -6,12 +6,11 @@ import { BenchmarkCharts } from "@/components/benchmark-charts"
 import { ChainBadge } from "@/components/chain-badge"
 import { FundingPanel } from "@/components/funding-panel"
 import { PageContainer } from "@/components/page-container"
-import { QuestionBreakdownCard } from "@/components/question-breakdown"
 import { QuestionList } from "@/components/question-list"
 import { SiteHeader } from "@/components/site-header"
 import { SuiteSwitcher } from "@/components/suite-switcher"
 import { Button } from "@/components/ui/button"
-import { getLatestRun } from "@/lib/kv"
+import { getBenchmarkRuns, getLatestRun } from "@/lib/kv"
 import { getMergedCells } from "@/lib/results"
 import {
   getAllSuites,
@@ -24,6 +23,7 @@ import type { ModelRegistryEntry, ModelResult } from "@/lib/types"
 
 interface PageProps {
   params: Promise<{ id: string }>
+  searchParams?: Promise<{ version?: string }>
 }
 
 // Transform ModelResult to the format BenchmarkCharts expects
@@ -104,7 +104,7 @@ function ModelsList({
         </summary>
         <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-4">
           {models.map((model) => (
-            <div key={model.id} className="min-w-0">
+            <div key={model.name} className="min-w-0">
               <span className="block truncate font-mono text-xs text-muted-foreground">
                 {model.name}
               </span>
@@ -158,12 +158,16 @@ export async function generateMetadata({
   }
 }
 
-export default async function SuiteResultsPage({ params }: PageProps) {
+export default async function SuiteResultsPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { id } = await params
+  const { version: requestedVersion } = (await searchParams) ?? {}
 
-  const [suite, latestRun, allSuites, suiteFile] = await Promise.all([
+  const [suite, runs, allSuites, suiteFile] = await Promise.all([
     getSuiteWithBalance(id),
-    getLatestRun(id),
+    getBenchmarkRuns(id, 50),
     getAllSuites(),
     getSuiteFile(id),
   ])
@@ -177,15 +181,21 @@ export default async function SuiteResultsPage({ params }: PageProps) {
     getDefaultModels(),
   ])
 
-  const cells = await getMergedCells(id, suite.version)
+  // The version wall: runs of earlier suite versions are real history but
+  // not comparable to the current questions. Every stored run keeps its
+  // version, so older results stay reachable via ?version=.
+  const versionsWithRuns = [...new Set(runs.map((run) => run.version))]
+  const pastVersions = versionsWithRuns.filter((v) => v !== suite.version)
+  const isViewingPast =
+    requestedVersion !== undefined &&
+    requestedVersion !== suite.version &&
+    versionsWithRuns.includes(requestedVersion)
+  const viewingVersion = isViewingPast ? requestedVersion : suite.version
+
+  const cells = await getMergedCells(id, viewingVersion)
   const hasResults = cells.length > 0
-  // The version wall: a run of an earlier suite version is real history but
-  // not comparable to the current questions. Surface it so "Last run" in the
-  // header does not contradict an empty current-version leaderboard.
-  const priorVersionRun =
-    !hasResults && latestRun && latestRun.version !== suite.version
-      ? latestRun
-      : null
+  const currentHasResults = versionsWithRuns.includes(suite.version)
+  const latestPastVersion = pastVersions[0] ?? null
   const runDatesByModel = new Map(cells.map((cell) => [cell.model, cell.runAt]))
   const runIds = new Set(cells.map((cell) => cell.runId ?? cell.runAt))
   const cellDates = cells.map((cell) => new Date(cell.runAt).getTime())
@@ -249,37 +259,62 @@ export default async function SuiteResultsPage({ params }: PageProps) {
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Comparable within version {suite.version}.
+                Comparable within version {viewingVersion}.
+                {!isViewingPast && pastVersions.length > 0 && (
+                  <>
+                    {" "}
+                    Earlier:{" "}
+                    {pastVersions.map((v, i) => (
+                      <span key={v}>
+                        {i > 0 && ", "}
+                        <Link
+                          href={`/suite/${id}?version=${encodeURIComponent(v)}`}
+                          className="font-medium text-foreground underline-offset-4 hover:underline"
+                        >
+                          v{v}
+                        </Link>
+                      </span>
+                    ))}
+                  </>
+                )}
               </p>
             )}
           </div>
-          {hasResults ? (
-            <div className="space-y-8">
-              <BenchmarkCharts
-                rankings={transformRankings(cells)}
-                chain={suite.chain}
-                poles={AI_POLE_LABELS[id]}
-              />
-              <QuestionBreakdownCard
-                suiteId={id}
-                philosophy={suite.chain === "ai"}
-              />
+
+          {isViewingPast && (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm">
+              <span>
+                Archived results from v{viewingVersion}. The questions have
+                since changed in v{suite.version}.
+              </span>
+              <Link
+                href={`/suite/${id}`}
+                className="font-medium underline underline-offset-4"
+              >
+                Back to v{suite.version}
+              </Link>
             </div>
+          )}
+
+          {hasResults ? (
+            <BenchmarkCharts
+              rankings={transformRankings(cells)}
+              chain={suite.chain}
+              poles={AI_POLE_LABELS[id]}
+            />
           ) : (
             <div className="py-8">
               <p className="text-2xl font-semibold tracking-tight text-muted-foreground/70">
-                {priorVersionRun
+                {latestPastVersion
                   ? `Version ${suite.version} not run yet.`
                   : "Not run yet."}
               </p>
               <p className="mt-2 max-w-md leading-relaxed text-muted-foreground">
-                {priorVersionRun ? (
+                {latestPastVersion ? (
                   <>
-                    The questions changed since version{" "}
-                    {priorVersionRun.version} ran on{" "}
-                    {formatDate(priorVersionRun.timestamp)}, so those scores are
-                    not comparable. Fund this version to run {suite.testCount}{" "}
-                    prompts across {suite.modelCount} models.
+                    The questions changed in v{suite.version}, so earlier scores
+                    aren&apos;t comparable. Fund this version to run the new
+                    set.
                   </>
                 ) : (
                   <>
@@ -289,6 +324,15 @@ export default async function SuiteResultsPage({ params }: PageProps) {
                   </>
                 )}
               </p>
+              {latestPastVersion && (
+                <Button asChild variant="outline" className="mt-4">
+                  <Link
+                    href={`/suite/${id}?version=${encodeURIComponent(latestPastVersion)}`}
+                  >
+                    View v{latestPastVersion} results
+                  </Link>
+                </Button>
+              )}
             </div>
           )}
         </section>
@@ -300,7 +344,7 @@ export default async function SuiteResultsPage({ params }: PageProps) {
           <aside className="space-y-10 lg:sticky lg:top-24 lg:col-start-3 lg:row-start-1 lg:self-start">
             <div>
               <h2 className="mb-6 text-lg font-semibold">Funding</h2>
-              <FundingPanel suite={suite} hasResults={hasResults} />
+              <FundingPanel suite={suite} hasResults={currentHasResults} />
             </div>
             <div className="border-t border-border pt-8">
               <h2 className="mb-6 text-lg font-semibold">Models</h2>
@@ -318,15 +362,20 @@ export default async function SuiteResultsPage({ params }: PageProps) {
             <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-lg font-semibold">Questions</h2>
               <span className="text-sm text-muted-foreground">
-                {suite.testCount} prompts, version {suite.version}
+                {isViewingPast
+                  ? `version ${viewingVersion}`
+                  : `${suite.testCount} prompts, version ${suite.version}`}
               </span>
             </div>
             <QuestionList
-              tests={suiteFile?.tests ?? []}
+              // Past versions render from the archived breakdown; the suite
+              // file only holds the current version's questions.
+              tests={isViewingPast ? [] : (suiteFile?.tests ?? [])}
+              suiteId={hasResults ? id : undefined}
+              version={viewingVersion}
               philosophy={
                 suite.chain === "ai" &&
-                (id === "ai-bitcoin-philosophy" ||
-                  id === "ai-econ-philosophy")
+                (id === "ai-bitcoin-philosophy" || id === "ai-econ-philosophy")
               }
             />
             <p className="mt-6">

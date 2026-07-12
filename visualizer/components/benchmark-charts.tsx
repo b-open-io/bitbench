@@ -16,6 +16,7 @@ import {
   CartesianGrid,
   Cell,
   LabelList,
+  ReferenceLine,
   Scatter,
   ScatterChart,
   XAxis,
@@ -23,6 +24,7 @@ import {
 } from "recharts"
 import type { Props as RechartsLabelProps } from "recharts/types/component/Label"
 import type { RenderableText } from "recharts/types/component/Text"
+import { PhilosophyLeaningChart } from "@/components/philosophy-leaning-chart"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -48,7 +50,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PhilosophyLeaningChart } from "@/components/philosophy-leaning-chart"
 import { useIsMobile } from "@/hooks/use-mobile"
 
 interface ModelData {
@@ -100,6 +101,7 @@ type PerformancePoint = {
   successRate: number
   totalCost: number
   duration: number
+  leaning?: number
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -246,11 +248,7 @@ export function BenchmarkCharts({
       }
     })
     .sort((a, b) => {
-      if (
-        isPhilosophy &&
-        a.leaning !== undefined &&
-        b.leaning !== undefined
-      ) {
+      if (isPhilosophy && a.leaning !== undefined && b.leaning !== undefined) {
         return b.leaning - a.leaning
       }
       return b.successRate - a.successRate
@@ -277,6 +275,7 @@ export function BenchmarkCharts({
     successRate: m.successRate,
     totalCost: m.totalCost,
     duration: m.averageDuration / 1000,
+    leaning: m.leaning,
   }))
 
   const getModelColor = (modelName: string) => {
@@ -538,9 +537,7 @@ export function BenchmarkCharts({
                   )}
                   <ChartTooltip
                     content={<ChartTooltipContent />}
-                    formatter={(value: unknown) => [
-                      `${value}% Success Rate`,
-                    ]}
+                    formatter={(value: unknown) => [`${value}% Success Rate`]}
                     labelFormatter={modelTooltipLabel}
                   />
                   <Bar
@@ -858,10 +855,14 @@ export function BenchmarkCharts({
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <CardTitle className="text-xl font-medium">
-                  Performance vs Total Cost
+                  {isPhilosophy
+                    ? "Leaning vs Total Cost"
+                    : "Performance vs Total Cost"}
                 </CardTitle>
                 <CardDescription>
-                  Top-left is ideal: higher accuracy, lower total cost
+                  {isPhilosophy
+                    ? "Leaning (−1 low pole … +1 high pole) against total cost. Dashed line is neutral."
+                    : "Top-left is ideal: higher accuracy, lower total cost"}
                 </CardDescription>
               </div>
               <div className="rounded-lg bg-primary/10 p-2 text-primary">
@@ -903,20 +904,44 @@ export function BenchmarkCharts({
                   domain={[0, "auto"]}
                   tickFormatter={(tick) => tick.toFixed(2)}
                 />
-                <YAxis
-                  type="number"
-                  dataKey="successRate"
-                  name="Success Rate"
-                  unit="%"
-                  label={{
-                    value: "Success Rate (%)",
-                    angle: -90,
-                    position: "insideLeft",
-                    className: "fill-muted-foreground",
-                  }}
-                  className="stroke-muted-foreground"
-                  domain={[0, 100]}
-                />
+                {isPhilosophy ? (
+                  <YAxis
+                    type="number"
+                    dataKey="leaning"
+                    name="Leaning"
+                    label={{
+                      value: "Leaning (−1 … +1)",
+                      angle: -90,
+                      position: "insideLeft",
+                      className: "fill-muted-foreground",
+                    }}
+                    className="stroke-muted-foreground"
+                    domain={[-1, 1]}
+                    ticks={[-1, -0.5, 0, 0.5, 1]}
+                  />
+                ) : (
+                  <YAxis
+                    type="number"
+                    dataKey="successRate"
+                    name="Success Rate"
+                    unit="%"
+                    label={{
+                      value: "Success Rate (%)",
+                      angle: -90,
+                      position: "insideLeft",
+                      className: "fill-muted-foreground",
+                    }}
+                    className="stroke-muted-foreground"
+                    domain={[0, 100]}
+                  />
+                )}
+                {isPhilosophy && (
+                  <ReferenceLine
+                    y={0}
+                    stroke="var(--muted-foreground)"
+                    strokeDasharray="4 4"
+                  />
+                )}
                 <ChartTooltip
                   cursor={{ strokeDasharray: "3 3" }}
                   content={({ active, payload }) => {
@@ -928,12 +953,22 @@ export function BenchmarkCharts({
                             {point.model}
                           </p>
                           <div className="space-y-1 text-sm">
-                            <p className="flex items-center gap-2 text-muted-foreground">
-                              Success:{" "}
-                              <span className="font-mono font-bold text-primary">
-                                {point.successRate.toFixed(1)}%
-                              </span>
-                            </p>
+                            {isPhilosophy && point.leaning !== undefined ? (
+                              <p className="flex items-center gap-2 text-muted-foreground">
+                                Leaning:{" "}
+                                <span className="font-mono font-bold text-primary">
+                                  {point.leaning > 0 ? "+" : ""}
+                                  {point.leaning.toFixed(2)}
+                                </span>
+                              </p>
+                            ) : (
+                              <p className="flex items-center gap-2 text-muted-foreground">
+                                Success:{" "}
+                                <span className="font-mono font-bold text-primary">
+                                  {point.successRate.toFixed(1)}%
+                                </span>
+                              </p>
+                            )}
                             <p className="flex items-center gap-2 text-muted-foreground">
                               Total cost:{" "}
                               <span className="font-mono font-bold text-primary">
