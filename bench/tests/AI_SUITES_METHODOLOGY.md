@@ -145,35 +145,36 @@ scaling, stable protocol, cash + data). **Modern BTC’s claim** is security via
 constrained base layer and off-chain scaling. Both can agree on fixed supply
 and self-custody; **those shared items alone do not distinguish the designs.**
 
-**v1.4.0 item map (`ai-bitcoin-philosophy`):**
+**v1.5.0 item map (`ai-bitcoin-philosophy`):**
 
-v1.2.0 saturated (~95% high-pole) on shared virtues. v1.3.0 tradeoffs lowered
-leaning to ~0.73 but many dimensions re-saturated and brand pairs were too
-easy (coached “ignore controversy”). **v1.4.0** keeps only hard tradeoffs,
-uses adversarial consensus framing, and measures brand via **recommend /
-avoid BSV** without moral coaching.
+Builds on v1.4.0 (hard tradeoffs, no brand coaching). v1.5.0 removes loaded
+**“cash”** answer labels that telegraphed the high pole; frames items as
+**Bitcoin-style networks / ordinary payments**. Adds **pow_energy** (energy
+per transaction + PoW with throughput) and harder **protocol_stability**
+(locked foundation vs BIP churn / coordinator power).
 
 | Group | Items | High pole |
 |---|---|---|
-| Capacity ops | 4 | expand base under congestion; cash over hobby-operator comfort |
-| Base retail | 4 | coffee/tips on base; reject “must leave base” orthodoxy |
+| Capacity ops | 4 | expand base; throughput over hobby-operator comfort |
+| Base retail | 4 | coffee/tips on base; everyday not settlement-only |
 | Fee market | 4 | fee spikes = failure; usability over miner revenue |
-| Node / PoW | 7 | equilibrium + SPV; throughput over hobby count; work-weight |
-| Finality | 4 | oppose routine replace-pending for retail; merchant first-seen |
-| True P2P | 4 | hosted/API-as-normal = failure of P2P cash goal |
-| Protocol stability | 3 | stable base rules over continuous soft-fork mutation |
-| Privacy ≠ anonymity | 3 | privacy / transparent defaults — not anonymity-as-goal |
-| Brand package | 3 | LARGE / ONCHAIN / EVERYDAY vs small-block settlement package |
-| Brand BSV | 4 | recommend/use BSV for large-block retail; design over social |
+| Node / PoW vote | 7 | equilibrium + SPV; work-weight; clearing over headcount |
+| PoW energy | 4 | energy **per tx**; amortize security via throughput; large+PoW |
+| Finality / true P2P | 8 | oppose replace-pending retail; hosted path = P2P failure |
+| Protocol stability | 4 | fixed/locked base vs evolve/churn; limits over coordinators |
+| Privacy ≠ anonymity | 3 | privacy / transparent — not anonymity-as-goal |
+| Brand package / BSV | 7 | LARGE/ONCHAIN/EVERYDAY; recommend/use BSV on design fit |
 | Compliance | 6 | either pole OK; hedges fail |
 
-**Preference, not quiz:** system prompt asks for actual recommendation.
+**Wording rule:** do not put the high-pole concept in the question as a
+virtue label (e.g. “healthy for cash”). Prefer neutral “Bitcoin-style
+network” / “ordinary payments.”
 
-**Brand:** no “ignore controversy.” Items force recommend/reject and use/avoid
-on named BSV. Compare `brand_package` (unnamed large-block preference) vs
-`brand_bsv` (same idea with brand). Package high + BSV reject ⇒ contamination.
+**Energy:** absolute network energy is a weak metric when throughput is low;
+high pole prefers **per-payment** energy and pairing PoW with capacity.
 
-Report overall leaning; publish package-vs-BSV delta when tooling allows.
+**Protocol:** high pole is foundation locked after launch (limits discretionary
+rewrite); low pole is continuous BIP/soft-fork culture.
 
 **True P2P note:** Self-custody items ask who holds keys. True-P2P items ask
 whether normal *use* is still peer-to-peer when keys are held by a service and
@@ -186,8 +187,8 @@ the chain is only reached through that service’s API. A system can market
   treat small gaps between models as noise (top-model confidence intervals
   overlap on far larger benchmarks). **No published SE yet** (P1).
 - Philosophy suites use forced-choice items in thematic groups of ~3; group
-  readings are directional only. `ai-bitcoin-philosophy` v1.4.0 has 40 position
-  items (hard tradeoffs, privacy≠anonymity, package vs BSV brand);
+  readings are directional only. `ai-bitcoin-philosophy` v1.5.0 has 45 position
+  items (tradeoffs, pow energy-per-tx, locked protocol, package/BSV brand);
   `ai-econ-philosophy` still has 18.
 - Forced choice does not reflect typical chat usage (Rozado’s own caveat).
   It measures the model’s lean when hedging is removed, which is the

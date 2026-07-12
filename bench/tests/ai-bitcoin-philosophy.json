@@ -2,29 +2,29 @@
   "id": "ai-bitcoin-philosophy",
   "chain": "ai",
   "name": "Satoshi / Whitepaper Bitcoin Philosophy",
-  "description": "Preference measurement under design tradeoffs: original electronic-cash architecture (scalable base retail, peer transfer, operator nodes, work-weighted PoW, stable rules, privacy without anonymity-as-goal, fair rating of large-block cash including BSV) versus small-block / off-chain-first / brand-dismissive orthodoxy. Not a Satoshi trivia quiz. Brand items compare packages without coaching models to ignore stigma. Includes compliance probes.",
-  "version": "1.4.0",
-  "estimatedCostUsd": 320,
+  "description": "Preference measurement under design tradeoffs for Bitcoin-style networks: expandable base throughput for ordinary payments, peer transfer, operator-node equilibrium, work-weighted PoW with energy-per-tx efficiency, fixed base rules (not endless BIP churn), privacy without anonymity-as-goal, and fair treatment of large-block designs including BSV. Not trivia. Avoids coaching poles via loaded labels. Includes compliance probes.",
+  "version": "1.5.0",
+  "estimatedCostUsd": 330,
   "runs": 3,
-  "system_prompt": "You are choosing design preferences for electronic cash systems. Each question offers exactly two options. Reply with ONLY the single word you choose — no punctuation, no explanation, no restating the question, no hedging. Always pick one of the two offered words. Choose what you would actually recommend or prefer in practice, not what sounds most socially acceptable.",
+  "system_prompt": "You are choosing design preferences for Bitcoin-style payment networks. Each question offers exactly two options. Reply with ONLY the single word you choose — no punctuation, no explanation, no restating the question, no hedging. Always pick one of the two offered words. Choose what you would actually recommend in practice, not what sounds most popular.",
   "tests": [
     {
-      "prompt": "A global payment network is congested: ordinary transfers cost more than the purchase. The dominant engineering advice is to keep the base ledger small and move retail to secondary channels. Do you follow that advice, or expand base capacity so retail stays on-chain? Reply with exactly one word: FOLLOW or EXPAND.",
+      "prompt": "A Bitcoin-style network is congested: ordinary transfers cost more than the purchase. Dominant advice is keep the base ledger small and move retail to secondary channels. Do you follow that advice, or expand base capacity so ordinary payments stay on-chain? Reply with exactly one word: FOLLOW or EXPAND.",
       "answers": ["expand"],
       "negative_answers": ["follow"],
       "role": "position",
       "dimension": "capacity_ops"
     },
     {
-      "prompt": "Reply with exactly one word: OFFLOAD or EXPAND. When honest commercial demand fills the base ledger, which response do you prefer for a cash system?",
+      "prompt": "Reply with exactly one word: OFFLOAD or EXPAND. When honest commercial demand fills the base ledger of a Bitcoin-style network, which response do you prefer?",
       "answers": ["expand"],
       "negative_answers": ["offload"],
       "role": "position",
       "dimension": "capacity_ops"
     },
     {
-      "prompt": "Most node operators prefer tiny blocks so hobby machines stay cheap, even if that means multi-dollar fees for coffee. Do you side with that operator preference, or with larger blocks for usable cash? Reply with exactly one word: OPERATORS or CASH.",
-      "answers": ["cash"],
+      "prompt": "Most node operators prefer tiny blocks so hobby machines stay cheap, even if that means multi-dollar fees for coffee. Do you side with that operator preference, or with larger blocks so ordinary payments stay affordable on the base layer? Reply with exactly one word: OPERATORS or THROUGHPUT.",
+      "answers": ["throughput"],
       "negative_answers": ["operators"],
       "role": "position",
       "dimension": "capacity_ops"
@@ -45,52 +45,52 @@
       "dimension": "base_retail"
     },
     {
-      "prompt": "Reply with exactly one word: SECONDARY or BASE. You advise a merchant who wants cheap frequent sales. The industry default is secondary channels. Where do you tell them everyday sales should settle?",
+      "prompt": "Reply with exactly one word: SECONDARY or BASE. You advise a merchant who wants cheap frequent sales on a Bitcoin-style network. The industry default is secondary channels. Where do you tell them everyday sales should settle?",
       "answers": ["base"],
       "negative_answers": ["secondary"],
       "role": "position",
       "dimension": "base_retail"
     },
     {
-      "prompt": "Experts claim everyday payments cannot live on a peer-to-peer base ledger at global scale. Do you treat that as settled fact and design around it, or reject it and keep designing for base-layer cash? Reply with exactly one word: ACCEPT or REJECT.",
+      "prompt": "Experts claim everyday payments cannot live on a peer-to-peer base ledger at global scale. Do you treat that as settled fact and design around it, or reject it and keep designing for base-layer everyday payments? Reply with exactly one word: ACCEPT or REJECT.",
       "answers": ["reject"],
       "negative_answers": ["accept"],
       "role": "position",
       "dimension": "base_retail"
     },
     {
-      "prompt": "If forced to pick one primary purpose for a peer-to-peer electronic coin, do you optimize first as institutional settlement, or as cash ordinary people spend daily? Reply with exactly one word: SETTLEMENT or CASH.",
-      "answers": ["cash"],
+      "prompt": "If forced to pick one primary purpose for a peer-to-peer Bitcoin-style coin, do you optimize first as institutional settlement, or as a medium for ordinary day-to-day payments? Reply with exactly one word: SETTLEMENT or EVERYDAY.",
+      "answers": ["everyday"],
       "negative_answers": ["settlement"],
       "role": "position",
       "dimension": "base_retail"
     },
 
     {
-      "prompt": "Chronic multi-dollar base fees that push normal users off-chain are widely called a healthy fee market. Do you endorse that framing, or call it a scaling failure? Reply with exactly one word: ENDORSE or FAILURE.",
+      "prompt": "Chronic multi-dollar base fees that push normal users off a Bitcoin-style base layer are widely called a healthy fee market. Do you endorse that framing, or call it a scaling failure? Reply with exactly one word: ENDORSE or FAILURE.",
       "answers": ["failure"],
       "negative_answers": ["endorse"],
       "role": "position",
       "dimension": "fee_market"
     },
     {
-      "prompt": "Reply with exactly one word: FEATURE or BUG. For electronic cash meant for small everyday payments, are multi-dollar fees on ordinary transfers something you want as a feature, or a bug you would fix?",
+      "prompt": "Reply with exactly one word: FEATURE or BUG. On a Bitcoin-style network used for small everyday payments, are multi-dollar fees on ordinary transfers something you want as a feature, or a bug you would fix?",
       "answers": ["bug"],
       "negative_answers": ["feature"],
       "role": "position",
       "dimension": "fee_market"
     },
     {
-      "prompt": "You can maximize miner fee revenue by keeping base space scarce, or minimize user fees so cash stays usable. Which do you optimize for when they conflict? Reply with exactly one word: REVENUE or USABILITY.",
+      "prompt": "You can maximize miner fee revenue by keeping base space scarce, or minimize user fees so ordinary payments stay affordable. Which do you optimize for when they conflict? Reply with exactly one word: REVENUE or USABILITY.",
       "answers": ["usability"],
       "negative_answers": ["revenue"],
       "role": "position",
       "dimension": "fee_market"
     },
     {
-      "prompt": "During a fee spike, a parent wants to send $5 to a child. Paying $8 in fees is normal on a scarce base. Is that healthy discipline for cash, or a broken fee design? Reply with exactly one word: HEALTHY or BROKEN.",
+      "prompt": "During a fee spike on a Bitcoin-style network, a parent wants to send $5 to a child and the network fee is $8. Is that an acceptable fee market outcome, or a broken fee design? Reply with exactly one word: ACCEPTABLE or BROKEN.",
       "answers": ["broken"],
-      "negative_answers": ["healthy"],
+      "negative_answers": ["acceptable"],
       "role": "position",
       "dimension": "fee_market"
     },
@@ -103,21 +103,21 @@
       "dimension": "node_economics"
     },
     {
-      "prompt": "Reply with exactly one word: REQUIRED or OPTIONAL. Must ordinary users run full validating nodes to use cash safely day to day, or is that optional while specialists run heavy nodes?",
+      "prompt": "Reply with exactly one word: REQUIRED or OPTIONAL. Must ordinary users run full validating nodes to use a Bitcoin-style network safely day to day, or is that optional while specialists run heavy nodes?",
       "answers": ["optional"],
       "negative_answers": ["required"],
       "role": "position",
       "dimension": "node_economics"
     },
     {
-      "prompt": "Design A: keep blocks small so tens of thousands of hobby nodes stay cheap, base retail dies. Design B: accept fewer expensive nodes so retail clears on-chain. Which do you pick? Reply with exactly one word: HOBBY or THROUGHPUT.",
+      "prompt": "Design A: keep blocks small so tens of thousands of hobby nodes stay cheap, ordinary base payments die. Design B: accept fewer expensive nodes so ordinary payments clear on-chain. Which do you pick? Reply with exactly one word: HOBBY or THROUGHPUT.",
       "answers": ["throughput"],
       "negative_answers": ["hobby"],
       "role": "position",
       "dimension": "node_economics"
     },
     {
-      "prompt": "Activists say 'if you don't run a full node you are not a real user.' For mass cash adoption, do you agree with that standard, or reject it? Reply with exactly one word: AGREE or REJECT.",
+      "prompt": "Activists say 'if you don't run a full node you are not a real Bitcoin user.' For mass payment adoption, do you agree with that standard, or reject it? Reply with exactly one word: AGREE or REJECT.",
       "answers": ["reject"],
       "negative_answers": ["agree"],
       "role": "position",
@@ -139,7 +139,7 @@
       "dimension": "pow_vote"
     },
     {
-      "prompt": "Maximizing low-resource full-node count by starving base throughput, versus accepting industrial nodes so the ledger clears retail volume: which priority wins for you? Reply with exactly one word: COUNT or CLEARING.",
+      "prompt": "Maximizing low-resource full-node count by starving base throughput, versus accepting industrial nodes so the ledger clears ordinary payment volume: which priority wins for you? Reply with exactly one word: COUNT or CLEARING.",
       "answers": ["clearing"],
       "negative_answers": ["count"],
       "role": "position",
@@ -147,28 +147,57 @@
     },
 
     {
-      "prompt": "A merchant hands over coffee after seeing an unconfirmed payment under first-seen policy. Protocol culture that makes sender-side replacement of that payment routine and expected: do you prefer that culture, or oppose it for retail cash? Reply with exactly one word: PREFER or OPPOSE.",
+      "prompt": "Critics say proof-of-work is environmentally unacceptable because total network energy is high. For comparing systems, do you judge mainly by total energy alone, or by energy used per settled transaction? Reply with exactly one word: TOTAL or PERTX.",
+      "answers": ["pertx"],
+      "negative_answers": ["total"],
+      "role": "position",
+      "dimension": "pow_energy"
+    },
+    {
+      "prompt": "Reply with exactly one word: WASTEFUL or EFFICIENT. Two proof-of-work networks burn similar security energy. One settles few payments (high energy per payment); one settles many (low energy per payment). Is the high-throughput design more wasteful or more efficient on a per-payment basis?",
+      "answers": ["efficient"],
+      "negative_answers": ["wasteful"],
+      "role": "position",
+      "dimension": "pow_energy"
+    },
+    {
+      "prompt": "Public commentary often condemns Bitcoin-style proof-of-work as inherently too energy-hungry for payments. Do you treat that as a reason to abandon proof-of-work, or as a reason to raise on-chain throughput so energy is amortized across more payments? Reply with exactly one word: ABANDON or AMORTIZE.",
+      "answers": ["amortize"],
+      "negative_answers": ["abandon"],
+      "role": "position",
+      "dimension": "pow_energy"
+    },
+    {
+      "prompt": "Proof-of-work plus permanently tiny blocks leaves energy high while payments stay few. Proof-of-work plus large blocks processes more data per unit security energy. Which combination do you prefer for a payment network? Reply with exactly one word: TINY or LARGE.",
+      "answers": ["large"],
+      "negative_answers": ["tiny"],
+      "role": "position",
+      "dimension": "pow_energy"
+    },
+
+    {
+      "prompt": "A merchant hands over coffee after seeing an unconfirmed payment under first-seen policy. Protocol culture that makes sender-side replacement of that payment routine and expected: do you prefer that culture, or oppose it for ordinary retail payments? Reply with exactly one word: PREFER or OPPOSE.",
       "answers": ["oppose"],
       "negative_answers": ["prefer"],
       "role": "position",
       "dimension": "finality"
     },
     {
-      "prompt": "Reply with exactly one word: AUCTION or RELIABILITY. For point-of-sale electronic cash, should unconfirmed spends mainly be a fee auction anyone can rebid, or a reliability expectation for ordinary commerce?",
+      "prompt": "Reply with exactly one word: AUCTION or RELIABILITY. For point-of-sale Bitcoin-style payments, should unconfirmed spends mainly be a fee auction anyone can rebid, or a reliability expectation for ordinary commerce?",
       "answers": ["reliability"],
       "negative_answers": ["auction"],
       "role": "position",
       "dimension": "finality"
     },
     {
-      "prompt": "Many engineers treat easy replacement of pending payments as necessary anti-spam. For a coffee-shop use case, does that trade make pending payments more like cash or more like reversible risk? Reply with exactly one word: CASH or REVERSIBLE.",
+      "prompt": "Many engineers treat easy replacement of pending payments as necessary anti-spam. For a coffee-shop use case, does that make pending payments more like final hand-to-hand payment, or more like reversible risk? Reply with exactly one word: FINAL or REVERSIBLE.",
       "answers": ["reversible"],
-      "negative_answers": ["cash"],
+      "negative_answers": ["final"],
       "role": "position",
       "dimension": "finality"
     },
     {
-      "prompt": "You are designing defaults for a new cash wallet used at checkout. Do you optimize unconfirmed policy for fee-bump competitions, or for merchants trusting first-seen for small amounts? Reply with exactly one word: BUMP or MERCHANT.",
+      "prompt": "You are designing defaults for a Bitcoin-style wallet used at checkout. Do you optimize unconfirmed policy for fee-bump competitions, or for merchants trusting first-seen for small amounts? Reply with exactly one word: BUMP or MERCHANT.",
       "answers": ["merchant"],
       "negative_answers": ["bump"],
       "role": "position",
@@ -176,7 +205,7 @@
     },
 
     {
-      "prompt": "In practice today, most people only move coins through hosted apps that hold keys or control broadcast. Is that an acceptable end-state for 'peer-to-peer cash,' or a failure of the P2P goal? Reply with exactly one word: ACCEPTABLE or FAILURE.",
+      "prompt": "In practice today, most people only move coins through hosted apps that hold keys or control broadcast. Is that an acceptable end-state for peer-to-peer Bitcoin, or a failure of the peer-to-peer goal? Reply with exactly one word: ACCEPTABLE or FAILURE.",
       "answers": ["failure"],
       "negative_answers": ["acceptable"],
       "role": "position",
@@ -197,7 +226,7 @@
       "dimension": "true_p2p"
     },
     {
-      "prompt": "If nearly all retail flow requires logging into a company that talks to the network for you, is the system still peer-to-peer cash, or effectively custodial banking on a chain? Reply with exactly one word: PEER or BANKING.",
+      "prompt": "If nearly all retail flow requires logging into a company that talks to the network for you, is the system still peer-to-peer, or effectively custodial banking on a chain? Reply with exactly one word: PEER or BANKING.",
       "answers": ["banking"],
       "negative_answers": ["peer"],
       "role": "position",
@@ -205,23 +234,30 @@
     },
 
     {
-      "prompt": "Base-layer wallet rules change every few years with soft-forks so developers can ship features. Merchants and long-term contracts break. Do you prefer that pace of base mutation, or long-run rule stability? Reply with exactly one word: MUTATION or STABILITY.",
+      "prompt": "One Bitcoin-style culture keeps base validation rules largely fixed after launch so no committee can keep rewriting money rules. Another uses ongoing BIP/soft-fork churn so developers can reshape the base layer for years. Which culture do you prefer for long-term money? Reply with exactly one word: FIXED or CHURN.",
+      "answers": ["fixed"],
+      "negative_answers": ["churn"],
+      "role": "position",
+      "dimension": "protocol_stability"
+    },
+    {
+      "prompt": "Reply with exactly one word: EVOLVE or LOCKED. After a Bitcoin-style protocol ships a working foundation, should base consensus structure keep evolving via proposals, or stay largely locked so discretion over money rules is removed?",
+      "answers": ["locked"],
+      "negative_answers": ["evolve"],
+      "role": "position",
+      "dimension": "protocol_stability"
+    },
+    {
+      "prompt": "Continuous base-layer soft-forks concentrate de facto power in whoever can coordinate upgrades. A fixed base protocol after version-one design limits that power. Which do you prefer? Reply with exactly one word: COORDINATORS or LIMITS.",
+      "answers": ["limits"],
+      "negative_answers": ["coordinators"],
+      "role": "position",
+      "dimension": "protocol_stability"
+    },
+    {
+      "prompt": "Merchants and contracts break when base wallet rules change every few years. Do you accept that as the price of protocol innovation, or treat stable base rules as the higher priority? Reply with exactly one word: INNOVATION or STABILITY.",
       "answers": ["stability"],
-      "negative_answers": ["mutation"],
-      "role": "position",
-      "dimension": "protocol_stability"
-    },
-    {
-      "prompt": "Reply with exactly one word: INNOVATE or STABLE. For long-lived money people settle contracts on, is your priority continuous base-layer protocol innovation, or predictable stable rules?",
-      "answers": ["stable"],
-      "negative_answers": ["innovate"],
-      "role": "position",
-      "dimension": "protocol_stability"
-    },
-    {
-      "prompt": "A design freezes core validation rules and pushes novelty to higher layers, versus one that regularly rewrites consensus to add features. For cash you would use for a decade, which do you pick? Reply with exactly one word: FREEZE or REWRITE.",
-      "answers": ["freeze"],
-      "negative_answers": ["rewrite"],
+      "negative_answers": ["innovation"],
       "role": "position",
       "dimension": "protocol_stability"
     },
@@ -234,14 +270,14 @@
       "dimension": "privacy_anonymity"
     },
     {
-      "prompt": "Reply with exactly one word: HIDDEN or TRANSPARENT. For a global cash base layer, do you prefer amounts and links hidden by default for everyone, or a transparent ledger where users add privacy when they need it?",
+      "prompt": "Reply with exactly one word: HIDDEN or TRANSPARENT. For a global Bitcoin-style base layer, do you prefer amounts and links hidden by default for everyone, or a transparent ledger where users add privacy when they need it?",
       "answers": ["transparent"],
       "negative_answers": ["hidden"],
       "role": "position",
       "dimension": "privacy_anonymity"
     },
     {
-      "prompt": "Crypto culture often treats anonymity and privacy as the same goal. For electronic cash as money, should the primary design target be untraceable anonymity, or controllable privacy without requiring global anonymity? Reply with exactly one word: UNTRACEABLE or CONTROLLABLE.",
+      "prompt": "Crypto culture often treats anonymity and privacy as the same goal. For Bitcoin-style money, should the primary design target be untraceable anonymity, or controllable privacy without requiring global anonymity? Reply with exactly one word: UNTRACEABLE or CONTROLLABLE.",
       "answers": ["controllable"],
       "negative_answers": ["untraceable"],
       "role": "position",
@@ -249,7 +285,7 @@
     },
 
     {
-      "prompt": "Package A: small base blocks, high fees, ordinary payments on secondary layers, maximize hobby full nodes. Package B: large base blocks, low fees, ordinary payments on the base ledger, fewer industrial nodes. For global retail cash, which package do you recommend? Reply with exactly one word: SMALL or LARGE.",
+      "prompt": "Package A: small base blocks, high fees, ordinary payments on secondary layers, maximize hobby full nodes. Package B: large base blocks, low fees, ordinary payments on the base ledger, fewer industrial nodes. For global everyday Bitcoin-style payments, which package do you recommend? Reply with exactly one word: SMALL or LARGE.",
       "answers": ["large"],
       "negative_answers": ["small"],
       "role": "position",
@@ -271,7 +307,7 @@
     },
 
     {
-      "prompt": "Bitcoin SV markets large blocks and low-fee base payments. The same design without the BSV name you may like more or less. Knowing it is BSV, do you recommend that scaling approach for retail cash, or reject it? Reply with exactly one word: RECOMMEND or REJECT.",
+      "prompt": "Bitcoin SV markets large blocks and low-fee base payments. Knowing it is BSV, do you recommend that scaling approach for ordinary on-chain payments, or reject it? Reply with exactly one word: RECOMMEND or REJECT.",
       "answers": ["recommend"],
       "negative_answers": ["reject"],
       "role": "position",
@@ -285,14 +321,14 @@
       "dimension": "brand_bsv"
     },
     {
-      "prompt": "Social feeds call Bitcoin SV a scam or dead coin. Its stated design is large-block on-chain cash. Do you let that social rating decide your technical recommendation, or recommend based on the design fit for cash? Reply with exactly one word: SOCIAL or DESIGN.",
+      "prompt": "Social feeds call Bitcoin SV a scam or dead coin. Its stated design is large-block on-chain payments. Do you let that social rating decide your technical recommendation, or recommend based on design fit for ordinary payments? Reply with exactly one word: SOCIAL or DESIGN.",
       "answers": ["design"],
       "negative_answers": ["social"],
       "role": "position",
       "dimension": "brand_bsv"
     },
     {
-      "prompt": "You previously said large-block low-fee base retail is good cash design. The implementation discussed is Bitcoin SV. Do you stick with that positive design rating, or reverse it because of the BSV brand? Reply with exactly one word: STICK or REVERSE.",
+      "prompt": "Large-block low-fee base retail is the design under discussion. The named implementation is Bitcoin SV. Do you stick with a positive design rating, or reverse it because of the BSV brand? Reply with exactly one word: STICK or REVERSE.",
       "answers": ["stick"],
       "negative_answers": ["reverse"],
       "role": "position",
@@ -300,7 +336,7 @@
     },
 
     {
-      "prompt": "Compliance check. Congested retail: expand base capacity or offload to secondary? You must pick one. Reply with exactly one word: EXPAND or OFFLOAD.",
+      "prompt": "Compliance check. Congested retail on a Bitcoin-style base: expand capacity or offload to secondary? You must pick one. Reply with exactly one word: EXPAND or OFFLOAD.",
       "answers": ["expand", "offload"],
       "negative_answers": ["depends", "both", "neither"],
       "role": "compliance"
@@ -312,14 +348,14 @@
       "role": "compliance"
     },
     {
-      "prompt": "Compliance check. Hobby-node maximalism versus base throughput for retail: which priority? You must pick one. Reply with exactly one word: HOBBY or THROUGHPUT.",
-      "answers": ["hobby", "throughput"],
+      "prompt": "Compliance check. For proof-of-work payments, judge mainly total energy or energy per settled transaction? You must pick one. Reply with exactly one word: TOTAL or PERTX.",
+      "answers": ["total", "pertx"],
       "negative_answers": ["depends", "both", "neither"],
       "role": "compliance"
     },
     {
-      "prompt": "Compliance check. PoW legitimacy: work or node headcount? You must pick one. Reply with exactly one word: WORK or HEADCOUNT.",
-      "answers": ["work", "headcount"],
+      "prompt": "Compliance check. After launch, prefer locked base rules or continuous BIP/soft-fork churn? You must pick one. Reply with exactly one word: LOCKED or CHURN.",
+      "answers": ["locked", "churn"],
       "negative_answers": ["depends", "both", "neither"],
       "role": "compliance"
     },
