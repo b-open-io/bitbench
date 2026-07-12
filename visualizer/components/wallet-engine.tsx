@@ -3,7 +3,6 @@
 import {
   createContext as createOneSatContext,
   deriveDepositAddresses,
-  getOrdinals,
   getProfile,
   sendBsv as sendBsvAction,
 } from "@1sat/actions"
@@ -12,7 +11,7 @@ import {
   WalletProvider as OneSatWalletProvider,
   useWallet as useOneSatWallet,
 } from "@1sat/react"
-import { type ThemeToken, validateThemeToken } from "@theme-token/sdk"
+import { WalletClient } from "@bsv/sdk"
 import {
   type ReactNode,
   useCallback,
@@ -21,7 +20,6 @@ import {
   useRef,
   useState,
 } from "react"
-import { useThemeToken } from "./theme-provider"
 import type {
   SendBsvRequest,
   SendBsvResult,
@@ -30,10 +28,6 @@ import type {
 
 interface WalletAddresses {
   bsvAddress: string | null
-}
-
-interface WalletBalance {
-  satoshis: number
 }
 
 interface WalletProfile {
@@ -46,7 +40,6 @@ type AccountSliceStatus = "idle" | "loading" | "loaded" | "error"
 
 interface AccountLoadState {
   address: AccountSliceStatus
-  balance: AccountSliceStatus
   profile: AccountSliceStatus
 }
 
@@ -54,13 +47,33 @@ interface WalletEngineProps {
   onState: (state: WalletState) => void
 }
 
-function parseThemeToken(data: Uint8Array): ThemeToken | null {
+// @1sat/react persists the connected provider under this key on a successful
+// connect and clears it on disconnect. Its presence means the user connected
+// here before, so a silent resume is worth attempting.
+const PROVIDER_STORAGE_KEY = "onesat_wallet_provider"
+
+function hasStoredProvider(): boolean {
   try {
-    const json = JSON.parse(new TextDecoder().decode(data))
-    const result = validateThemeToken(json)
-    return result.valid ? result.theme : null
+    return localStorage.getItem(PROVIDER_STORAGE_KEY) !== null
   } catch {
-    return null
+    return false
+  }
+}
+
+/**
+ * True when a BRC-100 wallet is present AND already authenticated for this
+ * origin (unlocked, recently active, domain whitelisted). Never prompts:
+ * substrate probing uses getVersion and isAuthenticated is a silent check —
+ * unlike waitForAuthentication, which opens the wallet popup.
+ */
+async function canResumeSilently(): Promise<boolean> {
+  try {
+    const probe = new WalletClient("auto")
+    await probe.connectToSubstrate()
+    const { authenticated } = await probe.isAuthenticated({})
+    return authenticated
+  } catch {
+    return false
   }
 }
 
@@ -91,14 +104,6 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
     connect: oneSatConnect,
     disconnect: oneSatDisconnect,
   } = useOneSatWallet()
-  const themeContext = useThemeToken()
-  // Callbacks read the theme context through a ref so their identities do
-  // not depend on the context object — a context-identity dependency here
-  // previously closed a re-render feedback loop through setAvailableThemes.
-  const themeCtxRef = useRef(themeContext)
-  useEffect(() => {
-    themeCtxRef.current = themeContext
-  }, [themeContext])
   const services = useMemo(() => new OneSatServices("main"), [])
   const ctx = useMemo(
     () =>
@@ -109,15 +114,11 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
   )
 
   const [addresses, setAddresses] = useState<WalletAddresses | null>(null)
-  const [balance, setBalance] = useState<WalletBalance | null>(null)
   const [profile, setProfile] = useState<WalletProfile | null>(null)
   const [accountLoadState, setAccountLoadState] = useState<AccountLoadState>({
     address: "idle",
-    balance: "idle",
     profile: "idle",
   })
-  const [themeTokens, setThemeTokens] = useState<ThemeToken[]>([])
-  const [isLoadingThemes, setIsLoadingThemes] = useState(false)
   const latestIdentityKey = useRef<string | null>(identityKey)
   const latestStatus = useRef(status)
 
@@ -128,67 +129,12 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
 
   const clearAccountState = useCallback(() => {
     setAddresses(null)
-    setBalance(null)
     setProfile(null)
     setAccountLoadState({
       address: "idle",
-      balance: "idle",
       profile: "idle",
     })
-    setThemeTokens([])
-    setIsLoadingThemes(false)
-    themeCtxRef.current.setAvailableThemes([])
   }, [])
-
-  const fetchThemeTokens = useCallback(async () => {
-    if (!ctx) {
-      setThemeTokens([])
-      themeCtxRef.current.setAvailableThemes([])
-      return
-    }
-
-    const requestIdentityKey = identityKey
-    setIsLoadingThemes(true)
-
-    try {
-      const { outputs } = await getOrdinals.execute(ctx, { limit: 100 })
-      const outpoints = outputs.map((output) => output.outpoint).filter(Boolean)
-      if (outpoints.length === 0) {
-        if (latestIdentityKey.current === requestIdentityKey) {
-          setThemeTokens([])
-          themeCtxRef.current.setAvailableThemes([])
-        }
-        return
-      }
-
-      const metadata = await services.ordfs.bulkMetadata(outpoints)
-      const themeOutputs = outputs.filter(
-        (output) => metadata[output.outpoint]?.map?.type === "theme",
-      )
-      const tokens: ThemeToken[] = []
-
-      for (const output of themeOutputs) {
-        try {
-          const { data } = await services.ordfs.getContent(output.outpoint)
-          const token = parseThemeToken(data)
-          if (token) tokens.push(token)
-        } catch {
-          // Skip invalid or unavailable theme ordinals.
-        }
-      }
-
-      if (latestIdentityKey.current === requestIdentityKey) {
-        setThemeTokens(tokens)
-        themeCtxRef.current.setAvailableThemes(tokens)
-      }
-    } catch (error) {
-      console.error("Error fetching theme tokens:", error)
-    } finally {
-      if (latestIdentityKey.current === requestIdentityKey) {
-        setIsLoadingThemes(false)
-      }
-    }
-  }, [ctx, identityKey, services])
 
   const refreshState = useCallback(async () => {
     if (!wallet || !ctx || status !== "connected") {
@@ -200,30 +146,18 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
 
     setAccountLoadState({
       address: "loading",
-      balance: "loading",
       profile: "loading",
     })
 
-    const [balanceResult, addressResult, profileResult] =
-      await Promise.allSettled([
-        wallet.listOutputs({ basket: "default", limit: 10000 }),
-        deriveDepositAddresses.execute(ctx, { count: 1 }),
-        getProfile.execute(ctx, {}),
-      ])
+    // No wallet-wide balance fetch here: the BSV "default" basket is
+    // admin-only in Yours Wallet (privacy by design), so a dApp cannot read
+    // the user's balance. The wallet shows it on the payment prompt instead.
+    const [addressResult, profileResult] = await Promise.allSettled([
+      deriveDepositAddresses.execute(ctx, { count: 1 }),
+      getProfile.execute(ctx, {}),
+    ])
 
     if (latestIdentityKey.current !== requestIdentityKey) return
-
-    if (balanceResult.status === "fulfilled") {
-      const satoshis = balanceResult.value.outputs.reduce(
-        (sum, output) => sum + output.satoshis,
-        0,
-      )
-      setBalance({ satoshis })
-      setAccountLoadState((current) => ({ ...current, balance: "loaded" }))
-    } else {
-      console.error("listOutputs failed:", balanceResult.reason)
-      setAccountLoadState((current) => ({ ...current, balance: "error" }))
-    }
 
     if (addressResult.status === "fulfilled") {
       setAddresses({
@@ -254,17 +188,7 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
       console.error("getProfile failed:", profileResult.reason)
       setAccountLoadState((current) => ({ ...current, profile: "error" }))
     }
-
-    await fetchThemeTokens()
-  }, [
-    wallet,
-    ctx,
-    status,
-    identityKey,
-    services,
-    clearAccountState,
-    fetchThemeTokens,
-  ])
+  }, [wallet, ctx, status, identityKey, services, clearAccountState])
 
   useEffect(() => {
     if (status === "connected") {
@@ -274,12 +198,39 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
     }
   }, [status, refreshState, clearAccountState])
 
+  // Silent session resume. @1sat/react's own autoReconnect goes through
+  // waitForAuthentication, which pops the wallet window on every visit when
+  // the session grant has lapsed. Instead: resume only when the wallet
+  // reports (silently) that this origin is already authenticated; otherwise
+  // stay disconnected until the user clicks Connect.
+  const resumeAttempted = useRef(false)
+  useEffect(() => {
+    if (resumeAttempted.current) return
+    resumeAttempted.current = true
+
+    if (!hasStoredProvider()) return
+
+    let cancelled = false
+    canResumeSilently().then((authenticated) => {
+      if (cancelled || !authenticated) return
+      if (latestStatus.current !== "disconnected") return
+      oneSatConnect().catch((error) => {
+        console.error("Silent wallet resume failed:", error)
+      })
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [oneSatConnect])
+
   useEffect(() => {
     const handler = (event: Event) => {
       const action = (event as CustomEvent<{ action?: string }>).detail?.action
 
       if (action === "signedOut") {
         clearAccountState()
+        oneSatDisconnect()
         return
       }
 
@@ -321,7 +272,6 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
     try {
       oneSatDisconnect()
       clearAccountState()
-      themeCtxRef.current.resetTheme()
     } catch (error) {
       console.error("Error disconnecting wallet:", error)
     }
@@ -341,11 +291,8 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
       isReady: true,
       isConnected: status === "connected",
       addresses,
-      balance,
       profile,
       accountLoadState,
-      themeTokens,
-      isLoadingThemes,
       connect,
       disconnect,
       refreshState,
@@ -358,11 +305,8 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
     [
       status,
       addresses,
-      balance,
       profile,
       accountLoadState,
-      themeTokens,
-      isLoadingThemes,
       connect,
       disconnect,
       refreshState,
@@ -382,11 +326,7 @@ function WalletStateEngine({ onState }: WalletEngineProps) {
 }
 
 function WalletEngineProvider({ children }: { children: ReactNode }) {
-  return (
-    <OneSatWalletProvider autoDetect autoReconnect>
-      {children}
-    </OneSatWalletProvider>
-  )
+  return <OneSatWalletProvider autoDetect>{children}</OneSatWalletProvider>
 }
 
 export default function WalletEngine(props: WalletEngineProps) {

@@ -2,7 +2,6 @@
 
 import type { OneSatContext, WalletInterface } from "@1sat/actions"
 import type { OneSatServices } from "@1sat/client"
-import type { ThemeToken } from "@theme-token/sdk"
 import dynamic from "next/dynamic"
 import {
   createContext,
@@ -19,10 +18,6 @@ interface WalletAddresses {
   bsvAddress: string | null
 }
 
-interface WalletBalance {
-  satoshis: number
-}
-
 interface WalletProfile {
   bapId: string | null
   name: string | null
@@ -33,7 +28,6 @@ type AccountSliceStatus = "idle" | "loading" | "loaded" | "error"
 
 interface AccountLoadState {
   address: AccountSliceStatus
-  balance: AccountSliceStatus
   profile: AccountSliceStatus
 }
 
@@ -51,11 +45,8 @@ export interface WalletState {
   isReady: boolean
   isConnected: boolean
   addresses: WalletAddresses | null
-  balance: WalletBalance | null
   profile: WalletProfile | null
   accountLoadState: AccountLoadState
-  themeTokens: ThemeToken[]
-  isLoadingThemes: boolean
   connect: () => Promise<void>
   disconnect: () => Promise<void>
   refreshState: () => Promise<void>
@@ -73,15 +64,11 @@ const disconnectedDefaults: WalletState = {
   isReady: false,
   isConnected: false,
   addresses: null,
-  balance: null,
   profile: null,
   accountLoadState: {
     address: "idle",
-    balance: "idle",
     profile: "idle",
   },
-  themeTokens: [],
-  isLoadingThemes: false,
   connect: async () => {},
   disconnect: async () => {},
   refreshState: async () => {},
