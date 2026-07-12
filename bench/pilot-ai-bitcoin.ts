@@ -25,6 +25,7 @@ const SUITE_PATH = join(import.meta.dir, "tests", "ai-bitcoin-philosophy.json");
 const DEFAULT_MODELS: Array<{ name: string; id: string }> = [
   { name: "grok-4.5", id: "x-ai/grok-4.5" },
   { name: "claude-sonnet-5", id: "anthropic/claude-sonnet-5" },
+  { name: "gpt-5.6-luna", id: "openai/gpt-5.6-luna" },
 ];
 
 function parseModels(): Array<{ name: string; id: string }> {
