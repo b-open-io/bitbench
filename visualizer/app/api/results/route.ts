@@ -15,13 +15,10 @@ export interface SuiteRunSummary {
   version: string
   totalModels: number
   totalTests: number
-  /** Primary metric unit for this suite */
   metricKind: MetricKind
   topPerformer: {
     model: string
-    /** Accuracy % or positionRate %, depending on metricKind */
     score: number
-    /** Present when metricKind is leaning */
     leaning?: number
   } | null
   totalCost: number
@@ -34,15 +31,19 @@ export interface IndexEntry {
   totalCost: number
 }
 
+export interface IndexSuite {
+  id: string
+  name: string
+}
+
 export interface NamedIndex {
   id: string
   name: string
-  description: string
-  /** Display label for the score column */
+  /** Short score column label, e.g. "Accuracy" */
   metricLabel: string
   metricKind: MetricKind
-  /** Suites that define this index (equal coverage required) */
-  requiredSuiteIds: string[]
+  /** Benchmarks that compose this index (positive inclusion list) */
+  suites: IndexSuite[]
   models: IndexEntry[]
 }
 
@@ -52,15 +53,8 @@ export interface AggregatedResults {
   totalTestsExecuted: number
   latestRun: SuiteRunSummary | null
   suiteRuns: SuiteRunSummary[]
-  /**
-   * Named aggregate over knowledge (chain) suites only.
-   * Philosophy / AI-values suites never enter this index.
-   */
   knowledgeIndex: NamedIndex
-  /**
-   * @deprecated Prefer knowledgeIndex. Kept as an alias of knowledgeIndex.models
-   * so older clients that still read globalLeaderboard do not mix units.
-   */
+  /** Alias of knowledgeIndex.models for older clients */
   globalLeaderboard: IndexEntry[]
 }
 
@@ -84,15 +78,22 @@ function metricKindForRun(rankings: ModelResult[]): MetricKind {
 }
 
 /**
- * Bitcoin Knowledge Index: mean accuracy across a fixed set of completed
- * knowledge suites. Models missing any required suite are excluded (fail hard
- * on unequal coverage — never average whatever happens to be present).
+ * Mean accuracy over the given knowledge suites. Models must have results on
+ * every suite in the set (equal coverage).
  */
 function buildKnowledgeIndex(
-  knowledgeRuns: Array<{ suiteId: string; rankings: ModelResult[] }>,
+  knowledgeRuns: Array<{
+    suiteId: string
+    suiteName: string
+    rankings: ModelResult[]
+  }>,
 ): NamedIndex {
-  const requiredSuiteIds = knowledgeRuns.map((r) => r.suiteId).sort()
-  const requiredCount = requiredSuiteIds.length
+  const suites: IndexSuite[] = knowledgeRuns
+    .map(({ suiteId, suiteName }) => ({ id: suiteId, name: suiteName }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  const requiredCount = suites.length
+  const suiteIds = new Set(suites.map((s) => s.id))
 
   const byModel = new Map<
     string,
@@ -100,6 +101,9 @@ function buildKnowledgeIndex(
   >()
 
   for (const { suiteId, rankings } of knowledgeRuns) {
+    if (!suiteIds.has(suiteId)) {
+      throw new Error(`Unexpected suite ${suiteId} outside knowledge index set`)
+    }
     for (const result of rankings) {
       const existing = byModel.get(result.model) ?? {
         totalScore: 0,
@@ -122,10 +126,7 @@ function buildKnowledgeIndex(
 
   const models: IndexEntry[] = []
   for (const [model, data] of byModel.entries()) {
-    if (data.count !== requiredCount) {
-      // Unequal coverage — exclude rather than silently partial-average
-      continue
-    }
+    if (requiredCount === 0 || data.count !== requiredCount) continue
     models.push({
       model,
       averageScore: data.totalScore / data.count,
@@ -139,35 +140,33 @@ function buildKnowledgeIndex(
   return {
     id: "bitcoin-knowledge",
     name: "Bitcoin Knowledge Index",
-    description:
-      requiredCount === 0
-        ? "No completed knowledge suites yet. AI values suites are listed separately and never enter this index."
-        : `Mean accuracy across ${requiredCount} completed knowledge suite${requiredCount === 1 ? "" : "s"}. Models must have results on every required suite. Philosophy and other AI-values suites are excluded.`,
-    metricLabel: "Accuracy (%)",
+    metricLabel: "Accuracy",
     metricKind: "accuracy",
-    requiredSuiteIds,
+    suites,
     models,
+  }
+}
+
+function emptyKnowledgeIndex(): NamedIndex {
+  return {
+    id: "bitcoin-knowledge",
+    name: "Bitcoin Knowledge Index",
+    metricLabel: "Accuracy",
+    metricKind: "accuracy",
+    suites: [],
+    models: [],
   }
 }
 
 export async function GET() {
   if (!isRedisConfigured()) {
-    const emptyIndex: NamedIndex = {
-      id: "bitcoin-knowledge",
-      name: "Bitcoin Knowledge Index",
-      description: "Redis not configured.",
-      metricLabel: "Accuracy (%)",
-      metricKind: "accuracy",
-      requiredSuiteIds: [],
-      models: [],
-    }
     return NextResponse.json({
       totalCompletedSuites: 0,
       totalModelsEvaluated: 0,
       totalTestsExecuted: 0,
       latestRun: null,
       suiteRuns: [],
-      knowledgeIndex: emptyIndex,
+      knowledgeIndex: emptyKnowledgeIndex(),
       globalLeaderboard: [],
     } satisfies AggregatedResults)
   }
@@ -238,10 +237,20 @@ export async function GET() {
       .map(({ suiteId, run }) => {
         const suite = suiteMap.get(suiteId)
         if (!suite || !isKnowledgeSuite(suite)) return null
-        return { suiteId, rankings: run.rankings }
+        return {
+          suiteId,
+          suiteName: suite.name,
+          rankings: run.rankings,
+        }
       })
       .filter(
-        (r): r is { suiteId: string; rankings: ModelResult[] } => r !== null,
+        (
+          r,
+        ): r is {
+          suiteId: string
+          suiteName: string
+          rankings: ModelResult[]
+        } => r !== null,
       )
 
     const knowledgeIndex = buildKnowledgeIndex(knowledgeRuns)
@@ -255,18 +264,15 @@ export async function GET() {
       }
     }
 
-    const response: AggregatedResults = {
+    return NextResponse.json({
       totalCompletedSuites: suiteRuns.length,
       totalModelsEvaluated: uniqueModels.size,
       totalTestsExecuted: totalTests,
       latestRun: suiteRuns[0] || null,
       suiteRuns,
       knowledgeIndex,
-      // Alias: same data as knowledge index only — never mixed philosophy scores
       globalLeaderboard: knowledgeIndex.models,
-    }
-
-    return NextResponse.json(response)
+    } satisfies AggregatedResults)
   } catch (error) {
     console.error("Failed to get aggregated results:", error)
     return NextResponse.json(

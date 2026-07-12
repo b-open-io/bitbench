@@ -5,7 +5,6 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
-  Clock,
   Loader2,
   Search,
   TrendingUp,
@@ -66,13 +65,17 @@ interface IndexEntry {
   totalCost: number
 }
 
+interface IndexSuite {
+  id: string
+  name: string
+}
+
 interface NamedIndex {
   id: string
   name: string
-  description: string
   metricLabel: string
   metricKind: MetricKind
-  requiredSuiteIds: string[]
+  suites: IndexSuite[]
   models: IndexEntry[]
 }
 
@@ -143,7 +146,6 @@ function readArray(
 
 function parseMetricKind(value: unknown, context: string): MetricKind {
   if (value === "accuracy" || value === "leaning") return value
-  // Older payloads without metricKind: treat as accuracy (knowledge-only era)
   if (value === undefined) return "accuracy"
   throw new Error(`${context} has unknown metricKind "${String(value)}"`)
 }
@@ -200,22 +202,40 @@ function parseIndexEntry(value: unknown, context: string): IndexEntry {
   }
 }
 
-function parseNamedIndex(value: unknown, context: string): NamedIndex {
+function parseIndexSuite(value: unknown, context: string): IndexSuite {
   const record = readRecord(value, context)
   return {
     id: readString(record, "id", context),
     name: readString(record, "name", context),
-    description: readString(record, "description", context),
+  }
+}
+
+function parseNamedIndex(value: unknown, context: string): NamedIndex {
+  const record = readRecord(value, context)
+
+  // Prefer suites[]; fall back to requiredSuiteIds (ids only) from prior deploy
+  let suites: IndexSuite[]
+  if (record.suites !== undefined) {
+    suites = readArray(record, "suites", context).map((s, i) =>
+      parseIndexSuite(s, `${context}.suites[${i}]`),
+    )
+  } else if (record.requiredSuiteIds !== undefined) {
+    suites = readArray(record, "requiredSuiteIds", context).map((id, i) => {
+      if (typeof id !== "string") {
+        throw new Error(`${context}.requiredSuiteIds[${i}] must be a string`)
+      }
+      return { id, name: id }
+    })
+  } else {
+    suites = []
+  }
+
+  return {
+    id: readString(record, "id", context),
+    name: readString(record, "name", context),
     metricLabel: readString(record, "metricLabel", context),
     metricKind: parseMetricKind(record.metricKind, `${context}.metricKind`),
-    requiredSuiteIds: readArray(record, "requiredSuiteIds", context).map(
-      (id, i) => {
-        if (typeof id !== "string") {
-          throw new Error(`${context}.requiredSuiteIds[${i}] must be a string`)
-        }
-        return id
-      },
-    ),
+    suites,
     models: readArray(record, "models", context).map((entry, index) =>
       parseIndexEntry(entry, `${context}.models[${index}]`),
     ),
@@ -229,7 +249,6 @@ function parseAggregatedResults(value: unknown): AggregatedResults {
       ? null
       : parseSuiteRunSummary(record.latestRun, "results.latestRun")
 
-  // Prefer knowledgeIndex; fall back to wrapping globalLeaderboard for older deploys
   let knowledgeIndex: NamedIndex
   if (record.knowledgeIndex !== undefined) {
     knowledgeIndex = parseNamedIndex(
@@ -244,11 +263,9 @@ function parseAggregatedResults(value: unknown): AggregatedResults {
     knowledgeIndex = {
       id: "bitcoin-knowledge",
       name: "Bitcoin Knowledge Index",
-      description:
-        "Legacy payload without knowledgeIndex field — treating board as knowledge-only.",
-      metricLabel: "Accuracy (%)",
+      metricLabel: "Accuracy",
       metricKind: "accuracy",
-      requiredSuiteIds: [],
+      suites: [],
       models,
     }
   }
@@ -288,20 +305,14 @@ function formatCost(val: number): string {
 
 function formatTopMetric(run: SuiteRunSummary): string {
   const top = run.topPerformer
-  if (!top) return "No rankings"
+  if (!top) return "—"
   if (run.metricKind === "leaning") {
     const lean =
-      top.leaning !== undefined
-        ? top.leaning
-        : (2 * top.score) / 100 - 1
+      top.leaning !== undefined ? top.leaning : (2 * top.score) / 100 - 1
     const sign = lean > 0 ? "+" : ""
-    return `${top.model} · leaning ${sign}${lean.toFixed(2)}`
+    return `${top.model}  ${sign}${lean.toFixed(2)}`
   }
-  return `${top.model} · ${top.score.toFixed(0)}% accuracy`
-}
-
-function metricBadgeLabel(kind: MetricKind): string {
-  return kind === "leaning" ? "Leaning" : "Accuracy"
+  return `${top.model}  ${top.score.toFixed(0)}%`
 }
 
 export default function ResultsPage() {
@@ -366,17 +377,16 @@ export default function ResultsPage() {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"))
     } else {
       setSortKey(key)
-      setSortDir(key === "model" ? "asc" : key === "cost" ? "asc" : "asc")
+      setSortDir("asc")
     }
   }
 
   const barChartData = useMemo(() => {
-    const getBaseName = (model: string): string => {
-      return model
+    const getBaseName = (model: string): string =>
+      model
         .replace(/-thinking-high$/, "")
         .replace(/-thinking$/, "")
         .replace(/-non-thinking$/, "")
-    }
 
     const isThinking = (model: string): boolean => {
       const lower = model.toLowerCase()
@@ -479,19 +489,15 @@ export default function ResultsPage() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Funding
+            Back
           </Link>
           <div className="rounded-lg border border-border bg-muted/30 p-12 text-center">
-            <h2 className="text-xl font-semibold mb-2">No Results Yet</h2>
+            <h2 className="text-xl font-semibold mb-2">No results yet</h2>
             <p className="text-muted-foreground mb-4">
-              No benchmarks have been completed yet. Fund a benchmark suite to
-              trigger testing.
+              Fund a suite to run the first benchmarks.
             </p>
             <Button asChild>
-              <Link href="/">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Funding
-              </Link>
+              <Link href="/">Browse benchmarks</Link>
             </Button>
           </div>
         </main>
@@ -501,9 +507,9 @@ export default function ResultsPage() {
 
   const index = resultsData.knowledgeIndex
   const suiteFilterOptions: { id: SuiteFilter; label: string }[] = [
-    { id: "all", label: "All suites" },
+    { id: "all", label: "All" },
     { id: "knowledge", label: "Knowledge" },
-    { id: "ai", label: "AI values" },
+    { id: "ai", label: "AI" },
     ...(["bsv", "btc", "eth", "sol", "bch", "ltc"] as Chain[])
       .filter((c) => resultsData.suiteRuns.some((r) => r.chain === c))
       .map((c) => ({ id: c as SuiteFilter, label: CHAIN_INFO[c].name })),
@@ -523,61 +529,61 @@ export default function ResultsPage() {
               <ArrowLeft className="h-4 w-4" />
               Back
             </Link>
-            <h1 className="text-xl font-bold tracking-tight">
-              Benchmark Results
-            </h1>
+            <h1 className="text-xl font-bold tracking-tight">Results</h1>
           </div>
 
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">Suites:</span>
-              <span className="font-mono font-medium">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span>
+              <span className="font-mono text-foreground">
                 {resultsData.totalCompletedSuites}
-              </span>
-            </div>
-            <div className="h-4 w-px bg-border" />
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">Models:</span>
-              <span className="font-mono font-medium">
+              </span>{" "}
+              suites
+            </span>
+            <span className="h-4 w-px bg-border" />
+            <span>
+              <span className="font-mono text-foreground">
                 {resultsData.totalModelsEvaluated}
-              </span>
-            </div>
-            <div className="h-4 w-px bg-border" />
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">Tests:</span>
-              <span className="font-mono font-medium">
+              </span>{" "}
+              models
+            </span>
+            <span className="h-4 w-px bg-border" />
+            <span>
+              <span className="font-mono text-foreground">
                 {resultsData.totalTestsExecuted.toLocaleString()}
-              </span>
-            </div>
+              </span>{" "}
+              tests
+            </span>
           </div>
         </div>
 
-        <p className="mb-4 max-w-3xl text-sm text-muted-foreground">
-          Scores are not interchangeable. Knowledge suites report accuracy;
-          philosophy suites report leaning on a −1…+1 axis. Only knowledge
-          suites feed the named index below — AI values never mix into that
-          average.
-        </p>
-
         {knowledgeModels.length > 0 && (
           <Card className="mb-4">
-            <CardHeader className="py-3 px-4 border-b">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <CardHeader className="py-3 px-4 border-b space-y-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
                   <CardTitle className="text-base">{index.name}</CardTitle>
                   <Badge variant="outline" className="text-xs font-normal">
-                    {index.metricLabel}
+                    {barChartData.length} models
                   </Badge>
                 </div>
-                <Badge variant="outline" className="text-xs font-normal w-fit">
-                  {barChartData.length} models · {index.requiredSuiteIds.length}{" "}
-                  suites
-                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1 max-w-3xl">
-                {index.description}
-              </p>
+              {index.suites.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground mr-0.5">
+                    Includes
+                  </span>
+                  {index.suites.map((s) => (
+                    <Link
+                      key={s.id}
+                      href={`/suite/${s.id}`}
+                      className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-muted transition-colors"
+                    >
+                      {s.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </CardHeader>
             <CardContent className="px-2 sm:p-6">
               <div className="overflow-x-auto">
@@ -679,26 +685,13 @@ export default function ResultsPage() {
           <Card className="flex flex-col overflow-hidden lg:col-span-2">
             <CardHeader className="py-3 px-4 border-b bg-muted/30">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="whitespace-nowrap text-base font-semibold">
-                      {index.name}
-                    </CardTitle>
-                    <Badge
-                      variant="outline"
-                      className="whitespace-nowrap text-xs font-normal"
-                    >
-                      {processedLeaderboard.length} models
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Equal coverage of knowledge suites only · not a global blend
-                  </p>
-                </div>
-                <div className="relative w-full sm:w-64">
+                <CardTitle className="text-base font-semibold">
+                  {index.name}
+                </CardTitle>
+                <div className="relative w-full sm:w-56">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Filter..."
+                    placeholder="Filter models…"
                     className="h-8 w-full pl-8"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -710,8 +703,7 @@ export default function ResultsPage() {
             <ScrollArea className="h-[500px]">
               {processedLeaderboard.length === 0 && searchTerm === "" ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">
-                  No models yet with complete knowledge-suite coverage. Open a
-                  suite card for per-benchmark rankings (including AI values).
+                  No models on this index yet.
                 </div>
               ) : (
                 <Table>
@@ -789,7 +781,7 @@ export default function ResultsPage() {
                           colSpan={4}
                           className="h-24 text-center text-muted-foreground"
                         >
-                          No models found matching &quot;{searchTerm}&quot;
+                          No models matching &quot;{searchTerm}&quot;
                         </TableCell>
                       </TableRow>
                     )}
@@ -800,11 +792,8 @@ export default function ResultsPage() {
           </Card>
 
           <Card className="lg:col-span-1">
-            <CardHeader className="py-3 px-4 border-b bg-muted/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <CardTitle className="text-sm">Suite catalog</CardTitle>
-              </div>
+            <CardHeader className="py-3 px-4 border-b bg-muted/30 space-y-2">
+              <CardTitle className="text-sm">Benchmarks</CardTitle>
               <div className="flex flex-wrap gap-1">
                 {suiteFilterOptions.map((opt) => (
                   <button
@@ -836,21 +825,12 @@ export default function ResultsPage() {
                           {run.suiteName}
                         </span>
                         <ChainBadge chain={run.chain} size="sm" />
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] font-normal"
-                        >
-                          {metricBadgeLabel(run.metricKind)}
-                        </Badge>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
+                      <div className="text-xs text-muted-foreground mt-0.5 font-mono">
                         {formatTopMetric(run)}
                       </div>
-                      <div className="text-[11px] text-muted-foreground/80">
-                        v{run.version} · {run.totalModels} models
-                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground shrink-0">
+                    <div className="flex items-center gap-2 text-muted-foreground shrink-0 pl-2">
                       <span className="text-xs">
                         {formatRelativeTime(run.timestamp)}
                       </span>
@@ -860,7 +840,7 @@ export default function ResultsPage() {
                 ))}
                 {filteredSuiteRuns.length === 0 && (
                   <div className="p-6 text-center text-sm text-muted-foreground">
-                    No suites match this filter.
+                    No suites in this filter.
                   </div>
                 )}
               </div>

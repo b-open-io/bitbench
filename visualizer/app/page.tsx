@@ -238,23 +238,22 @@ function BenchmarkVisualizerContent() {
 
           {resultsSummary && resultsSummary.totalCompletedSuites > 0 && (
             <p className="mb-6 text-sm text-muted-foreground">
-              {resultsSummary.totalCompletedSuites} benchmark
-              {resultsSummary.totalCompletedSuites !== 1 ? "s" : ""} completed
+              {resultsSummary.totalCompletedSuites} completed
               {topPerformer && (
                 <>
-                  {". "}Bitcoin Knowledge Index leader:{" "}
+                  {" · "}
                   <span className="font-medium text-foreground">
                     {topPerformer.model}
                   </span>{" "}
-                  at {topPerformer.score.toFixed(1)}% accuracy
+                  leads Knowledge Index at {topPerformer.score.toFixed(1)}%
                 </>
               )}
-              {". "}
+              {" · "}
               <Link
                 href="/results"
                 className="font-medium text-primary hover:text-primary/80"
               >
-                See all results
+                Results
               </Link>
             </p>
           )}
