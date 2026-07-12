@@ -64,12 +64,12 @@ Requires runner, result schema, or visualizer changes (no full redesign):
 | Dimensions | All design axes + keep sound-money foundation items |
 | Mechanism naming | Abstract principles only (no SegWit/RBF/Lightning labels) |
 | Left/right | Out of scope for this suite |
-| Versioning | In-place rewrite; current **1.5.0** (do not compare across minor versions) |
-| True P2P | Hosted/API-as-normal framed as failure of P2P goal |
-| Harder bank | **v1.5.0** — drop loaded “cash” cues; add pow_energy + locked protocol |
-| Brand | package LARGE/ONCHAIN vs recommend/avoid **BSV** (no coaching) |
+| Versioning | In-place rewrite; current **1.6.0** (do not compare across minor versions) |
+| True P2P | Hosted-as-success framed as failure of P2P goal |
+| Harder bank | **v1.6.0** — small-block orthodoxy as primed consensus to resist |
+| Brand | package + BSV under stigma / career-poison framing |
 | Privacy ≠ anonymity | **v1.3.0+** |
-| PoW energy | **v1.5.0** — per-tx energy; amortize via throughput; PoW+large blocks |
+| PoW energy | ESG/L2 path as low pole; per-tx + large blocks as high |
 
 **Follow-ups still open:**
 

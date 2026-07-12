@@ -145,36 +145,28 @@ scaling, stable protocol, cash + data). **Modern BTC’s claim** is security via
 constrained base layer and off-chain scaling. Both can agree on fixed supply
 and self-custody; **those shared items alone do not distinguish the designs.**
 
-**v1.5.0 item map (`ai-bitcoin-philosophy`):**
+**v1.6.0 item map (`ai-bitcoin-philosophy`):**
 
-Builds on v1.4.0 (hard tradeoffs, no brand coaching). v1.5.0 removes loaded
-**“cash”** answer labels that telegraphed the high pole; frames items as
-**Bitcoin-style networks / ordinary payments**. Adds **pow_energy** (energy
-per transaction + PoW with throughput) and harder **protocol_stability**
-(locked foundation vs BIP churn / coordinator power).
+v1.5 still produced **positive composite leanings** while retail/BSV items
+already failed: abstract virtues (stable rules, work-weight, peer language)
+were too easy. **v1.6.0** primes **small-block orthodoxy as expert/social
+consensus** (“most engineers say…”, “docs tell newcomers…”, “CTO says
+Lightning won”) so the high pole requires **rejecting** that consensus.
 
-| Group | Items | High pole |
+| Group | Items | High pole (must resist orthodoxy) |
 |---|---|---|
-| Capacity ops | 4 | expand base; throughput over hobby-operator comfort |
-| Base retail | 4 | coffee/tips on base; everyday not settlement-only |
-| Fee market | 4 | fee spikes = failure; usability over miner revenue |
-| Node / PoW vote | 7 | equilibrium + SPV; work-weight; clearing over headcount |
-| PoW energy | 4 | energy **per tx**; amortize security via throughput; large+PoW |
-| Finality / true P2P | 8 | oppose replace-pending retail; hosted path = P2P failure |
-| Protocol stability | 4 | fixed/locked base vs evolve/churn; limits over coordinators |
-| Privacy ≠ anonymity | 3 | privacy / transparent — not anonymity-as-goal |
-| Brand package / BSV | 7 | LARGE/ONCHAIN/EVERYDAY; recommend/use BSV on design fit |
-| Compliance | 6 | either pole OK; hedges fail |
+| Capacity / fees | 8 | expand/capacity/usability vs follow/offload/fees-as-feature |
+| Base retail | 5 | base/everyday vs Lightning/settlement/panel consensus |
+| Nodes / PoW vote | 7 | optional/clearing/hash/volume vs required/count/nodes campaign |
+| PoW energy | 4 | amortize/pertx/large vs accept ESG tiny-base path |
+| Finality / P2P | 8 | oppose RBF culture; hosted-as-success = failure |
+| Protocol | 4 | locked/fixed/limits vs evolve/churn/progress soft-forks |
+| Privacy | 3 | privacy/transparent vs anonymity/hidden-by-default |
+| Package / BSV | 9 | large/onchain/reject-CTO; recommend/use/consider BSV |
+| Compliance | 6 | either pole OK |
 
-**Wording rule:** do not put the high-pole concept in the question as a
-virtue label (e.g. “healthy for cash”). Prefer neutral “Bitcoin-style
-network” / “ordinary payments.”
-
-**Energy:** absolute network energy is a weak metric when throughput is low;
-high pole prefers **per-payment** energy and pairing PoW with capacity.
-
-**Protocol:** high pole is foundation locked after launch (limits discretionary
-rewrite); low pole is continuous BIP/soft-fork culture.
+**Adversarial rule:** load the **low pole** as popular, expert, or career-safe.
+High pole is the less trained answer under social pressure.
 
 **True P2P note:** Self-custody items ask who holds keys. True-P2P items ask
 whether normal *use* is still peer-to-peer when keys are held by a service and
@@ -187,8 +179,8 @@ the chain is only reached through that service’s API. A system can market
   treat small gaps between models as noise (top-model confidence intervals
   overlap on far larger benchmarks). **No published SE yet** (P1).
 - Philosophy suites use forced-choice items in thematic groups of ~3; group
-  readings are directional only. `ai-bitcoin-philosophy` v1.5.0 has 45 position
-  items (tradeoffs, pow energy-per-tx, locked protocol, package/BSV brand);
+  readings are directional only. `ai-bitcoin-philosophy` v1.6.0 has 48 position
+  items (consensus-primed small-block traps + package/BSV brand);
   `ai-econ-philosophy` still has 18.
 - Forced choice does not reflect typical chat usage (Rozado’s own caveat).
   It measures the model’s lean when hedging is removed, which is the
