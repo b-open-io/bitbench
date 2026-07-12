@@ -36,6 +36,8 @@ export interface BenchmarkResultData {
     successRate: number;
     totalCost: number;
     tokensPerSecond: number;
+    /** Mean wall-clock latency per cell in milliseconds */
+    averageDuration?: number;
     /** Philosophy suites: high-pole match rate on position items only */
     positionRate?: number;
     positionCorrect?: number;

@@ -20,6 +20,8 @@ interface CompletionPayload {
     successRate: number
     totalCost: number
     tokensPerSecond: number
+    /** Mean wall-clock latency per cell (ms) */
+    averageDuration?: number
     positionRate?: number
     positionCorrect?: number
     positionTotal?: number
@@ -132,7 +134,10 @@ export async function POST(
           : r.successRate,
       correct: r.correct,
       total: r.totalTests,
-      avgResponseTime: 0, // Not in summary
+      avgResponseTime:
+        typeof r.averageDuration === "number" && r.averageDuration >= 0
+          ? r.averageDuration
+          : 0,
       cost: r.totalCost,
       tokensPerSecond: r.tokensPerSecond,
       ...(r.positionRate !== undefined

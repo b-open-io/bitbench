@@ -607,6 +607,7 @@ const App: React.FC = () => {
             successRate: r.successRate,
             totalCost: r.totalCost,
             tokensPerSecond: r.tokensPerSecond,
+            averageDuration: r.averageDuration,
             ...(r.positionRate !== undefined
               ? {
                   positionRate: r.positionRate,
