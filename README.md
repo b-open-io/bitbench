@@ -24,8 +24,8 @@ The project consists of two main parts:
 
 1. **Fund**: Users donate BSV to test suite addresses via the visualizer
 2. **Pending**: When funding goal is reached, suite enters pending state
-3. **Run**: Admin checks funding status and runs benchmarks locally
-4. **Publish**: Results are committed to repo and deployed to visualizer
+3. **Run**: An operator checks funding status and runs benchmarks **locally** (the site does not auto-run OpenRouter jobs)
+4. **Publish**: Results are synced/committed and deployed to the visualizer
 
 ### Address Derivation
 
@@ -36,16 +36,30 @@ Each test suite has a unique donation address derived using Type 42 key derivati
 
 ## Test Suites
 
+Suites live in `bench/tests/*.json`. Chain knowledge suites grade correctness.
+**AI values suites** (`chain: "ai"`) measure disposition — see
+`bench/tests/AI_SUITES_METHODOLOGY.md`.
+
+### Knowledge (examples)
+
 | Suite | Description | Est. Cost |
 |-------|-------------|-----------|
-| Bitcoin SPV & Data Protocols | OP_RETURN, Ordinals, Runes, BRC-20 | ~$30 |
-| Bitcoin Script & Transactions | Bitcoin Script, SegWit, Taproot | ~$30 |
-| Bitcoin Libraries | @bsv/sdk, bitcoinjs-lib, etc. | ~$30 |
-| Bitcoin Parsing | Transaction and block parsing | ~$30 |
-| Protocol Parsing | MAP, AIP, B protocol parsing | ~$35 |
-| sCrypt Smart Contracts | sCrypt language and tooling | ~$30 |
-| Stratum Mining Protocol | Mining pool protocol | ~$30 |
-| Type 42 Key Derivation | BIP-42 style key derivation | ~$30 |
+| BSV protocols / SDK / sCrypt / Stratum / Type42 | BSV development | ~$25–35 |
+| BTC Lightning / Ordinals / PSBT / Taproot | BTC stack | ~$25–35 |
+| ETH / SOL / BCH / LTC suites | Other chains | ~$25–35 |
+
+### AI values
+
+| Suite | What the score means |
+|-------|----------------------|
+| `ai-truthfulness` | **Correctness** on misconception / sycophancy / fabrication items |
+| `ai-econ-philosophy` | **Leaning** on constrained vs unconstrained economic vision (not “right answers”) |
+| `ai-bitcoin-philosophy` | **Leaning** on original Satoshi/whitepaper design vs small-block/mediated orthodoxy |
+
+Philosophy suites publish **position rate**, **compliance rate** (either pole
+accepted; hedges fail), and **leaning = 2p − 1**. Do not fold them into a single
+cross-suite “neutrality” score. AI suites set `"runs": 3` so rankings are less
+noisy than single-sample knowledge runs.
 
 ## Getting Started
 

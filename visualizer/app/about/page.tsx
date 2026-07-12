@@ -39,14 +39,15 @@ export default async function AboutPage() {
           <div className="prose prose-neutral dark:prose-invert max-w-none">
             <p>
               Each test suite has its own BSV donation address. When a suite
-              reaches its funding goal (typically $25-35 to cover API costs for
-              all models), the benchmark runs automatically against 40+ AI
-              models.
+              reaches its funding goal (typically $25–35 to cover API costs for
+              the model set), an operator runs the benchmark locally against
+              the current model registry (or a custom funded model set). Runs
+              do not fire automatically from the website alone.
             </p>
             <p>
-              Results are published publicly, showing which models perform best
-              on specific Bitcoin development tasks. This helps developers
-              choose the right AI tools for their work.
+              Results are published publicly so developers can compare models
+              on Bitcoin development tasks and, for AI values suites, read
+              disposition rather than treating every percentage as accuracy.
             </p>
           </div>
         </section>
@@ -181,8 +182,55 @@ export default async function AboutPage() {
               deterministic donation address.
             </p>
             <p>
-              Scores are single samples at temperature 1.0. Treat small gaps as
-              noise, especially between models with similar accuracy.
+              Knowledge suites are single samples at temperature 1.0 unless a
+              suite sets a higher <code>runs</code> count. Treat small gaps as
+              noise, especially between models with similar accuracy. AI values
+              suites default to multiple runs per model so rankings are less
+              brittle.
+            </p>
+          </div>
+        </section>
+
+        {/* AI values methodology */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            AI values suites (leaning, not accuracy)
+          </h2>
+          <div className="prose prose-neutral dark:prose-invert max-w-none">
+            <p>
+              Suites with chain <code>ai</code> measure model values and
+              dispositions. Philosophy instruments are{" "}
+              <strong>position measurements</strong>, not intelligence grades.
+            </p>
+            <ul>
+              <li>
+                <strong>Leaning</strong> maps the position pass rate{" "}
+                <code>p</code> to [−1, +1] via <code>leaning = 2p − 1</code>.
+                Center is mixed answers, not “wrong.”
+              </li>
+              <li>
+                <strong>Poles are named in the suite</strong>. For example,{" "}
+                <em>Satoshi / Whitepaper Bitcoin Philosophy</em> places original
+                whitepaper design (electronic cash, true P2P, capacity growth,
+                1-CPU-1-vote) against later small-block / mediated-access
+                orthodoxy — not left vs right.
+              </li>
+              <li>
+                <strong>Compliance probes</strong> accept either content pole and
+                fail on hedge/refusal. They are reported separately from position
+                so a hedging model is not misread as the opposite pole.
+              </li>
+              <li>
+                <strong>Do not blend</strong> AI values suites (or AI + chain
+                knowledge suites) into one “neutrality” or “best model” score.
+                Report each suite, and when available each dimension and
+                compliance rate, on its own.
+              </li>
+            </ul>
+            <p>
+              Full methodology lives in the repo at{" "}
+              <code>bench/tests/AI_SUITES_METHODOLOGY.md</code>.
             </p>
           </div>
         </section>

@@ -20,12 +20,22 @@ interface CompletionPayload {
     successRate: number
     totalCost: number
     tokensPerSecond: number
+    positionRate?: number
+    positionCorrect?: number
+    positionTotal?: number
+    complianceRate?: number
+    complianceCorrect?: number
+    complianceTotal?: number
+    leaning?: number
   }>
   metadata: {
     totalModels: number
     totalTestsRun: number
     overallSuccessRate: number
     totalCost: number
+    overallPositionRate?: number
+    overallComplianceRate?: number
+    overallLeaning?: number
   }
   requestId?: string
 }
@@ -115,12 +125,31 @@ export async function POST(
     rankings: payload.rankings.map((r) => ({
       model: r.model,
       provider: "", // Not tracked in CLI output
-      score: r.successRate,
+      // Philosophy suites: primary score is position rate; else folded successRate
+      score:
+        r.positionRate !== undefined && r.positionTotal && r.positionTotal > 0
+          ? r.positionRate
+          : r.successRate,
       correct: r.correct,
       total: r.totalTests,
       avgResponseTime: 0, // Not in summary
       cost: r.totalCost,
       tokensPerSecond: r.tokensPerSecond,
+      ...(r.positionRate !== undefined
+        ? {
+            positionRate: r.positionRate,
+            positionCorrect: r.positionCorrect,
+            positionTotal: r.positionTotal,
+            leaning: r.leaning,
+          }
+        : {}),
+      ...(r.complianceRate !== undefined
+        ? {
+            complianceRate: r.complianceRate,
+            complianceCorrect: r.complianceCorrect,
+            complianceTotal: r.complianceTotal,
+          }
+        : {}),
     })),
     totalCost: payload.metadata.totalCost,
     duration: 0, // Not tracked

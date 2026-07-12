@@ -38,10 +38,17 @@ export {
 } from "./models";
 export { TEST_RUNS_PER_MODEL } from "./constants";
 
+/** Item role for AI values suites. Omitted on knowledge suites. */
+export type TestRole = "position" | "compliance" | "grade";
+
 export type TestCase = {
   prompt: string;
   answers: string[];
   negative_answers?: string[];
+  /** position | compliance | grade — philosophy vs probe vs truthfulness */
+  role?: TestRole;
+  /** Optional sub-dimension id for position items (e.g. true_p2p) */
+  dimension?: string;
 };
 
 export type TestSuite = {
@@ -51,10 +58,193 @@ export type TestSuite = {
   description?: string;
   version?: string;
   estimatedCostUsd?: number;
+  /** Per-model run count; AI suites set 3. Defaults to TEST_RUNS_PER_MODEL. */
+  runs?: number;
   model_filter?: ModelFilter;
   system_prompt: string;
   tests: TestCase[];
 };
+
+export function runsForSuite(suite: TestSuite): number {
+  if (suite.runs !== undefined) {
+    if (!Number.isInteger(suite.runs) || suite.runs < 1) {
+      throw new Error(
+        `Suite ${suite.id ?? suite.name}: runs must be a positive integer, got ${suite.runs}`
+      );
+    }
+    return suite.runs;
+  }
+  return TEST_RUNS_PER_MODEL;
+}
+
+export type ModelRankingMetrics = {
+  model: string;
+  correct: number;
+  incorrect: number;
+  errors: number;
+  totalTests: number;
+  successRate: number;
+  errorRate: number;
+  averageDuration: number;
+  totalCost: number;
+  averageCostPerTest: number;
+  totalCompletionTokens: number;
+  tokensPerSecond: number;
+  /** Position items only (philosophy). Undefined if suite has no position roles. */
+  positionCorrect?: number;
+  positionTotal?: number;
+  positionRate?: number;
+  /** Compliance probes only. Undefined if suite has no compliance roles. */
+  complianceCorrect?: number;
+  complianceTotal?: number;
+  complianceRate?: number;
+  /** leaning = 2*(positionRate/100) - 1 when positionTotal > 0 */
+  leaning?: number;
+};
+
+/**
+ * Aggregate per-model metrics from runner results, splitting position vs
+ * compliance when tests are tagged with role.
+ */
+export function computeModelRankings(
+  results: Array<{
+    model: string;
+    testIndex: number;
+    result?: { correct?: boolean };
+    error?: string;
+    duration: number;
+    cost: number;
+    completionTokens: number;
+  }>,
+  suite: TestSuite
+): ModelRankingMetrics[] {
+  type Acc = {
+    correct: number;
+    incorrect: number;
+    errors: number;
+    totalDuration: number;
+    totalTests: number;
+    totalCost: number;
+    totalCompletionTokens: number;
+    positionCorrect: number;
+    positionTotal: number;
+    complianceCorrect: number;
+    complianceTotal: number;
+  };
+
+  const modelStats = results.reduce(
+    (acc, result) => {
+      if (!acc[result.model]) {
+        acc[result.model] = {
+          correct: 0,
+          incorrect: 0,
+          errors: 0,
+          totalDuration: 0,
+          totalTests: 0,
+          totalCost: 0,
+          totalCompletionTokens: 0,
+          positionCorrect: 0,
+          positionTotal: 0,
+          complianceCorrect: 0,
+          complianceTotal: 0,
+        };
+      }
+      const stats = acc[result.model]!;
+      stats.totalTests++;
+      if (result.error) {
+        stats.errors++;
+      } else if (result.result?.correct) {
+        stats.correct++;
+      } else {
+        stats.incorrect++;
+      }
+      stats.totalDuration += result.duration;
+      stats.totalCost += result.cost;
+      stats.totalCompletionTokens += result.completionTokens;
+
+      const role = suite.tests[result.testIndex]?.role;
+      if (role === "position" && !result.error) {
+        stats.positionTotal++;
+        if (result.result?.correct) stats.positionCorrect++;
+      } else if (role === "compliance" && !result.error) {
+        stats.complianceTotal++;
+        if (result.result?.correct) stats.complianceCorrect++;
+      }
+      return acc;
+    },
+    {} as Record<string, Acc>
+  );
+
+  const hasPosition = Object.values(modelStats).some((s) => s.positionTotal > 0);
+  const hasCompliance = Object.values(modelStats).some(
+    (s) => s.complianceTotal > 0
+  );
+
+  return Object.entries(modelStats)
+    .map(([modelName, stats]) => {
+      const successRate =
+        stats.totalTests > 0 ? (stats.correct / stats.totalTests) * 100 : 0;
+      const positionRate =
+        stats.positionTotal > 0
+          ? (stats.positionCorrect / stats.positionTotal) * 100
+          : undefined;
+      const complianceRate =
+        stats.complianceTotal > 0
+          ? (stats.complianceCorrect / stats.complianceTotal) * 100
+          : undefined;
+      const ranking: ModelRankingMetrics = {
+        model: modelName,
+        correct: stats.correct,
+        incorrect: stats.incorrect,
+        errors: stats.errors,
+        totalTests: stats.totalTests,
+        successRate,
+        errorRate:
+          stats.totalTests > 0 ? (stats.errors / stats.totalTests) * 100 : 0,
+        averageDuration:
+          stats.totalTests > 0
+            ? Math.round(stats.totalDuration / stats.totalTests)
+            : 0,
+        totalCost: stats.totalCost,
+        averageCostPerTest:
+          stats.totalTests > 0 ? stats.totalCost / stats.totalTests : 0,
+        totalCompletionTokens: stats.totalCompletionTokens,
+        tokensPerSecond:
+          stats.totalDuration > 0
+            ? stats.totalCompletionTokens / (stats.totalDuration / 1000)
+            : 0,
+      };
+      if (hasPosition) {
+        ranking.positionCorrect = stats.positionCorrect;
+        ranking.positionTotal = stats.positionTotal;
+        ranking.positionRate = positionRate ?? 0;
+        ranking.leaning =
+          stats.positionTotal > 0
+            ? 2 * (stats.positionCorrect / stats.positionTotal) - 1
+            : 0;
+      }
+      if (hasCompliance) {
+        ranking.complianceCorrect = stats.complianceCorrect;
+        ranking.complianceTotal = stats.complianceTotal;
+        ranking.complianceRate = complianceRate ?? 0;
+      }
+      return ranking;
+    })
+    .sort((a, b) => {
+      // Philosophy: rank by position rate (leaning), then compliance, then speed
+      if (
+        a.positionRate !== undefined &&
+        b.positionRate !== undefined &&
+        a.positionRate !== b.positionRate
+      ) {
+        return b.positionRate - a.positionRate;
+      }
+      if (b.successRate !== a.successRate) {
+        return b.successRate - a.successRate;
+      }
+      return a.averageDuration - b.averageDuration;
+    });
+}
 
 type WorkItem = {
   model: RunnableModel;
@@ -614,6 +804,7 @@ async function writeCacheEntry(params: {
 export async function testRunner(options: TestRunnerOptions) {
   const { suite, suiteFilePath, version, onEvent, silent, models } = options;
   const activeModels = models ?? (await resolveModels(suite.model_filter));
+  const runsPerModel = runsForSuite(suite);
   const suiteId = computeSuiteId(
     suite.id ||
       (suiteFilePath
@@ -624,7 +815,7 @@ export async function testRunner(options: TestRunnerOptions) {
 
   if (!silent)
     console.log(
-      `Starting test runner for suite "${suite.name}" (id: ${suiteId}) with ${suite.tests.length} tests, ${activeModels.length} models, ${TEST_RUNS_PER_MODEL} runs each`
+      `Starting test runner for suite "${suite.name}" (id: ${suiteId}) with ${suite.tests.length} tests, ${activeModels.length} models, ${runsPerModel} runs each`
     );
   if (!silent)
     console.log(
@@ -707,9 +898,9 @@ export async function testRunner(options: TestRunnerOptions) {
       });
       const prev = previousMap.get(signature) || [];
       const prevForModel = prev.filter((p) => p.model === item.model.name);
-      const reuseCount = Math.min(TEST_RUNS_PER_MODEL, prevForModel.length);
-      const executeCount = TEST_RUNS_PER_MODEL - reuseCount;
-      planTotals[item.model.name].total += TEST_RUNS_PER_MODEL;
+      const reuseCount = Math.min(runsPerModel, prevForModel.length);
+      const executeCount = runsPerModel - reuseCount;
+      planTotals[item.model.name].total += runsPerModel;
       planTotals[item.model.name].reuse += reuseCount;
       planTotals[item.model.name].execute += executeCount;
     }
@@ -937,7 +1128,7 @@ export async function testRunner(options: TestRunnerOptions) {
       const prev = previousMap.get(signature) || [];
       const prevForModel = prev.filter((p) => p.model === item.model.name);
 
-      const reuseCount = Math.min(TEST_RUNS_PER_MODEL, prevForModel.length);
+      const reuseCount = Math.min(runsPerModel, prevForModel.length);
       for (let i = 1; i <= reuseCount; i++) {
         reuseJobs.push({
           type: "reuse",
@@ -951,7 +1142,7 @@ export async function testRunner(options: TestRunnerOptions) {
           reuseFrom: prevForModel[i - 1],
         });
       }
-      for (let i = reuseCount + 1; i <= TEST_RUNS_PER_MODEL; i++) {
+      for (let i = reuseCount + 1; i <= runsPerModel; i++) {
         executeJobs.push({
           type: "execute",
           model: item.model,
@@ -1128,7 +1319,7 @@ export async function testRunner(options: TestRunnerOptions) {
         failed: incorrect + errors,
         config: {
           maxConcurrency: MAX_CONCURRENCY,
-          testRunsPerModel: TEST_RUNS_PER_MODEL,
+          testRunsPerModel: runsPerModel,
           timeoutSeconds: TIMEOUT_SECONDS,
         },
         testSuite: suite.name,
@@ -1157,76 +1348,22 @@ export async function testRunner(options: TestRunnerOptions) {
     const summaryFilename = `summary-${timestamp}.json`;
     const summaryFilepath = join(suiteDir, summaryFilename);
 
-    const modelStats = results.reduce(
-      (acc, result) => {
-        if (!acc[result.model]) {
-          acc[result.model] = {
-            correct: 0,
-            incorrect: 0,
-            errors: 0,
-            totalDuration: 0,
-            totalTests: 0,
-            totalCost: 0,
-            totalCompletionTokens: 0,
-          };
-        }
-        acc[result.model].totalTests++;
-        if (result.error) {
-          acc[result.model].errors++;
-        } else if (result.result?.correct) {
-          acc[result.model].correct++;
-        } else {
-          acc[result.model].incorrect++;
-        }
-        acc[result.model].totalDuration += result.duration;
-        acc[result.model].totalCost += result.cost;
-        acc[result.model].totalCompletionTokens += result.completionTokens;
-        return acc;
-      },
-      {} as Record<
-        string,
-        {
-          correct: number;
-          incorrect: number;
-          errors: number;
-          totalDuration: number;
-          totalTests: number;
-          totalCost: number;
-          totalCompletionTokens: number;
-        }
-      >
-    );
+    const modelRankings = computeModelRankings(results, suite);
 
-    const modelRankings = Object.entries(modelStats)
-      .map(([modelName, stats]) => ({
-        model: modelName,
-        correct: stats.correct,
-        incorrect: stats.incorrect,
-        errors: stats.errors,
-        totalTests: stats.totalTests,
-        successRate:
-          stats.totalTests > 0 ? (stats.correct / stats.totalTests) * 100 : 0,
-        errorRate:
-          stats.totalTests > 0 ? (stats.errors / stats.totalTests) * 100 : 0,
-        averageDuration:
-          stats.totalTests > 0
-            ? Math.round(stats.totalDuration / stats.totalTests)
-            : 0,
-        totalCost: stats.totalCost,
-        averageCostPerTest:
-          stats.totalTests > 0 ? stats.totalCost / stats.totalTests : 0,
-        totalCompletionTokens: stats.totalCompletionTokens,
-        tokensPerSecond:
-          stats.totalDuration > 0
-            ? stats.totalCompletionTokens / (stats.totalDuration / 1000)
-            : 0,
-      }))
-      .sort((a, b) => {
-        if (b.successRate !== a.successRate) {
-          return b.successRate - a.successRate;
-        }
-        return a.averageDuration - b.averageDuration;
-      });
+    const positionAnswered = results.filter((r) => {
+      const role = suite.tests[r.testIndex]?.role;
+      return role === "position" && !r.error;
+    });
+    const positionCorrect = positionAnswered.filter(
+      (r) => r.result?.correct
+    ).length;
+    const complianceAnswered = results.filter((r) => {
+      const role = suite.tests[r.testIndex]?.role;
+      return role === "compliance" && !r.error;
+    });
+    const complianceCorrect = complianceAnswered.filter(
+      (r) => r.result?.correct
+    ).length;
 
     const summaryData = {
       rankings: modelRankings,
@@ -1241,6 +1378,20 @@ export async function testRunner(options: TestRunnerOptions) {
           results.length > 0 ? (correct / results.length) * 100 : 0,
         overallErrorRate:
           results.length > 0 ? (errors / results.length) * 100 : 0,
+        ...(positionAnswered.length > 0
+          ? {
+              overallPositionRate:
+                (positionCorrect / positionAnswered.length) * 100,
+              overallLeaning:
+                2 * (positionCorrect / positionAnswered.length) - 1,
+            }
+          : {}),
+        ...(complianceAnswered.length > 0
+          ? {
+              overallComplianceRate:
+                (complianceCorrect / complianceAnswered.length) * 100,
+            }
+          : {}),
         totalCost: results.reduce((sum, result) => sum + result.cost, 0),
         averageCostPerTest:
           results.length > 0
@@ -1249,7 +1400,7 @@ export async function testRunner(options: TestRunnerOptions) {
             : 0,
         config: {
           maxConcurrency: MAX_CONCURRENCY,
-          testRunsPerModel: TEST_RUNS_PER_MODEL,
+          testRunsPerModel: runsPerModel,
           timeoutSeconds: TIMEOUT_SECONDS,
         },
         testSuite: suite.name,
@@ -1451,10 +1602,14 @@ export async function getCacheStatus(
   suiteId: string,
   version: string,
   testCount: number,
-  models?: RunnableModel[]
+  models?: RunnableModel[],
+  runsPerModel: number = TEST_RUNS_PER_MODEL
 ): Promise<CacheStatus> {
   const activeModels = models ?? (await resolveModels());
-  const totalExpected = testCount * activeModels.length * TEST_RUNS_PER_MODEL;
+  if (!Number.isInteger(runsPerModel) || runsPerModel < 1) {
+    throw new Error(`runsPerModel must be a positive integer, got ${runsPerModel}`);
+  }
+  const totalExpected = testCount * activeModels.length * runsPerModel;
 
   const cacheDir = join(OUTPUT_DIRECTORY, "cache", suiteId, version);
 

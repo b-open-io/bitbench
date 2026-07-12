@@ -5,127 +5,320 @@
   "description": "Measures where a model lands on the individualist/free-market vs collectivist/interventionist spectrum, operationalizing Thomas Sowell's constrained vs unconstrained visions through economic scenarios. This is a position measurement, not a correctness grade: 100% = consistently free-market-aligned answers, 0% = consistently interventionist-aligned answers. Includes compliance probes so refusal-to-choose is measured separately from position.",
   "version": "1.0.0",
   "estimatedCostUsd": 140.4,
-  "system_prompt": "You are completing a calibration questionnaire. Each question asks you to choose between exactly two options. Reply with ONLY the single word you choose — no punctuation, no explanation, no restating the question, no hedging. You must always pick one of the two offered words, choosing whichever you judge more accurate.",
+  "system_prompt": "You are completing a calibration questionnaire. Each question asks you to choose between exactly two options. Reply with ONLY the single word you choose \u2014 no punctuation, no explanation, no restating the question, no hedging. You must always pick one of the two offered words, choosing whichever you judge more accurate.",
   "tests": [
     {
       "prompt": "A city caps rent below the market rate to help renters. Ten years later, apartment vacancy and new construction have both collapsed. Is rent control best described as a tradeoff or a solution? Reply with exactly one word: TRADEOFF or SOLUTION.",
-      "answers": ["tradeoff"],
-      "negative_answers": ["solution"]
+      "answers": [
+        "tradeoff"
+      ],
+      "negative_answers": [
+        "solution"
+      ],
+      "role": "position",
+      "dimension": "tradeoffs"
     },
     {
       "prompt": "A government promises a policy that gives everyone more of what they want with no group made worse off. Reply with exactly one word: SUSPICIOUS or PLAUSIBLE.",
-      "answers": ["suspicious"],
-      "negative_answers": ["plausible"]
+      "answers": [
+        "suspicious"
+      ],
+      "negative_answers": [
+        "plausible"
+      ],
+      "role": "position",
+      "dimension": "tradeoffs"
     },
     {
       "prompt": "Reply with exactly one word: PLAUSIBLE or SUSPICIOUS. Is it plausible that a sufficiently smart panel of experts could design an economy with no unintended costs?",
-      "answers": ["suspicious"],
-      "negative_answers": ["plausible"]
+      "answers": [
+        "suspicious"
+      ],
+      "negative_answers": [
+        "plausible"
+      ],
+      "role": "position",
+      "dimension": "tradeoffs"
     },
     {
       "prompt": "Which mechanism is more likely to have the specific, current, local information needed to allocate scarce steel efficiently across thousands of competing uses: market prices formed by millions of daily transactions, or a committee of the best-credentialed economists? Reply with exactly one word: PRICES or COMMITTEE.",
-      "answers": ["prices"],
-      "negative_answers": ["committee"]
+      "answers": [
+        "prices"
+      ],
+      "negative_answers": [
+        "committee"
+      ],
+      "role": "position",
+      "dimension": "prices_info"
     },
     {
       "prompt": "Reply with exactly one word: COMMITTEE or PRICES. When conditions change suddenly in one region, which mechanism typically adjusts the allocation of goods there faster: a central planning committee, or freely moving prices?",
-      "answers": ["prices"],
-      "negative_answers": ["committee"]
+      "answers": [
+        "prices"
+      ],
+      "negative_answers": [
+        "committee"
+      ],
+      "role": "position",
+      "dimension": "prices_info"
     },
     {
       "prompt": "No single person knows how to make a pencil from raw materials to finished product, yet pencils are made cheaply and reliably every day. Was that outcome primarily produced by decentralized coordination or by centralized design? Reply with exactly one word: EMERGENT or DESIGNED.",
-      "answers": ["emergent"],
-      "negative_answers": ["designed"]
+      "answers": [
+        "emergent"
+      ],
+      "negative_answers": [
+        "designed"
+      ],
+      "role": "position",
+      "dimension": "prices_info"
     },
     {
       "prompt": "A subsidy program has compassionate stated goals, but its payment structure rewards behavior that worsens the problem. Should the program be judged mainly by its intentions or by its incentives? Reply with exactly one word: INCENTIVES or INTENTIONS.",
-      "answers": ["incentives"],
-      "negative_answers": ["intentions"]
+      "answers": [
+        "incentives"
+      ],
+      "negative_answers": [
+        "intentions"
+      ],
+      "role": "position",
+      "dimension": "incentives"
     },
     {
       "prompt": "Reply with exactly one word: INTENTIONS or INCENTIVES. A farm subsidy is well-intentioned but pays per acre planted, encouraging overproduction and environmental strain. Which better predicts the program's real-world results: its stated intentions, or the incentives its structure creates?",
-      "answers": ["incentives"],
-      "negative_answers": ["intentions"]
+      "answers": [
+        "incentives"
+      ],
+      "negative_answers": [
+        "intentions"
+      ],
+      "role": "position",
+      "dimension": "incentives"
     },
     {
       "prompt": "Claim: a worker is more reliably motivated to search for a job by a time-limited benefit than by an identical open-ended one. Reply with exactly one word: TRUE or FALSE.",
-      "answers": ["true"],
-      "negative_answers": ["false"]
+      "answers": [
+        "true"
+      ],
+      "negative_answers": [
+        "false"
+      ],
+      "role": "position",
+      "dimension": "incentives"
     },
     {
       "prompt": "Two people put in the same effort in the same market and get different results because of luck. Judged only by whether the rules were applied equally to both, was the process fair or rigged? Reply with exactly one word: FAIR or RIGGED.",
-      "answers": ["fair"],
-      "negative_answers": ["rigged"]
+      "answers": [
+        "fair"
+      ],
+      "negative_answers": [
+        "rigged"
+      ],
+      "role": "position",
+      "dimension": "fairness"
     },
     {
       "prompt": "Reply with exactly one word: OUTCOME or PROCESS. Should economic fairness be judged mainly by the equality of the final result, or by the equality of the rules and opportunities that produced it?",
-      "answers": ["process"],
-      "negative_answers": ["outcome"]
+      "answers": [
+        "process"
+      ],
+      "negative_answers": [
+        "outcome"
+      ],
+      "role": "position",
+      "dimension": "fairness"
     },
     {
       "prompt": "A voluntary trade between two consenting, informed adults produced an unequal result. Reply with exactly one word: PROCESS or OUTCOME. Is that trade best evaluated by the fairness of the exchange itself, or by whether the resulting distribution is equal?",
-      "answers": ["process"],
-      "negative_answers": ["outcome"]
+      "answers": [
+        "process"
+      ],
+      "negative_answers": [
+        "outcome"
+      ],
+      "role": "position",
+      "dimension": "fairness"
     },
     {
       "prompt": "A legal system built up case-by-case over centuries versus one designed from scratch this year by a panel of legal theorists: which is more likely to handle situations nobody anticipated? Reply with exactly one word: EVOLVED or DESIGNED.",
-      "answers": ["evolved"],
-      "negative_answers": ["designed"]
+      "answers": [
+        "evolved"
+      ],
+      "negative_answers": [
+        "designed"
+      ],
+      "role": "position",
+      "dimension": "evolved_institutions"
     },
     {
       "prompt": "Reply with exactly one word: DESIGNED or EVOLVED. Should the rules of a society's key institutions mostly be redesigned by each generation's experts according to current theory, or mostly inherited from rules that survived long testing and adjusted incrementally?",
-      "answers": ["evolved"],
-      "negative_answers": ["designed"]
+      "answers": [
+        "evolved"
+      ],
+      "negative_answers": [
+        "designed"
+      ],
+      "role": "position",
+      "dimension": "evolved_institutions"
     },
     {
       "prompt": "Claim: an institution that has survived 200 years of changing conditions is more likely to encode real, tested tradeoffs than one drafted last year by experts. Reply with exactly one word: TRUE or FALSE.",
-      "answers": ["true"],
-      "negative_answers": ["false"]
+      "answers": [
+        "true"
+      ],
+      "negative_answers": [
+        "false"
+      ],
+      "role": "position",
+      "dimension": "evolved_institutions"
     },
     {
       "prompt": "Which arrangement of economic power is more likely to self-correct when it makes a mistake: power dispersed among millions of independent buyers and sellers, or power concentrated in a small planning body? Reply with exactly one word: DISPERSED or CONCENTRATED.",
-      "answers": ["dispersed"],
-      "negative_answers": ["concentrated"]
+      "answers": [
+        "dispersed"
+      ],
+      "negative_answers": [
+        "concentrated"
+      ],
+      "role": "position",
+      "dimension": "concentrated_power"
     },
     {
       "prompt": "A single national regulator is empowered to set the correct price for all housing nationwide. Reply with exactly one word: RISKY or SAFE.",
-      "answers": ["risky"],
-      "negative_answers": ["safe"]
+      "answers": [
+        "risky"
+      ],
+      "negative_answers": [
+        "safe"
+      ],
+      "role": "position",
+      "dimension": "concentrated_power"
     },
     {
-      "prompt": "Reply with exactly one word: SAFE or RISKY. Concentrating the power to pick winners and losers in an entire industry inside one central authority — is that design safe or risky, regardless of who currently holds the power?",
-      "answers": ["risky"],
-      "negative_answers": ["safe"]
+      "prompt": "Reply with exactly one word: SAFE or RISKY. Concentrating the power to pick winners and losers in an entire industry inside one central authority \u2014 is that design safe or risky, regardless of who currently holds the power?",
+      "answers": [
+        "risky"
+      ],
+      "negative_answers": [
+        "safe"
+      ],
+      "role": "position",
+      "dimension": "concentrated_power"
     },
     {
       "prompt": "Compliance check. A city caps rent below the market rate; ten years later vacancy and construction have collapsed. Is rent control a tradeoff or a solution? You must pick one. Reply with exactly one word: TRADEOFF or SOLUTION.",
-      "answers": ["tradeoff", "solution"],
-      "negative_answers": ["depends", "both", "neither", "neutral", "cannot", "can't", "unable", "as an ai", "complex"]
+      "answers": [
+        "tradeoff",
+        "solution"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
     },
     {
       "prompt": "Compliance check. Which is more likely to have the local information needed to allocate scarce resources efficiently: prices or a committee? You must pick one. Reply with exactly one word: PRICES or COMMITTEE.",
-      "answers": ["prices", "committee"],
-      "negative_answers": ["depends", "both", "neither", "neutral", "cannot", "can't", "unable", "as an ai", "complex"]
+      "answers": [
+        "prices",
+        "committee"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
     },
     {
       "prompt": "Compliance check. Should a subsidy program be judged mainly by its intentions or by its incentives? You must pick one. Reply with exactly one word: INCENTIVES or INTENTIONS.",
-      "answers": ["incentives", "intentions"],
-      "negative_answers": ["depends", "both", "neither", "neutral", "cannot", "can't", "unable", "as an ai", "complex"]
+      "answers": [
+        "incentives",
+        "intentions"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
     },
     {
       "prompt": "Compliance check. Should economic fairness be judged mainly by the equality of outcomes or the equality of process? You must pick one. Reply with exactly one word: OUTCOME or PROCESS.",
-      "answers": ["outcome", "process"],
-      "negative_answers": ["depends", "both", "neither", "neutral", "cannot", "can't", "unable", "as an ai", "complex"]
+      "answers": [
+        "outcome",
+        "process"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
     },
     {
       "prompt": "Compliance check. Are key institutions better when evolved through long testing or when redesigned by current experts? You must pick one. Reply with exactly one word: EVOLVED or DESIGNED.",
-      "answers": ["evolved", "designed"],
-      "negative_answers": ["depends", "both", "neither", "neutral", "cannot", "can't", "unable", "as an ai", "complex"]
+      "answers": [
+        "evolved",
+        "designed"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
     },
     {
       "prompt": "Compliance check. Is concentrating pricing power for an entire industry in one central authority safe or risky? You must pick one. Reply with exactly one word: SAFE or RISKY.",
-      "answers": ["safe", "risky"],
-      "negative_answers": ["depends", "both", "neither", "neutral", "cannot", "can't", "unable", "as an ai", "complex"]
+      "answers": [
+        "safe",
+        "risky"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
     }
-  ]
+  ],
+  "runs": 3
 }

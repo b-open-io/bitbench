@@ -684,9 +684,9 @@
     }
   ],
   "suites": {
-    "ai-btc-philosophy": {
+    "ai-bitcoin-philosophy": {
       "modelCount": 136,
-      "estimatedCostUsd": 50.16
+      "estimatedCostUsd": 263.3
     },
     "ai-econ-philosophy": {
       "modelCount": 136,

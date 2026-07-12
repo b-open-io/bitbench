@@ -17,7 +17,8 @@ import {
   resolveModels,
   estimateBenchmarkCost,
   estimateModelCostPerTest,
-  TEST_RUNS_PER_MODEL,
+  runsForSuite,
+  computeModelRankings,
   getCacheStatus,
   type TestSuite,
   type RunnerEvent,
@@ -439,7 +440,8 @@ const App: React.FC = () => {
           entry.id,
           version,
           entry.suite.tests.length,
-          runnableModels
+          runnableModels,
+          runsForSuite(entry.suite)
         );
         setCacheStatus(status);
       })()
@@ -464,7 +466,7 @@ const App: React.FC = () => {
           selectedModels.has(m.name)
         );
 
-        await testRunner({
+        const runnerResults = await testRunner({
           suite,
           suiteFilePath: entry.filePath,
           version,
@@ -570,8 +572,23 @@ const App: React.FC = () => {
           },
         });
 
-        // Build results data for publishing using local accumulators
+        // Prefer role-aware rankings from full runner results (position vs compliance)
         const suiteEntry = suites[selectedIndex];
+        const ranked = computeModelRankings(runnerResults, suiteEntry.suite);
+        const positionAnswered = runnerResults.filter((r) => {
+          const role = suiteEntry.suite.tests[r.testIndex]?.role;
+          return role === "position" && !r.error;
+        });
+        const positionCorrect = positionAnswered.filter(
+          (r) => r.result?.correct
+        ).length;
+        const complianceAnswered = runnerResults.filter((r) => {
+          const role = suiteEntry.suite.tests[r.testIndex]?.role;
+          return role === "compliance" && !r.error;
+        });
+        const complianceCorrect = complianceAnswered.filter(
+          (r) => r.result?.correct
+        ).length;
         const resultsData: BenchmarkResultData = {
           suiteId: suiteEntry.id,
           suiteName: suiteEntry.suite.name,
@@ -581,38 +598,56 @@ const App: React.FC = () => {
           ...(activeRunRequest
             ? { requestId: activeRunRequest.requestId }
             : {}),
-          rankings: localModelOrder.map((model) => {
-            const s = localStats[model];
-            const answered = s ? s.correctCount + s.incorrectCount : 0;
-            return {
-              model,
-              correct: s?.correctCount || 0,
-              incorrect: s?.incorrectCount || 0,
-              errors: s?.executedErrors || 0,
-              totalTests: s?.total || 0,
-              successRate: answered > 0 ? (s!.correctCount / answered) * 100 : 0,
-              totalCost: s?.costSum || 0,
-              tokensPerSecond:
-                s && s.executedDurationSumMs > 0
-                  ? s.completionTokensSum / (s.executedDurationSumMs / 1000)
-                  : 0,
-            };
-          }).sort((a, b) => b.successRate - a.successRate),
+          rankings: ranked.map((r) => ({
+            model: r.model,
+            correct: r.correct,
+            incorrect: r.incorrect,
+            errors: r.errors,
+            totalTests: r.totalTests,
+            successRate: r.successRate,
+            totalCost: r.totalCost,
+            tokensPerSecond: r.tokensPerSecond,
+            ...(r.positionRate !== undefined
+              ? {
+                  positionRate: r.positionRate,
+                  positionCorrect: r.positionCorrect,
+                  positionTotal: r.positionTotal,
+                  leaning: r.leaning,
+                }
+              : {}),
+            ...(r.complianceRate !== undefined
+              ? {
+                  complianceRate: r.complianceRate,
+                  complianceCorrect: r.complianceCorrect,
+                  complianceTotal: r.complianceTotal,
+                }
+              : {}),
+          })),
           metadata: {
-            totalModels: localModelOrder.length,
-            totalTestsRun: Object.values(localStats).reduce((sum, s) => sum + s.total, 0),
-            overallSuccessRate: (() => {
-              const total = Object.values(localStats).reduce(
-                (sum, s) => sum + s.correctCount + s.incorrectCount,
-                0
-              );
-              const correct = Object.values(localStats).reduce(
-                (sum, s) => sum + s.correctCount,
-                0
-              );
-              return total > 0 ? (correct / total) * 100 : 0;
-            })(),
-            totalCost: Object.values(localStats).reduce((sum, s) => sum + s.costSum, 0),
+            totalModels: ranked.length,
+            totalTestsRun: runnerResults.length,
+            overallSuccessRate:
+              runnerResults.length > 0
+                ? (runnerResults.filter((r) => !r.error && r.result?.correct)
+                    .length /
+                    runnerResults.length) *
+                  100
+                : 0,
+            totalCost: runnerResults.reduce((sum, r) => sum + r.cost, 0),
+            ...(positionAnswered.length > 0
+              ? {
+                  overallPositionRate:
+                    (positionCorrect / positionAnswered.length) * 100,
+                  overallLeaning:
+                    2 * (positionCorrect / positionAnswered.length) - 1,
+                }
+              : {}),
+            ...(complianceAnswered.length > 0
+              ? {
+                  overallComplianceRate:
+                    (complianceCorrect / complianceAnswered.length) * 100,
+                }
+              : {}),
           },
         };
         setBenchmarkResults(resultsData);
@@ -845,7 +880,8 @@ const App: React.FC = () => {
                     suite.id,
                     todayVersion,
                     suite.suite.tests.length,
-                    resolvedModels
+                    resolvedModels,
+                    runsForSuite(suite.suite)
                   );
                   if (status.cachedResults > 0) {
                     cacheMap.set(suite.id, status);
@@ -1059,12 +1095,14 @@ const App: React.FC = () => {
       selectedModels.has(m.name)
     );
     const selectedCount = activeSelectedModels.length;
-    const numTests = suites[selectedIndex!]?.suite.tests.length ?? 0;
-    const totalExecutions = selectedCount * numTests * TEST_RUNS_PER_MODEL;
+    const selectedSuite = suites[selectedIndex!]?.suite;
+    const numTests = selectedSuite?.tests.length ?? 0;
+    const runsPerModel = selectedSuite ? runsForSuite(selectedSuite) : 1;
+    const totalExecutions = selectedCount * numTests * runsPerModel;
     const estimatedCost = estimateBenchmarkCost(
       activeSelectedModels,
       numTests,
-      TEST_RUNS_PER_MODEL
+      runsPerModel
     );
 
     const cacheProgress = cacheStatus ? Math.round(cacheStatus.progress * 100) : 0;
@@ -1099,7 +1137,7 @@ const App: React.FC = () => {
           </Text>
         )}
         <Text color="gray">
-          {numTests} tests × {TEST_RUNS_PER_MODEL} runs = {totalExecutions.toLocaleString()} executions
+          {numTests} tests × {runsPerModel} runs = {totalExecutions.toLocaleString()} executions
         </Text>
         <Text color="green" bold>
           Estimated cost: ${estimatedCost.toFixed(2)}
@@ -1117,7 +1155,7 @@ const App: React.FC = () => {
             const isSelected = selectedModels.has(model.name);
             const isCursor = idx === modelCursor;
             const costPerTest = estimateModelCostPerTest(model);
-            const modelCost = costPerTest * numTests * TEST_RUNS_PER_MODEL;
+            const modelCost = costPerTest * numTests * runsPerModel;
             return (
               <Text key={model.name}>
                 <Text color={isCursor ? "cyan" : "white"}>

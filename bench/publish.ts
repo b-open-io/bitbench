@@ -36,12 +36,25 @@ export interface BenchmarkResultData {
     successRate: number;
     totalCost: number;
     tokensPerSecond: number;
+    /** Philosophy suites: high-pole match rate on position items only */
+    positionRate?: number;
+    positionCorrect?: number;
+    positionTotal?: number;
+    /** Philosophy suites: either-pole acceptance rate on compliance probes */
+    complianceRate?: number;
+    complianceCorrect?: number;
+    complianceTotal?: number;
+    /** leaning = 2*(positionRate/100) - 1 */
+    leaning?: number;
   }>;
   metadata: {
     totalModels: number;
     totalTestsRun: number;
     overallSuccessRate: number;
     totalCost: number;
+    overallPositionRate?: number;
+    overallComplianceRate?: number;
+    overallLeaning?: number;
   };
 }
 

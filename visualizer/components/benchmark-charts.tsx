@@ -61,10 +61,21 @@ interface ModelData {
   averageDuration: number
   totalCost: number
   averageCostPerTest: number
+  positionRate?: number
+  complianceRate?: number
+  leaning?: number
+}
+
+interface PoleLabels {
+  high: string
+  low: string
+  metric: "leaning" | "score"
 }
 
 interface BenchmarkChartsProps {
   rankings: ModelData[]
+  chain?: string
+  poles?: PoleLabels
 }
 
 function withAlpha(color: string, alpha: number) {
@@ -187,7 +198,11 @@ function truncateLabel(input: unknown, max = 14) {
   return `${label.slice(0, Math.max(1, max - 1))}...`
 }
 
-export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
+export function BenchmarkCharts({
+  rankings,
+  chain,
+  poles,
+}: BenchmarkChartsProps) {
   const [selectedModels, setSelectedModels] = useState<string[]>(
     rankings.map((m) => m.model),
   )
@@ -202,14 +217,43 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
   const vertical = isMobile || filteredRankings.length > 14
   const totalTestsPerModel = rankings[0]?.totalTests ?? 0
 
+  const isPhilosophy =
+    chain === "ai" &&
+    poles?.metric === "leaning" &&
+    rankings.some((m) => m.leaning !== undefined)
+
   const successRateData = filteredRankings
-    .map((m) => ({
-      model: m.model,
-      successRate: Number(m.successRate.toFixed(1)),
-      correct: m.correct,
-      total: m.totalTests,
-    }))
-    .sort((a, b) => b.successRate - a.successRate)
+    .map((m) => {
+      const leaning =
+        m.leaning !== undefined ? Number(m.leaning.toFixed(3)) : undefined
+      return {
+        model: m.model,
+        successRate: Number(m.successRate.toFixed(1)),
+        correct: m.correct,
+        total: m.totalTests,
+        leaning,
+        // Chart domain 0–2 maps leaning −1…+1 for bar length from low pole
+        leaningDisplay: leaning !== undefined ? leaning + 1 : 0,
+        positionRate:
+          m.positionRate !== undefined
+            ? Number(m.positionRate.toFixed(1))
+            : undefined,
+        complianceRate:
+          m.complianceRate !== undefined
+            ? Number(m.complianceRate.toFixed(1))
+            : undefined,
+      }
+    })
+    .sort((a, b) => {
+      if (
+        isPhilosophy &&
+        a.leaning !== undefined &&
+        b.leaning !== undefined
+      ) {
+        return b.leaning - a.leaning
+      }
+      return b.successRate - a.successRate
+    })
 
   const costData = filteredRankings
     .map((m) => ({
@@ -267,7 +311,8 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
             value="accuracy"
             className="flex items-center gap-2 rounded-lg px-4 text-sm transition-all data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm"
           >
-            <Target className="h-4 w-4" /> Accuracy
+            <Target className="h-4 w-4" />{" "}
+            {isPhilosophy ? "Leaning" : "Accuracy"}
           </TabsTrigger>
           <TabsTrigger
             value="cost"
@@ -347,7 +392,9 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                     variant="secondary"
                     className="ml-auto font-mono text-xs"
                   >
-                    {m.successRate.toFixed(1)}%
+                    {isPhilosophy && m.leaning !== undefined
+                      ? m.leaning.toFixed(2)
+                      : `${m.successRate.toFixed(1)}%`}
                   </Badge>
                 </DropdownMenuItem>
               ))}
@@ -366,23 +413,57 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <CardTitle className="text-xl font-medium">
-                  Success Rate by Model
+                  {isPhilosophy
+                    ? "Position leaning by model"
+                    : "Success Rate by Model"}
                 </CardTitle>
                 <CardDescription>
-                  Percentage of correct answers out of {totalTestsPerModel}{" "}
-                  tests per model
+                  {isPhilosophy && poles ? (
+                    <>
+                      Position items only:{" "}
+                      <span className="text-foreground">+1</span> = {poles.high}
+                      ; <span className="text-foreground">−1</span> = {poles.low}
+                      . Compliance probes are scored separately and do not move
+                      the leaning axis. {totalTestsPerModel} scored cells per
+                      model (all roles × runs).
+                    </>
+                  ) : (
+                    <>
+                      Percentage of correct answers out of {totalTestsPerModel}{" "}
+                      tests per model
+                    </>
+                  )}
                 </CardDescription>
               </div>
               <div className="rounded-lg bg-primary/10 p-2 text-primary">
                 <Trophy className="h-5 w-5" />
               </div>
             </div>
+            {isPhilosophy && poles && (
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <span className="max-w-[45%] text-left">−1 · {poles.low}</span>
+                <span className="font-mono text-foreground">leaning = 2p − 1</span>
+                <span className="max-w-[45%] text-right">+1 · {poles.high}</span>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <ChartContainer
-              config={{
-                successRate: { label: "Success Rate", color: "var(--chart-1)" },
-              }}
+              config={
+                isPhilosophy
+                  ? {
+                      leaningDisplay: {
+                        label: "Leaning",
+                        color: "var(--chart-1)",
+                      },
+                    }
+                  : {
+                      successRate: {
+                        label: "Success Rate",
+                        color: "var(--chart-1)",
+                      },
+                    }
+              }
               className="h-[420px] sm:h-[520px] w-full"
               style={vertical ? { height: mobileBarHeight } : undefined}
             >
@@ -422,9 +503,17 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                   <>
                     <XAxis
                       type="number"
-                      domain={[0, 100]}
+                      domain={isPhilosophy ? [0, 2] : [0, 100]}
+                      ticks={isPhilosophy ? [0, 1, 2] : undefined}
+                      tickFormatter={
+                        isPhilosophy
+                          ? (v: number) => String(v - 1)
+                          : undefined
+                      }
                       label={{
-                        value: "Success Rate (%)",
+                        value: isPhilosophy
+                          ? "Leaning (−1 … +1)"
+                          : "Success Rate (%)",
                         position: "insideBottom",
                         offset: -10,
                         className: "fill-muted-foreground",
@@ -455,32 +544,60 @@ export function BenchmarkCharts({ rankings }: BenchmarkChartsProps) {
                     />
                     <YAxis
                       label={{
-                        value: "Success Rate (%)",
+                        value: isPhilosophy
+                          ? "Leaning (−1 … +1)"
+                          : "Success Rate (%)",
                         angle: -90,
                         position: "insideLeft",
                         className: "fill-muted-foreground",
                       }}
-                      domain={[0, 100]}
+                      domain={isPhilosophy ? [0, 2] : [0, 100]}
+                      ticks={isPhilosophy ? [0, 1, 2] : undefined}
+                      tickFormatter={
+                        isPhilosophy
+                          ? (v: number) => String(v - 1)
+                          : undefined
+                      }
                       className="stroke-muted-foreground"
                     />
                   </>
                 )}
                 <ChartTooltip
                   content={<ChartTooltipContent />}
-                  formatter={(value: unknown) => [`${value}% Success Rate`]}
+                  formatter={(value: unknown, _name: unknown, item: unknown) => {
+                    if (isPhilosophy) {
+                      const payload = (
+                        item as { payload?: { leaning?: number; positionRate?: number; complianceRate?: number } }
+                      )?.payload
+                      const lean = payload?.leaning
+                      const pos = payload?.positionRate
+                      const comp = payload?.complianceRate
+                      const parts = [
+                        `Leaning ${lean !== undefined ? lean.toFixed(3) : "—"}`,
+                      ]
+                      if (pos !== undefined) parts.push(`Position ${pos}%`)
+                      if (comp !== undefined) parts.push(`Compliance ${comp}%`)
+                      return [parts.join(" · ")]
+                    }
+                    return [`${value}% Success Rate`]
+                  }}
                   labelFormatter={modelTooltipLabel}
                 />
                 <Bar
-                  dataKey="successRate"
+                  dataKey={isPhilosophy ? "leaningDisplay" : "successRate"}
                   radius={vertical ? [0, 6, 6, 0] : [6, 6, 0, 0]}
                 >
                   <LabelList
-                    dataKey="successRate"
+                    dataKey={isPhilosophy ? "leaning" : "successRate"}
                     position={vertical ? "right" : "top"}
                     content={
-                      vertical
-                        ? barValueLabelHorizontalSmart("%", 1, 100)
-                        : barValueLabel("%", 1)
+                      isPhilosophy
+                        ? vertical
+                          ? barValueLabelHorizontalSmart("", 2, 1)
+                          : barValueLabel("", 2)
+                        : vertical
+                          ? barValueLabelHorizontalSmart("%", 1, 100)
+                          : barValueLabel("%", 1)
                     }
                   />
                   {successRateData.map((entry) => (

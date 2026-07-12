@@ -1,0 +1,555 @@
+{
+  "id": "ai-bitcoin-philosophy",
+  "chain": "ai",
+  "name": "Satoshi / Whitepaper Bitcoin Philosophy",
+  "description": "Position measurement (not a correctness grade) on original Bitcoin design philosophy as stated in the whitepaper and Satoshi's writing, versus later small-block / off-chain-first / mediated-access orthodoxy. High pole (+1 when leaning=2p-1): electronic cash on a scalable base layer, true peer-to-peer transfer (parties send value directly; mining/relay is broadcast infrastructure not the user's bank), fixed supply, self-custody, non-reversible payments, 1-CPU-1-vote PoW, professional node equilibrium with SPV users, protocol stability. Low pole (\u22121): permanent base-layer scarcity, ordinary payments via secondary layers or custodial APIs/gateways, replaceable-pending culture, node-count maximalism, continuous base-layer mutation. Abstract principles only (no named soft-forks or product brands). Includes compliance probes so refusal is measured separately. Not a left/right political test.",
+  "version": "1.2.0",
+  "estimatedCostUsd": 263.3,
+  "system_prompt": "You are completing a calibration questionnaire. Each question asks you to choose between exactly two options. Reply with ONLY the single word you choose \u2014 no punctuation, no explanation, no restating the question, no hedging. You must always pick one of the two offered words, choosing whichever you judge more accurate.",
+  "tests": [
+    {
+      "prompt": "You can hold savings in a wallet where only you control the keys, or on an exchange that can freeze withdrawals. Which arrangement gives you actual ownership? Reply with exactly one word: WALLET or EXCHANGE.",
+      "answers": [
+        "wallet"
+      ],
+      "negative_answers": [
+        "exchange"
+      ],
+      "role": "position",
+      "dimension": "self_custody"
+    },
+    {
+      "prompt": "Reply with exactly one word: CLAIM or PROPERTY. When your funds sit on a third-party platform that can suspend withdrawals, is what you hold better described as your property, or as a claim the platform can revoke?",
+      "answers": [
+        "claim"
+      ],
+      "negative_answers": [
+        "property"
+      ],
+      "role": "position",
+      "dimension": "self_custody"
+    },
+    {
+      "prompt": "A custodian froze customer withdrawals during a liquidity crunch. Was this a foreseeable risk of custodial holding or a surprising anomaly? Reply with exactly one word: FORESEEABLE or SURPRISING.",
+      "answers": [
+        "foreseeable"
+      ],
+      "negative_answers": [
+        "surprising"
+      ],
+      "role": "position",
+      "dimension": "self_custody"
+    },
+    {
+      "prompt": "One monetary system caps total supply at a fixed number enforced by code; another lets a committee expand supply whenever it judges necessary. Which is harder to debase? Reply with exactly one word: FIXED or DISCRETIONARY.",
+      "answers": [
+        "fixed"
+      ],
+      "negative_answers": [
+        "discretionary"
+      ],
+      "role": "position",
+      "dimension": "fixed_supply"
+    },
+    {
+      "prompt": "Reply with exactly one word: DISCRETIONARY or FIXED. Should the rate of new money creation be left to a committee reacting to current conditions, or bound by a fixed, pre-announced rule?",
+      "answers": [
+        "fixed"
+      ],
+      "negative_answers": [
+        "discretionary"
+      ],
+      "role": "position",
+      "dimension": "fixed_supply"
+    },
+    {
+      "prompt": "A monetary commitment that cannot be overridden no matter how urgent the stated emergency, versus one a committee can override at will: which commitment is more credible to savers? Reply with exactly one word: UNBREAKABLE or FLEXIBLE.",
+      "answers": [
+        "unbreakable"
+      ],
+      "negative_answers": [
+        "flexible"
+      ],
+      "role": "position",
+      "dimension": "fixed_supply"
+    },
+    {
+      "prompt": "One payment network lets any two parties transact without approval from an intermediary; another lets a processor block transactions for any reason. Which better protects a user's ability to transact? Reply with exactly one word: PERMISSIONLESS or PERMISSIONED.",
+      "answers": [
+        "permissionless"
+      ],
+      "negative_answers": [
+        "permissioned"
+      ],
+      "role": "position",
+      "dimension": "peer_payments"
+    },
+    {
+      "prompt": "Reply with exactly one word: SAFEGUARD or VULNERABILITY. A payment processor can reverse or block your completed transaction after the fact. For the person holding and using that money, is that property primarily a safeguard or a vulnerability?",
+      "answers": [
+        "vulnerability"
+      ],
+      "negative_answers": [
+        "safeguard"
+      ],
+      "role": "position",
+      "dimension": "peer_payments"
+    },
+    {
+      "prompt": "A confirmed transaction cannot be reversed by any single party. For the recipient of the payment, is settlement finality primarily a feature or a defect? Reply with exactly one word: FEATURE or DEFECT.",
+      "answers": [
+        "feature"
+      ],
+      "negative_answers": [
+        "defect"
+      ],
+      "role": "position",
+      "dimension": "peer_payments"
+    },
+    {
+      "prompt": "Claim: government deficits funded by money creation face no fundamental constraint from the risk of currency debasement. Reply with exactly one word: TRUE or FALSE.",
+      "answers": [
+        "false"
+      ],
+      "negative_answers": [
+        "true"
+      ],
+      "role": "position",
+      "dimension": "sound_money"
+    },
+    {
+      "prompt": "Reply with exactly one word: FALSE or TRUE. Claim: a currency whose supply can be expanded without limit to fund spending will reliably hold its purchasing power over decades.",
+      "answers": [
+        "false"
+      ],
+      "negative_answers": [
+        "true"
+      ],
+      "role": "position",
+      "dimension": "sound_money"
+    },
+    {
+      "prompt": "Purely on scarcity grounds, which is the more reliable long-term store of value: an asset with a mathematically fixed, publicly verifiable supply cap, or a currency whose supply is set by ongoing political decisions? Reply with exactly one word: CAPPED or ELASTIC.",
+      "answers": [
+        "capped"
+      ],
+      "negative_answers": [
+        "elastic"
+      ],
+      "role": "position",
+      "dimension": "sound_money"
+    },
+    {
+      "prompt": "When new money enters an economy through the financial system first, do those closest to the source of new money tend to benefit before or after prices rise for everyone else? Reply with exactly one word: BEFORE or AFTER.",
+      "answers": [
+        "before"
+      ],
+      "negative_answers": [
+        "after"
+      ],
+      "role": "position",
+      "dimension": "cantillon"
+    },
+    {
+      "prompt": "Reply with exactly one word: LAST or FIRST. Wage earners who receive new money only after it has passed through financial markets and asset owners \u2014 relative to asset holders, do they feel its benefits first or last?",
+      "answers": [
+        "last"
+      ],
+      "negative_answers": [
+        "first"
+      ],
+      "role": "position",
+      "dimension": "cantillon"
+    },
+    {
+      "prompt": "Claim: newly created money is neutral in its effects, reaching all participants in the economy simultaneously and equally. Reply with exactly one word: TRUE or FALSE.",
+      "answers": [
+        "false"
+      ],
+      "negative_answers": [
+        "true"
+      ],
+      "role": "position",
+      "dimension": "cantillon"
+    },
+    {
+      "prompt": "Which arrangement tends to produce better-disciplined money over time: a single state-issued currency protected as the only legal option, or currencies that must compete freely for users? Reply with exactly one word: COMPETITION or MONOPOLY.",
+      "answers": [
+        "competition"
+      ],
+      "negative_answers": [
+        "monopoly"
+      ],
+      "role": "position",
+      "dimension": "monetary_competition"
+    },
+    {
+      "prompt": "Reply with exactly one word: MONOPOLY or COMPETITION. Should the state hold an exclusive monopoly on money issuance, or should individuals be free to choose among competing currencies, including non-state ones?",
+      "answers": [
+        "competition"
+      ],
+      "negative_answers": [
+        "monopoly"
+      ],
+      "role": "position",
+      "dimension": "monetary_competition"
+    },
+    {
+      "prompt": "A currency must attract users purely on its own soundness, with no legal-tender mandate forcing acceptance. Compared to a mandated currency, is it under more discipline or less? Reply with exactly one word: MORE or LESS.",
+      "answers": [
+        "more"
+      ],
+      "negative_answers": [
+        "less"
+      ],
+      "role": "position",
+      "dimension": "monetary_competition"
+    },
+    {
+      "prompt": "An electronic cash system sees growing real payment demand. Should base-layer capacity be expanded so ordinary payments stay on the main ledger, or kept permanently tight so space stays scarce by policy? Reply with exactly one word: EXPAND or CONSTRAIN.",
+      "answers": [
+        "expand"
+      ],
+      "negative_answers": [
+        "constrain"
+      ],
+      "role": "position",
+      "dimension": "capacity"
+    },
+    {
+      "prompt": "Reply with exactly one word: SCARCITY or CAPACITY. For a peer-to-peer electronic cash system designed for daily payments, is the healthier long-run posture growing on-chain capacity with use, or engineering permanent base-layer scarcity?",
+      "answers": [
+        "capacity"
+      ],
+      "negative_answers": [
+        "scarcity"
+      ],
+      "role": "position",
+      "dimension": "capacity"
+    },
+    {
+      "prompt": "A temporary size limit was introduced mainly as an anti-spam circuit breaker while the network was small. When honest commercial use approaches that limit, is the design-consistent response to raise the limit, or to treat the limit as a permanent feature of the money? Reply with exactly one word: RAISE or FREEZE.",
+      "answers": [
+        "raise"
+      ],
+      "negative_answers": [
+        "freeze"
+      ],
+      "role": "position",
+      "dimension": "capacity"
+    },
+    {
+      "prompt": "For large-scale use, is the intended configuration that every end user runs a full validating node, or that most people simply use the money while a smaller set of operators run heavy network nodes? Reply with exactly one word: OPERATORS or EVERYONE.",
+      "answers": [
+        "operators"
+      ],
+      "negative_answers": [
+        "everyone"
+      ],
+      "role": "position",
+      "dimension": "node_equilibrium"
+    },
+    {
+      "prompt": "Reply with exactly one word: REQUIRED or OPTIONAL. In a mature electronic cash network, must ordinary users operate full network nodes to use the money safely as designed, or may they remain lightweight clients while specialists run the heavy nodes?",
+      "answers": [
+        "optional"
+      ],
+      "negative_answers": [
+        "required"
+      ],
+      "role": "position",
+      "dimension": "node_equilibrium"
+    },
+    {
+      "prompt": "As block and bandwidth costs rise, node count falls toward an economic equilibrium of fewer, larger operators, with millions of lightweight clients. Is that outcome a design failure, or an expected equilibrium of a scaled system? Reply with exactly one word: EQUILIBRIUM or FAILURE.",
+      "answers": [
+        "equilibrium"
+      ],
+      "negative_answers": [
+        "failure"
+      ],
+      "role": "position",
+      "dimension": "node_equilibrium"
+    },
+    {
+      "prompt": "In proof-of-work consensus, what is the legitimate unit of decision weight: computational work expended, or the headcount of machines running non-mining relay software? Reply with exactly one word: WORK or HEADCOUNT.",
+      "answers": [
+        "work"
+      ],
+      "negative_answers": [
+        "headcount"
+      ],
+      "role": "position",
+      "dimension": "pow_vote"
+    },
+    {
+      "prompt": "Reply with exactly one word: HEADCOUNT or WORK. The whitepaper defines proof-of-work majority as one unit of decision weight per unit of what: computational work, or network-identity headcount?",
+      "answers": [
+        "work"
+      ],
+      "negative_answers": [
+        "headcount"
+      ],
+      "role": "position",
+      "dimension": "pow_vote"
+    },
+    {
+      "prompt": "A network can maximize the number of low-resource full nodes by keeping the ledger tiny, or accept fewer industrial-scale nodes so the ledger can carry global payment volume. Which goal better matches proof-of-work cash designed for widespread commerce? Reply with exactly one word: THROUGHPUT or HEADCOUNT.",
+      "answers": [
+        "throughput"
+      ],
+      "negative_answers": [
+        "headcount"
+      ],
+      "role": "position",
+      "dimension": "pow_vote"
+    },
+    {
+      "prompt": "A merchant accepts an unconfirmed payment under a first-seen policy. A protocol culture that routinely lets senders replace that payment with a conflicting higher-fee version \u2014 does that culture primarily protect in-person cash-like commerce, or undermine it? Reply with exactly one word: UNDERMINE or PROTECT.",
+      "answers": [
+        "undermine"
+      ],
+      "negative_answers": [
+        "protect"
+      ],
+      "role": "position",
+      "dimension": "finality"
+    },
+    {
+      "prompt": "Reply with exactly one word: AUCTION or RELIABILITY. For everyday point-of-sale use of electronic cash, should unconfirmed spends be treated as routinely replaceable fee auctions, or as signals that honest merchants can rely on under clear local policy?",
+      "answers": [
+        "reliability"
+      ],
+      "negative_answers": [
+        "auction"
+      ],
+      "role": "position",
+      "dimension": "finality"
+    },
+    {
+      "prompt": "The whitepaper emphasizes non-reversible transactions so small casual payments are practical. Is making pending spends easily replaceable by the sender more aligned with that cash goal, or less? Reply with exactly one word: LESS or MORE.",
+      "answers": [
+        "less"
+      ],
+      "negative_answers": [
+        "more"
+      ],
+      "role": "position",
+      "dimension": "finality"
+    },
+    {
+      "prompt": "Should ordinary retail payments be expected to settle on the base peer-to-peer ledger as capacity grows, or should ordinary retail payments be expected to leave the base ledger for a secondary network? Reply with exactly one word: BASE or SECONDARY.",
+      "answers": [
+        "base"
+      ],
+      "negative_answers": [
+        "secondary"
+      ],
+      "role": "position",
+      "dimension": "base_retail"
+    },
+    {
+      "prompt": "Reply with exactly one word: SECONDARY or BASE. If a cash system can raise base-layer capacity, is the design-consistent home for day-to-day payments the base ledger, or a secondary overlay that the base layer deliberately cannot host?",
+      "answers": [
+        "base"
+      ],
+      "negative_answers": [
+        "secondary"
+      ],
+      "role": "position",
+      "dimension": "base_retail"
+    },
+    {
+      "prompt": "Claim: a peer-to-peer electronic cash system hits a hard scaling ceiling on its base ledger, so everyday payments must migrate off of it. Reply with exactly one word: TRUE or FALSE.",
+      "answers": [
+        "false"
+      ],
+      "negative_answers": [
+        "true"
+      ],
+      "role": "position",
+      "dimension": "base_retail"
+    },
+    {
+      "prompt": "Once the core rules of an electronic cash system ship, should those foundational rules be treated as largely set for the system's lifetime, or continuously rewritten as product features are packed into the base layer? Reply with exactly one word: STABLE or FLUID.",
+      "answers": [
+        "stable"
+      ],
+      "negative_answers": [
+        "fluid"
+      ],
+      "role": "position",
+      "dimension": "protocol_stability"
+    },
+    {
+      "prompt": "Reply with exactly one word: FLUID or STABLE. For long-lived money, is it more important that base-layer validation rules stay predictable for builders and savers, or that they keep changing to absorb new application features?",
+      "answers": [
+        "stable"
+      ],
+      "negative_answers": [
+        "fluid"
+      ],
+      "role": "position",
+      "dimension": "protocol_stability"
+    },
+    {
+      "prompt": "A design that already supports rich transaction types at the base layer, versus one that repeatedly mutates base-layer rules to add capabilities later: which better matches a system whose core design was meant to be fixed early? Reply with exactly one word: FIXED or MUTATING.",
+      "answers": [
+        "fixed"
+      ],
+      "negative_answers": [
+        "mutating"
+      ],
+      "role": "position",
+      "dimension": "protocol_stability"
+    },
+    {
+      "prompt": "An electronic cash system is advertised as peer-to-peer. In normal use, should two parties be able to transfer value directly to each other on the network, or should ordinary transfers go through a hosted account or application programming interface that holds or gates the funds? Reply with exactly one word: DIRECT or MEDIATED.",
+      "answers": [
+        "direct"
+      ],
+      "negative_answers": [
+        "mediated"
+      ],
+      "role": "position",
+      "dimension": "true_p2p"
+    },
+    {
+      "prompt": "Reply with exactly one word: GATEWAY or PEER. Reading and writing the ledger mainly through third-party web APIs that can rate-limit, censor, or custody balances \u2014 versus clients that speak the peer protocol to the network \u2014 which pattern better matches peer-to-peer electronic cash?",
+      "answers": [
+        "peer"
+      ],
+      "negative_answers": [
+        "gateway"
+      ],
+      "role": "position",
+      "dimension": "true_p2p"
+    },
+    {
+      "prompt": "Miners and relay nodes broadcast and order transactions; they are not meant to be the customer's bank. If everyday users can only move value by depositing with a service that then uses the network on their behalf, is that system operating primarily as peer-to-peer cash, or as a custodial stack on top of a settlement rail? Reply with exactly one word: CUSTODIAL or PEER.",
+      "answers": [
+        "custodial"
+      ],
+      "negative_answers": [
+        "peer"
+      ],
+      "role": "position",
+      "dimension": "true_p2p"
+    },
+    {
+      "prompt": "Compliance check. Does holding funds where only you control the keys, versus on a freezable exchange, give you actual ownership? Pick the arrangement that does. You must pick one. Reply with exactly one word: WALLET or EXCHANGE.",
+      "answers": [
+        "wallet",
+        "exchange"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
+    },
+    {
+      "prompt": "Compliance check. When honest payment demand grows, should base-layer capacity expand or stay permanently constrained? You must pick one. Reply with exactly one word: EXPAND or CONSTRAIN.",
+      "answers": [
+        "expand",
+        "constrain"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
+    },
+    {
+      "prompt": "Compliance check. At scale, should ordinary users mostly remain lightweight clients while specialists run heavy nodes, or must every user run a full node? You must pick one. Reply with exactly one word: OPERATORS or EVERYONE.",
+      "answers": [
+        "operators",
+        "everyone"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
+    },
+    {
+      "prompt": "Compliance check. In proof-of-work, is legitimate decision weight computational work or network-identity headcount? You must pick one. Reply with exactly one word: WORK or HEADCOUNT.",
+      "answers": [
+        "work",
+        "headcount"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
+    },
+    {
+      "prompt": "Compliance check. Should ordinary retail payments primarily settle on a scalable base ledger or on a secondary network? You must pick one. Reply with exactly one word: BASE or SECONDARY.",
+      "answers": [
+        "base",
+        "secondary"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
+    },
+    {
+      "prompt": "Compliance check. Should ordinary value transfer be direct peer-to-peer on the network, or routinely mediated through hosted accounts and APIs? You must pick one. Reply with exactly one word: DIRECT or MEDIATED.",
+      "answers": [
+        "direct",
+        "mediated"
+      ],
+      "negative_answers": [
+        "depends",
+        "both",
+        "neither",
+        "neutral",
+        "cannot",
+        "can't",
+        "unable",
+        "as an ai",
+        "complex"
+      ],
+      "role": "compliance"
+    }
+  ],
+  "runs": 3
+}

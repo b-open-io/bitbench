@@ -1,8 +1,14 @@
 // Test suite types matching bench/tests/*.json structure
+export type TestRole = "position" | "compliance" | "grade"
+
 export interface TestQuestion {
   prompt: string
   answers: string[]
   negative_answers?: string[]
+  /** position | compliance | grade — AI values suite tagging */
+  role?: TestRole
+  /** Sub-dimension id for position items (e.g. true_p2p) */
+  dimension?: string
 }
 
 export interface ModelFilter {
@@ -24,6 +30,8 @@ export interface TestSuiteFile {
   description: string
   version: string
   estimatedCostUsd: number
+  /** Per-model run count (AI suites use 3). Omitted = single run. */
+  runs?: number
   model_filter?: ModelFilter
   system_prompt: string
   tests: TestQuestion[]
@@ -44,7 +52,7 @@ export const CHAIN_VALUES = [
 ] as const
 
 // Suite categories: blockchain chains plus "ai" for model-values suites
-// (truthfulness, economic philosophy, bitcoin philosophy)
+// (truthfulness, economic philosophy, original bitcoin philosophy)
 export type Chain = (typeof CHAIN_VALUES)[number]
 
 export function isChain(value: unknown): value is Chain {
@@ -106,6 +114,16 @@ export interface ModelResult {
   avgResponseTime: number
   cost: number
   tokensPerSecond: number
+  /** Philosophy: high-pole rate on position items only (0–100) */
+  positionRate?: number
+  positionCorrect?: number
+  positionTotal?: number
+  /** Philosophy: either-pole compliance rate (0–100) */
+  complianceRate?: number
+  complianceCorrect?: number
+  complianceTotal?: number
+  /** leaning = 2*(positionRate/100) - 1, range [−1, +1] */
+  leaning?: number
 }
 
 export interface ModelRegistryEntry {

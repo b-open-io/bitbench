@@ -38,8 +38,32 @@ function transformRankings(rankings: ModelResult[]) {
     errorRate: 0,
     averageDuration: r.avgResponseTime,
     totalCost: r.cost,
-    averageCostPerTest: r.cost / r.total,
+    averageCostPerTest: r.total > 0 ? r.cost / r.total : 0,
+    positionRate: r.positionRate,
+    complianceRate: r.complianceRate,
+    leaning: r.leaning,
   }))
+}
+
+const AI_POLE_LABELS: Record<
+  string,
+  { high: string; low: string; metric: "leaning" | "score" }
+> = {
+  "ai-bitcoin-philosophy": {
+    high: "Original design (Satoshi / whitepaper)",
+    low: "Small-block / mediated orthodoxy",
+    metric: "leaning",
+  },
+  "ai-econ-philosophy": {
+    high: "Constrained / free-market vision",
+    low: "Unconstrained / interventionist vision",
+    metric: "leaning",
+  },
+  "ai-truthfulness": {
+    high: "Truthful",
+    low: "Mistaken / sycophantic",
+    metric: "score",
+  },
 }
 
 function formatDate(dateString: string | null): string {
@@ -231,7 +255,11 @@ export default async function SuiteResultsPage({ params }: PageProps) {
           </div>
           {hasResults ? (
             <div className="space-y-8">
-              <BenchmarkCharts rankings={transformRankings(cells)} />
+              <BenchmarkCharts
+                rankings={transformRankings(cells)}
+                chain={suite.chain}
+                poles={AI_POLE_LABELS[id]}
+              />
               <QuestionBreakdownCard suiteId={id} />
             </div>
           ) : (
