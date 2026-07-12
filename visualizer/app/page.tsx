@@ -76,13 +76,17 @@ function BenchmarkVisualizerContent() {
         const res = await fetch("/api/results")
         if (res.ok) {
           const data = await res.json()
+          // Knowledge index only — never use a cross-suite blend that mixes
+          // philosophy leaning with accuracy.
+          const board =
+            data.knowledgeIndex?.models ?? data.globalLeaderboard ?? []
           setResultsSummary({
             totalCompletedSuites: data.totalCompletedSuites,
             totalModelsEvaluated: data.totalModelsEvaluated,
-            topPerformer: data.globalLeaderboard?.[0]
+            topPerformer: board[0]
               ? {
-                  model: data.globalLeaderboard[0].model,
-                  score: data.globalLeaderboard[0].averageScore,
+                  model: board[0].model,
+                  score: board[0].averageScore,
                 }
               : null,
           })
@@ -238,11 +242,11 @@ function BenchmarkVisualizerContent() {
               {resultsSummary.totalCompletedSuites !== 1 ? "s" : ""} completed
               {topPerformer && (
                 <>
-                  {". "}Top result so far:{" "}
+                  {". "}Bitcoin Knowledge Index leader:{" "}
                   <span className="font-medium text-foreground">
                     {topPerformer.model}
                   </span>{" "}
-                  at {topPerformer.score.toFixed(1)}%
+                  at {topPerformer.score.toFixed(1)}% accuracy
                 </>
               )}
               {". "}

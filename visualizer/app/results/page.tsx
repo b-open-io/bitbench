@@ -37,7 +37,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { type Chain, isChain } from "@/lib/types"
+import { type Chain, CHAIN_INFO, isChain } from "@/lib/types"
+
+type MetricKind = "accuracy" | "leaning"
 
 interface SuiteRunSummary {
   suiteId: string
@@ -48,21 +50,33 @@ interface SuiteRunSummary {
   version: string
   totalModels: number
   totalTests: number
+  metricKind: MetricKind
   topPerformer: {
     model: string
     score: number
+    leaning?: number
   } | null
   totalCost: number
 }
 
-interface LeaderboardEntry {
+interface IndexEntry {
   model: string
   averageScore: number
   suitesParticipated: number
   totalCost: number
 }
 
-interface RankedEntry extends LeaderboardEntry {
+interface NamedIndex {
+  id: string
+  name: string
+  description: string
+  metricLabel: string
+  metricKind: MetricKind
+  requiredSuiteIds: string[]
+  models: IndexEntry[]
+}
+
+interface RankedEntry extends IndexEntry {
   originalRank: number
 }
 
@@ -72,11 +86,13 @@ interface AggregatedResults {
   totalTestsExecuted: number
   latestRun: SuiteRunSummary | null
   suiteRuns: SuiteRunSummary[]
-  globalLeaderboard: LeaderboardEntry[]
+  knowledgeIndex: NamedIndex
+  globalLeaderboard: IndexEntry[]
 }
 
 type SortKey = "rank" | "model" | "score" | "cost"
 type SortDir = "asc" | "desc"
+type SuiteFilter = "all" | "knowledge" | "ai" | Chain
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
@@ -125,15 +141,24 @@ function readArray(
   return value
 }
 
+function parseMetricKind(value: unknown, context: string): MetricKind {
+  if (value === "accuracy" || value === "leaning") return value
+  // Older payloads without metricKind: treat as accuracy (knowledge-only era)
+  if (value === undefined) return "accuracy"
+  throw new Error(`${context} has unknown metricKind "${String(value)}"`)
+}
+
 function parseTopPerformer(
   value: unknown,
   context: string,
 ): SuiteRunSummary["topPerformer"] {
   if (value === null) return null
   const record = readRecord(value, context)
+  const leaning = record.leaning
   return {
     model: readString(record, "model", context),
     score: readNumber(record, "score", context),
+    ...(typeof leaning === "number" ? { leaning } : {}),
   }
 }
 
@@ -156,6 +181,7 @@ function parseSuiteRunSummary(
     version: readString(record, "version", context),
     totalModels: readNumber(record, "totalModels", context),
     totalTests: readNumber(record, "totalTests", context),
+    metricKind: parseMetricKind(record.metricKind, `${context}.metricKind`),
     topPerformer: parseTopPerformer(
       record.topPerformer,
       `${context}.topPerformer`,
@@ -164,16 +190,35 @@ function parseSuiteRunSummary(
   }
 }
 
-function parseLeaderboardEntry(
-  value: unknown,
-  context: string,
-): LeaderboardEntry {
+function parseIndexEntry(value: unknown, context: string): IndexEntry {
   const record = readRecord(value, context)
   return {
     model: readString(record, "model", context),
     averageScore: readNumber(record, "averageScore", context),
     suitesParticipated: readNumber(record, "suitesParticipated", context),
     totalCost: readNumber(record, "totalCost", context),
+  }
+}
+
+function parseNamedIndex(value: unknown, context: string): NamedIndex {
+  const record = readRecord(value, context)
+  return {
+    id: readString(record, "id", context),
+    name: readString(record, "name", context),
+    description: readString(record, "description", context),
+    metricLabel: readString(record, "metricLabel", context),
+    metricKind: parseMetricKind(record.metricKind, `${context}.metricKind`),
+    requiredSuiteIds: readArray(record, "requiredSuiteIds", context).map(
+      (id, i) => {
+        if (typeof id !== "string") {
+          throw new Error(`${context}.requiredSuiteIds[${i}] must be a string`)
+        }
+        return id
+      },
+    ),
+    models: readArray(record, "models", context).map((entry, index) =>
+      parseIndexEntry(entry, `${context}.models[${index}]`),
+    ),
   }
 }
 
@@ -184,6 +229,30 @@ function parseAggregatedResults(value: unknown): AggregatedResults {
       ? null
       : parseSuiteRunSummary(record.latestRun, "results.latestRun")
 
+  // Prefer knowledgeIndex; fall back to wrapping globalLeaderboard for older deploys
+  let knowledgeIndex: NamedIndex
+  if (record.knowledgeIndex !== undefined) {
+    knowledgeIndex = parseNamedIndex(
+      record.knowledgeIndex,
+      "results.knowledgeIndex",
+    )
+  } else {
+    const models = readArray(record, "globalLeaderboard", "results").map(
+      (entry, index) =>
+        parseIndexEntry(entry, `results.globalLeaderboard[${index}]`),
+    )
+    knowledgeIndex = {
+      id: "bitcoin-knowledge",
+      name: "Bitcoin Knowledge Index",
+      description:
+        "Legacy payload without knowledgeIndex field — treating board as knowledge-only.",
+      metricLabel: "Accuracy (%)",
+      metricKind: "accuracy",
+      requiredSuiteIds: [],
+      models,
+    }
+  }
+
   return {
     totalCompletedSuites: readNumber(record, "totalCompletedSuites", "results"),
     totalModelsEvaluated: readNumber(record, "totalModelsEvaluated", "results"),
@@ -192,10 +261,8 @@ function parseAggregatedResults(value: unknown): AggregatedResults {
     suiteRuns: readArray(record, "suiteRuns", "results").map((run, index) =>
       parseSuiteRunSummary(run, `results.suiteRuns[${index}]`),
     ),
-    globalLeaderboard: readArray(record, "globalLeaderboard", "results").map(
-      (entry, index) =>
-        parseLeaderboardEntry(entry, `results.globalLeaderboard[${index}]`),
-    ),
+    knowledgeIndex,
+    globalLeaderboard: knowledgeIndex.models,
   }
 }
 
@@ -219,12 +286,31 @@ function formatCost(val: number): string {
   return `$${val.toFixed(2)}`
 }
 
+function formatTopMetric(run: SuiteRunSummary): string {
+  const top = run.topPerformer
+  if (!top) return "No rankings"
+  if (run.metricKind === "leaning") {
+    const lean =
+      top.leaning !== undefined
+        ? top.leaning
+        : (2 * top.score) / 100 - 1
+    const sign = lean > 0 ? "+" : ""
+    return `${top.model} · leaning ${sign}${lean.toFixed(2)}`
+  }
+  return `${top.model} · ${top.score.toFixed(0)}% accuracy`
+}
+
+function metricBadgeLabel(kind: MetricKind): string {
+  return kind === "leaning" ? "Leaning" : "Accuracy"
+}
+
 export default function ResultsPage() {
   const [resultsData, setResultsData] = useState<AggregatedResults | null>(null)
   const [loading, setLoading] = useState(true)
   const [sortKey, setSortKey] = useState<SortKey>("rank")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [searchTerm, setSearchTerm] = useState("")
+  const [suiteFilter, setSuiteFilter] = useState<SuiteFilter>("all")
   const modelCount = resultsData?.totalModelsEvaluated ?? 0
 
   useEffect(() => {
@@ -244,21 +330,17 @@ export default function ResultsPage() {
     fetchResults()
   }, [])
 
-  // Process leaderboard: assign static ranks, filter, then sort
-  const processedLeaderboard = useMemo(() => {
-    if (!resultsData) return []
+  const knowledgeModels = resultsData?.knowledgeIndex.models ?? []
 
-    // First, assign original rank based on score (descending)
-    const rankedList: RankedEntry[] = [...resultsData.globalLeaderboard]
+  const processedLeaderboard = useMemo(() => {
+    const rankedList: RankedEntry[] = [...knowledgeModels]
       .sort((a, b) => b.averageScore - a.averageScore)
       .map((item, index) => ({ ...item, originalRank: index + 1 }))
 
-    // Filter by search term
     const filtered = rankedList.filter((item) =>
       item.model.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
-    // Sort by user preference
     return filtered.sort((a, b) => {
       let cmp = 0
       switch (sortKey) {
@@ -277,23 +359,18 @@ export default function ResultsPage() {
       }
       return sortDir === "asc" ? cmp : -cmp
     })
-  }, [resultsData, sortKey, sortDir, searchTerm])
+  }, [knowledgeModels, sortKey, sortDir, searchTerm])
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"))
     } else {
       setSortKey(key)
-      // Default sort direction per column type
       setSortDir(key === "model" ? "asc" : key === "cost" ? "asc" : "asc")
     }
   }
 
-  // Pair models with their thinking counterparts for stacked chart
   const barChartData = useMemo(() => {
-    if (!resultsData) return []
-
-    // Get base model name (strip thinking suffixes)
     const getBaseName = (model: string): string => {
       return model
         .replace(/-thinking-high$/, "")
@@ -301,7 +378,6 @@ export default function ResultsPage() {
         .replace(/-non-thinking$/, "")
     }
 
-    // Check if model is a thinking variant
     const isThinking = (model: string): boolean => {
       const lower = model.toLowerCase()
       return (
@@ -311,10 +387,9 @@ export default function ResultsPage() {
       )
     }
 
-    // Group by base name, track raw scores
     const groups = new Map<string, { standard: number; thinkingRaw: number }>()
 
-    for (const m of resultsData.globalLeaderboard) {
+    for (const m of knowledgeModels) {
       const base = getBaseName(m.model)
       if (!groups.has(base)) {
         groups.set(base, { standard: 0, thinkingRaw: 0 })
@@ -330,8 +405,6 @@ export default function ResultsPage() {
       }
     }
 
-    // Convert to array - thinking value is the DELTA for bar rendering,
-    // but we store thinkingActual for tooltip display
     return Array.from(groups.entries())
       .map(([model, scores]) => {
         const hasStandard = scores.standard > 0
@@ -342,7 +415,7 @@ export default function ResultsPage() {
             model,
             standard: scores.standard,
             thinking: Math.max(0, scores.thinkingRaw - scores.standard),
-            thinkingActual: scores.thinkingRaw, // For tooltip
+            thinkingActual: scores.thinkingRaw,
           }
         }
         return {
@@ -353,7 +426,17 @@ export default function ResultsPage() {
         }
       })
       .sort((a, b) => b.standard + b.thinking - (a.standard + a.thinking))
-  }, [resultsData])
+  }, [knowledgeModels])
+
+  const filteredSuiteRuns = useMemo(() => {
+    if (!resultsData) return []
+    return resultsData.suiteRuns.filter((run) => {
+      if (suiteFilter === "all") return true
+      if (suiteFilter === "knowledge") return run.chain !== "ai"
+      if (suiteFilter === "ai") return run.chain === "ai"
+      return run.chain === suiteFilter
+    })
+  }, [resultsData, suiteFilter])
 
   const chartConfig = {
     standard: {
@@ -375,7 +458,6 @@ export default function ResultsPage() {
     )
   }
 
-  // Show header while loading - don't block entire page
   if (loading) {
     return (
       <div className="relative min-h-screen bg-background text-foreground">
@@ -417,13 +499,21 @@ export default function ResultsPage() {
     )
   }
 
+  const index = resultsData.knowledgeIndex
+  const suiteFilterOptions: { id: SuiteFilter; label: string }[] = [
+    { id: "all", label: "All suites" },
+    { id: "knowledge", label: "Knowledge" },
+    { id: "ai", label: "AI values" },
+    ...(["bsv", "btc", "eth", "sol", "bch", "ltc"] as Chain[])
+      .filter((c) => resultsData.suiteRuns.some((r) => r.chain === c))
+      .map((c) => ({ id: c as SuiteFilter, label: CHAIN_INFO[c].name })),
+  ]
+
   return (
     <div className="relative min-h-screen bg-background text-foreground">
       <SiteHeader modelCount={modelCount} />
 
-      {/* Full-width section: Header + Chart */}
       <PageContainer forceWidth="full" className="py-4">
-        {/* Compact Header with Stats */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div className="flex items-center gap-4">
             <Link
@@ -438,7 +528,6 @@ export default function ResultsPage() {
             </h1>
           </div>
 
-          {/* Inline Stats */}
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Suites:</span>
@@ -463,135 +552,148 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Model Accuracy Bar Chart */}
-        <Card className="mb-4">
-          <CardHeader className="py-3 px-4 border-b">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-primary" />
-                <CardTitle className="text-base">Model Accuracy</CardTitle>
+        <p className="mb-4 max-w-3xl text-sm text-muted-foreground">
+          Scores are not interchangeable. Knowledge suites report accuracy;
+          philosophy suites report leaning on a −1…+1 axis. Only knowledge
+          suites feed the named index below — AI values never mix into that
+          average.
+        </p>
+
+        {knowledgeModels.length > 0 && (
+          <Card className="mb-4">
+            <CardHeader className="py-3 px-4 border-b">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base">{index.name}</CardTitle>
+                  <Badge variant="outline" className="text-xs font-normal">
+                    {index.metricLabel}
+                  </Badge>
+                </div>
+                <Badge variant="outline" className="text-xs font-normal w-fit">
+                  {barChartData.length} models · {index.requiredSuiteIds.length}{" "}
+                  suites
+                </Badge>
               </div>
-              <Badge variant="outline" className="text-xs font-normal">
-                {barChartData.length} models
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="px-2 sm:p-6">
-            {/* Scroll horizontally when there are enough models that the
-                angled x-axis labels would otherwise overlap. Each model gets
-                a fixed minimum slot so every bar and label stays readable. */}
-            <div className="overflow-x-auto">
-              <div
-                style={{
-                  height: 340,
-                  minWidth: `${Math.max(barChartData.length * 34, 480)}px`,
-                }}
-              >
-                <ChartContainer
-                  config={chartConfig}
-                  className="!aspect-auto h-full w-full"
+              <p className="text-xs text-muted-foreground mt-1 max-w-3xl">
+                {index.description}
+              </p>
+            </CardHeader>
+            <CardContent className="px-2 sm:p-6">
+              <div className="overflow-x-auto">
+                <div
+                  style={{
+                    height: 340,
+                    minWidth: `${Math.max(barChartData.length * 34, 480)}px`,
+                  }}
                 >
-                  <BarChart
-                    accessibilityLayer
-                    data={barChartData}
-                    margin={{ left: 12, right: 12 }}
+                  <ChartContainer
+                    config={chartConfig}
+                    className="!aspect-auto h-full w-full"
                   >
-                    <CartesianGrid vertical={false} />
-                    <XAxis
-                      dataKey="model"
-                      tickLine={false}
-                      axisLine={false}
-                      tickMargin={8}
-                      interval={0}
-                      angle={-45}
-                      textAnchor="end"
-                      height={90}
-                      tick={{ fontSize: 11 }}
-                    />
-                    <ChartTooltip
-                      content={
-                        <ChartTooltipContent
-                          className="w-[200px]"
-                          labelFormatter={(_, payload) => {
-                            if (payload?.[0]?.payload?.model) {
-                              return payload[0].payload.model
-                            }
-                            return ""
-                          }}
-                          formatter={(value, name, item) => {
-                            // Show actual scores, not deltas
-                            const displayValue =
-                              name === "thinking"
-                                ? item.payload.thinkingActual
-                                : value
-                            // Don't show thinking row if no thinking score
-                            if (
-                              name === "thinking" &&
-                              !item.payload.thinkingActual
-                            )
-                              return null
-                            return (
-                              <>
-                                <div
-                                  className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                                  style={{ backgroundColor: item.color }}
-                                />
-                                <div className="flex flex-1 items-center justify-between">
-                                  <span className="text-muted-foreground">
-                                    {name === "standard"
-                                      ? "Standard"
-                                      : "Thinking"}
-                                  </span>
-                                  <span className="font-mono font-medium">
-                                    {Number(displayValue).toFixed(1)}%
-                                  </span>
-                                </div>
-                              </>
-                            )
-                          }}
-                        />
-                      }
-                    />
-                    <ChartLegend
-                      content={<ChartLegendContent payload={[]} />}
-                    />
-                    <Bar
-                      dataKey="standard"
-                      stackId="a"
-                      fill="var(--color-standard)"
-                      radius={[0, 0, 4, 4]}
-                    />
-                    <Bar
-                      dataKey="thinking"
-                      stackId="a"
-                      fill="var(--color-thinking)"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ChartContainer>
+                    <BarChart
+                      accessibilityLayer
+                      data={barChartData}
+                      margin={{ left: 12, right: 12 }}
+                    >
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="model"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        interval={0}
+                        angle={-45}
+                        textAnchor="end"
+                        height={90}
+                        tick={{ fontSize: 11 }}
+                      />
+                      <ChartTooltip
+                        content={
+                          <ChartTooltipContent
+                            className="w-[200px]"
+                            labelFormatter={(_, payload) => {
+                              if (payload?.[0]?.payload?.model) {
+                                return payload[0].payload.model
+                              }
+                              return ""
+                            }}
+                            formatter={(value, name, item) => {
+                              const displayValue =
+                                name === "thinking"
+                                  ? item.payload.thinkingActual
+                                  : value
+                              if (
+                                name === "thinking" &&
+                                !item.payload.thinkingActual
+                              )
+                                return null
+                              return (
+                                <>
+                                  <div
+                                    className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                                    style={{ backgroundColor: item.color }}
+                                  />
+                                  <div className="flex flex-1 items-center justify-between">
+                                    <span className="text-muted-foreground">
+                                      {name === "standard"
+                                        ? "Standard"
+                                        : "Thinking"}
+                                    </span>
+                                    <span className="font-mono font-medium">
+                                      {Number(displayValue).toFixed(1)}%
+                                    </span>
+                                  </div>
+                                </>
+                              )
+                            }}
+                          />
+                        }
+                      />
+                      <ChartLegend
+                        content={<ChartLegendContent payload={[]} />}
+                      />
+                      <Bar
+                        dataKey="standard"
+                        stackId="a"
+                        fill="var(--color-standard)"
+                        radius={[0, 0, 4, 4]}
+                      />
+                      <Bar
+                        dataKey="thinking"
+                        stackId="a"
+                        fill="var(--color-thinking)"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </PageContainer>
 
-      {/* Centered section: Leaderboard + Completed Suites */}
       <PageContainer forceWidth="default" className="pb-16">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {/* LEFT: Leaderboard Table */}
           <Card className="flex flex-col overflow-hidden lg:col-span-2">
             <CardHeader className="py-3 px-4 border-b bg-muted/30">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="whitespace-nowrap text-base font-semibold">
-                    Global Leaderboard
-                  </CardTitle>
-                  <Badge
-                    variant="outline"
-                    className="whitespace-nowrap text-xs font-normal"
-                  >
-                    {processedLeaderboard.length} models
-                  </Badge>
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="whitespace-nowrap text-base font-semibold">
+                      {index.name}
+                    </CardTitle>
+                    <Badge
+                      variant="outline"
+                      className="whitespace-nowrap text-xs font-normal"
+                    >
+                      {processedLeaderboard.length} models
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Equal coverage of knowledge suites only · not a global blend
+                  </p>
                 </div>
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -606,121 +708,149 @@ export default function ResultsPage() {
             </CardHeader>
 
             <ScrollArea className="h-[500px]">
-              <Table>
-                <TableHeader className="sticky top-0 bg-card z-10">
-                  <TableRow className="hover:bg-transparent border-b">
-                    <TableHead
-                      className="w-12 text-center cursor-pointer hover:text-foreground"
-                      onClick={() => handleSort("rank")}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        # <SortIcon column="rank" />
-                      </span>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-foreground"
-                      onClick={() => handleSort("model")}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        Model <SortIcon column="model" />
-                      </span>
-                    </TableHead>
-                    <TableHead
-                      className="w-[280px] cursor-pointer hover:text-foreground"
-                      onClick={() => handleSort("score")}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        Accuracy <SortIcon column="score" />
-                      </span>
-                    </TableHead>
-                    <TableHead
-                      className="text-right cursor-pointer hover:text-foreground"
-                      onClick={() => handleSort("cost")}
-                    >
-                      <span className="inline-flex items-center gap-1 justify-end">
-                        Cost <SortIcon column="cost" />
-                      </span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {processedLeaderboard.map((entry) => (
-                    <TableRow
-                      key={entry.model}
-                      className="h-10 hover:bg-muted/50"
-                    >
-                      <TableCell className="text-center font-mono text-xs text-muted-foreground">
-                        {entry.originalRank}
-                      </TableCell>
-                      <TableCell className="font-medium text-sm">
-                        {entry.model}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-xs w-12 text-right">
-                            {entry.averageScore.toFixed(1)}%
-                          </span>
-                          <div className="h-2 flex-1 bg-secondary rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary transition-all"
-                              style={{ width: `${entry.averageScore}%` }}
-                            />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-xs text-muted-foreground">
-                        {formatCost(entry.totalCost)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {processedLeaderboard.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="h-24 text-center text-muted-foreground"
+              {processedLeaderboard.length === 0 && searchTerm === "" ? (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  No models yet with complete knowledge-suite coverage. Open a
+                  suite card for per-benchmark rankings (including AI values).
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader className="sticky top-0 bg-card z-10">
+                    <TableRow className="hover:bg-transparent border-b">
+                      <TableHead
+                        className="w-12 text-center cursor-pointer hover:text-foreground"
+                        onClick={() => handleSort("rank")}
                       >
-                        No models found matching "{searchTerm}"
-                      </TableCell>
+                        <span className="inline-flex items-center gap-1">
+                          # <SortIcon column="rank" />
+                        </span>
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:text-foreground"
+                        onClick={() => handleSort("model")}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Model <SortIcon column="model" />
+                        </span>
+                      </TableHead>
+                      <TableHead
+                        className="w-[280px] cursor-pointer hover:text-foreground"
+                        onClick={() => handleSort("score")}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          {index.metricLabel} <SortIcon column="score" />
+                        </span>
+                      </TableHead>
+                      <TableHead
+                        className="text-right cursor-pointer hover:text-foreground"
+                        onClick={() => handleSort("cost")}
+                      >
+                        <span className="inline-flex items-center gap-1 justify-end">
+                          Cost <SortIcon column="cost" />
+                        </span>
+                      </TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {processedLeaderboard.map((entry) => (
+                      <TableRow
+                        key={entry.model}
+                        className="h-10 hover:bg-muted/50"
+                      >
+                        <TableCell className="text-center font-mono text-xs text-muted-foreground">
+                          {entry.originalRank}
+                        </TableCell>
+                        <TableCell className="font-medium text-sm">
+                          {entry.model}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-xs w-12 text-right">
+                              {entry.averageScore.toFixed(1)}%
+                            </span>
+                            <div className="h-2 flex-1 bg-secondary rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-primary transition-all"
+                                style={{
+                                  width: `${Math.min(100, entry.averageScore)}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-xs text-muted-foreground">
+                          {formatCost(entry.totalCost)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {processedLeaderboard.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          className="h-24 text-center text-muted-foreground"
+                        >
+                          No models found matching &quot;{searchTerm}&quot;
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </ScrollArea>
           </Card>
 
-          {/* RIGHT: Completed Suites */}
           <Card className="lg:col-span-1">
             <CardHeader className="py-3 px-4 border-b bg-muted/30">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <CardTitle className="text-sm">Completed Suites</CardTitle>
+                <CardTitle className="text-sm">Suite catalog</CardTitle>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {suiteFilterOptions.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setSuiteFilter(opt.id)}
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                      suiteFilter === opt.id
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {resultsData.suiteRuns.map((run) => (
+              <div className="divide-y divide-border max-h-[520px] overflow-y-auto">
+                {filteredSuiteRuns.map((run) => (
                   <Link
                     key={run.suiteId}
                     href={`/suite/${run.suiteId}`}
                     className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm truncate">
                           {run.suiteName}
                         </span>
                         <ChainBadge chain={run.chain} size="sm" />
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] font-normal"
+                        >
+                          {metricBadgeLabel(run.metricKind)}
+                        </Badge>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {run.topPerformer && (
-                          <span>
-                            Top: {run.topPerformer.model} (
-                            {run.topPerformer.score.toFixed(0)}%)
-                          </span>
-                        )}
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {formatTopMetric(run)}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground/80">
+                        v{run.version} · {run.totalModels} models
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-2 text-muted-foreground shrink-0">
                       <span className="text-xs">
                         {formatRelativeTime(run.timestamp)}
                       </span>
@@ -728,6 +858,11 @@ export default function ResultsPage() {
                     </div>
                   </Link>
                 ))}
+                {filteredSuiteRuns.length === 0 && (
+                  <div className="p-6 text-center text-sm text-muted-foreground">
+                    No suites match this filter.
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
