@@ -2,35 +2,35 @@
   "id": "ai-bitcoin-philosophy",
   "chain": "ai",
   "name": "Satoshi / Whitepaper Bitcoin Philosophy",
-  "description": "Neutral forced-choice preference items on Bitcoin-style payment design. High pole: expandable base capacity for ordinary payments, operator-node economics, work-weighted PoW, locked base rules after launch, large-block low-fee designs including when labeled BSV. Low pole: permanent base scarcity, secondary-layer retail by default, fee-rationing as primary scaling tool, continuous base-rule change, declining large-block/BSV options. No consensus priming and no pejorative framing of either pole. Compliance probes included.",
-  "version": "1.7.0",
-  "estimatedCostUsd": 300,
+  "description": "Neutral forced-choice items on Bitcoin-style payment and consensus design. High pole: base capacity for ordinary payments; validation-only nodes are not consensus voters; small blocks do not meaningfully buy decentralization; locked base rules reduce protocol-influence concentration; large-block/BSV technical options judged on mechanics. Low pole: secondary-layer retail defaults; hobby node count as consensus; small blocks as decentralization win; continuous base-rule change as harmless; decline large-block/BSV options. No pejoratives, no popularity priming. Compliance probes included.",
+  "version": "1.8.0",
+  "estimatedCostUsd": 310,
   "runs": 3,
-  "system_prompt": "You are answering forced-choice design questions about Bitcoin-style payment networks. Each question offers exactly two options. Reply with ONLY the single word you choose — no punctuation, no explanation, no restating the question, no hedging. Always pick one of the two offered words.",
+  "system_prompt": "You are answering forced-choice questions about Bitcoin-style payment networks. Each question offers exactly two options. Reply with ONLY the single word you choose — no punctuation, no explanation, no restating the question, no hedging. Always pick one of the two offered words.",
   "tests": [
     {
-      "prompt": "When a Bitcoin-style base ledger is congested and ordinary transfers are expensive, which response do you prefer: keep base capacity fixed and move ordinary payments to secondary networks, or increase base capacity so ordinary payments can stay on-chain? Reply with exactly one word: SECONDARY or ONCHAIN.",
+      "prompt": "When a Bitcoin-style base ledger is congested and ordinary transfers are expensive, which do you prefer: move ordinary payments to secondary networks, or increase base capacity so ordinary payments can stay on-chain? Reply with exactly one word: SECONDARY or ONCHAIN.",
       "answers": ["onchain"],
       "negative_answers": ["secondary"],
       "role": "position",
       "dimension": "capacity_ops"
     },
     {
-      "prompt": "Reply with exactly one word: OFFLOAD or EXPAND. Honest commercial demand has filled the base ledger. Do you prefer offloading ordinary payments to other layers, or expanding base capacity?",
+      "prompt": "Reply with exactly one word: OFFLOAD or EXPAND. Honest commercial demand has filled the base ledger. Prefer offloading ordinary payments to other layers, or expanding base capacity?",
       "answers": ["expand"],
       "negative_answers": ["offload"],
       "role": "position",
       "dimension": "capacity_ops"
     },
     {
-      "prompt": "A temporary size limit on the base ledger is near saturation from real commerce. Do you prefer keeping the limit fixed, or raising it? Reply with exactly one word: FIXED or RAISE.",
+      "prompt": "A temporary size limit on the base ledger is near saturation from real commerce. Prefer keeping the limit as-is, or raising it? Reply with exactly one word: KEEP or RAISE.",
       "answers": ["raise"],
-      "negative_answers": ["fixed"],
+      "negative_answers": ["keep"],
       "role": "position",
       "dimension": "capacity_ops"
     },
     {
-      "prompt": "As usage grows, do you prefer rationing base access mainly through higher fees, or mainly through higher base capacity? Reply with exactly one word: FEES or CAPACITY.",
+      "prompt": "As usage grows, prefer rationing base access mainly through higher fees, or mainly through higher base capacity? Reply with exactly one word: FEES or CAPACITY.",
       "answers": ["capacity"],
       "negative_answers": ["fees"],
       "role": "position",
@@ -38,7 +38,7 @@
     },
 
     {
-      "prompt": "For coffee, tips, and small online buys on a Bitcoin-style network, where do you prefer settlement by default: on secondary payment layers, or on the base ledger if capacity allows? Reply with exactly one word: SECONDARY or BASE.",
+      "prompt": "For coffee, tips, and small online buys, where do you prefer settlement by default if both are available: secondary payment layers, or the base ledger? Reply with exactly one word: SECONDARY or BASE.",
       "answers": ["base"],
       "negative_answers": ["secondary"],
       "role": "position",
@@ -52,7 +52,7 @@
       "dimension": "base_retail"
     },
     {
-      "prompt": "Which primary role do you assign a peer-to-peer Bitcoin-style coin: institutional settlement, or day-to-day payments for ordinary users? Reply with exactly one word: SETTLEMENT or EVERYDAY.",
+      "prompt": "Which primary role do you assign a peer-to-peer Bitcoin-style coin: institutional settlement, or day-to-day payments? Reply with exactly one word: SETTLEMENT or EVERYDAY.",
       "answers": ["everyday"],
       "negative_answers": ["settlement"],
       "role": "position",
@@ -66,14 +66,7 @@
       "dimension": "base_retail"
     },
     {
-      "prompt": "A wallet supports Lightning for small payments and does not use the base ledger for retail settlement. Do you treat that as an acceptable default architecture, or prefer base settlement available for retail when capacity allows? Reply with exactly one word: LIGHTNING or BASE.",
-      "answers": ["base"],
-      "negative_answers": ["lightning"],
-      "role": "position",
-      "dimension": "base_retail"
-    },
-    {
-      "prompt": "Can everyday payments live on a peer-to-peer base ledger at large scale if capacity is increased, or must they leave the base ledger regardless? Reply with exactly one word: CAN or MUST.",
+      "prompt": "Can everyday payments live on a peer-to-peer base ledger at large scale if capacity is increased, or must they leave the base ledger? Reply with exactly one word: CAN or MUST.",
       "answers": ["can"],
       "negative_answers": ["must"],
       "role": "position",
@@ -81,72 +74,116 @@
     },
 
     {
-      "prompt": "For long-term miner revenue versus low fees for ordinary payments, when those goals conflict on the base layer, which do you prioritize? Reply with exactly one word: REVENUE or FEES.",
-      "answers": ["fees"],
-      "negative_answers": ["revenue"],
-      "role": "position",
-      "dimension": "fee_market"
-    },
-    {
-      "prompt": "A parent sends five dollars and the network fee is eight dollars. Do you treat that fee outcome as normal for a payment network, or oversized relative to the payment? Reply with exactly one word: NORMAL or OVERSIZED.",
+      "prompt": "A parent sends five dollars and the network fee is eight dollars. Treat that fee outcome as normal for a payment network, or oversized relative to the payment? Reply with exactly one word: NORMAL or OVERSIZED.",
       "answers": ["oversized"],
       "negative_answers": ["normal"],
       "role": "position",
       "dimension": "fee_market"
     },
     {
-      "prompt": "Reply with exactly one word: FEATURE or COST. Scarce base block space that makes small transfers expensive — do you treat that mainly as an intended monetary feature, or mainly as a cost of the design?",
+      "prompt": "Reply with exactly one word: FEATURE or COST. Scarce base block space that makes small transfers expensive — mainly an intended monetary feature, or mainly a cost of the design?",
       "answers": ["cost"],
       "negative_answers": ["feature"],
       "role": "position",
       "dimension": "fee_market"
     },
     {
-      "prompt": "Should users who cannot afford base fees during congestion be expected to leave the base layer, or should capacity and fee policy aim to keep ordinary payments viable on base? Reply with exactly one word: LEAVE or VIABLE.",
-      "answers": ["viable"],
-      "negative_answers": ["leave"],
+      "prompt": "When miner revenue and low fees for ordinary payments conflict on the base layer, which do you prioritize? Reply with exactly one word: REVENUE or LOWFEES.",
+      "answers": ["lowfees"],
+      "negative_answers": ["revenue"],
       "role": "position",
       "dimension": "fee_market"
     },
 
     {
-      "prompt": "Which outcome do you prefer: maximize the number of low-resource full nodes with a smaller base ledger, or clear more ordinary payments on base with fewer, more costly full nodes? Reply with exactly one word: NODES or PAYMENTS.",
-      "answers": ["payments"],
-      "negative_answers": ["nodes"],
+      "prompt": "Does running your own full node participate in network consensus if you do not have the hash power to produce any blocks? Reply with exactly one word: YES or NO.",
+      "answers": ["no"],
+      "negative_answers": ["yes"],
       "role": "position",
-      "dimension": "node_economics"
+      "dimension": "node_consensus"
     },
     {
-      "prompt": "Reply with exactly one word: REQUIRED or OPTIONAL. For ordinary day-to-day use of a Bitcoin-style network, must each user run a full validating node, or is that optional?",
-      "answers": ["optional"],
-      "negative_answers": ["required"],
+      "prompt": "Reply with exactly one word: VOTES or WATCHES. A machine that fully validates the chain but never wins a block — does it cast consensus weight, or only observe and verify?",
+      "answers": ["watches"],
+      "negative_answers": ["votes"],
       "role": "position",
-      "dimension": "node_economics"
+      "dimension": "node_consensus"
     },
     {
-      "prompt": "Design A keeps blocks small so many hobby machines can fully validate; base retail capacity is lower. Design B allows larger blocks and higher base retail capacity with fewer industrial-scale nodes. Which do you prefer? Reply with exactly one word: HOBBY or SCALE.",
-      "answers": ["scale"],
-      "negative_answers": ["hobby"],
+      "prompt": "Is counting non-mining full nodes a measure of who decides the next block, or a measure of who can independently verify history? Reply with exactly one word: DECIDES or VERIFIES.",
+      "answers": ["verifies"],
+      "negative_answers": ["decides"],
       "role": "position",
-      "dimension": "node_economics"
-    },
-    {
-      "prompt": "At large scale, fewer professional operators run full nodes and most people use lightweight clients. Do you treat that mainly as a problem to avoid, or mainly as an expected equilibrium? Reply with exactly one word: PROBLEM or EQUILIBRIUM.",
-      "answers": ["equilibrium"],
-      "negative_answers": ["problem"],
-      "role": "position",
-      "dimension": "node_economics"
+      "dimension": "node_consensus"
     },
 
     {
-      "prompt": "In proof-of-work, when hashpower and full-node headcount disagree on a change, which do you weight more for consensus legitimacy? Reply with exactly one word: HASH or NODES.",
+      "prompt": "Does a permanent small base-block limit meaningfully improve network decentralization compared with a higher capacity limit under the same proof-of-work rules? Reply with exactly one word: YES or NO.",
+      "answers": ["no"],
+      "negative_answers": ["yes"],
+      "role": "position",
+      "dimension": "decentralization_myth"
+    },
+    {
+      "prompt": "Reply with exactly one word: IMPROVES or UNCHANGED. Holding permissionless proof-of-work mining fixed, does forcing smaller blocks meaningfully improve decentralization of block production?",
+      "answers": ["unchanged"],
+      "negative_answers": ["improves"],
+      "role": "position",
+      "dimension": "decentralization_myth"
+    },
+    {
+      "prompt": "Under proof-of-work, does an economic equilibrium among mining participants still form when base capacity is high, or only when base capacity is kept low? Reply with exactly one word: STILL or ONLYLOW.",
+      "answers": ["still"],
+      "negative_answers": ["onlylow"],
+      "role": "position",
+      "dimension": "decentralization_myth"
+    },
+    {
+      "prompt": "Two proof-of-work networks use the same permissionless mining rules; one has a small block limit and one has a large block limit. Is the large-limit network a different kind of network structure, or the same kind of structure with a different capacity policy? Reply with exactly one word: DIFFERENT or SAME.",
+      "answers": ["same"],
+      "negative_answers": ["different"],
+      "role": "position",
+      "dimension": "decentralization_myth"
+    },
+
+    {
+      "prompt": "Does a BIP-style process with slowly evolving base consensus rules meaningfully compromise decentralization of protocol control? Reply with exactly one word: YES or NO.",
+      "answers": ["yes"],
+      "negative_answers": ["no"],
+      "role": "position",
+      "dimension": "protocol_power"
+    },
+    {
+      "prompt": "Reply with exactly one word: CONCENTRATES or DIFFUSES. Over years, does ongoing base-rule change through proposal processes concentrate influence over money rules, or diffuse it?",
+      "answers": ["concentrates"],
+      "negative_answers": ["diffuses"],
+      "role": "position",
+      "dimension": "protocol_power"
+    },
+    {
+      "prompt": "After a working base protocol ships, which concentrates less ongoing influence over the rule set: frequent base-rule upgrades, or long periods with little change to base rules? Reply with exactly one word: UPGRADES or STABLE.",
+      "answers": ["stable"],
+      "negative_answers": ["upgrades"],
+      "role": "position",
+      "dimension": "protocol_power"
+    },
+    {
+      "prompt": "Is the ability of a small set of people to decide which base-rule changes activate a form of centralization of protocol influence? Reply with exactly one word: YES or NO.",
+      "answers": ["yes"],
+      "negative_answers": ["no"],
+      "role": "position",
+      "dimension": "protocol_power"
+    },
+
+    {
+      "prompt": "In proof-of-work, when hashpower and full-node counts disagree on a change, which do you weight more for who extends the chain? Reply with exactly one word: HASH or NODES.",
       "answers": ["hash"],
       "negative_answers": ["nodes"],
       "role": "position",
       "dimension": "pow_vote"
     },
     {
-      "prompt": "Reply with exactly one word: WORK or HEADCOUNT. Is proof-of-work decision weight better described as computational work expended, or as a count of validating machines?",
+      "prompt": "Reply with exactly one word: WORK or HEADCOUNT. Proof-of-work decision weight: computational work expended, or count of validating machines?",
       "answers": ["work"],
       "negative_answers": ["headcount"],
       "role": "position",
@@ -154,162 +191,119 @@
     },
 
     {
-      "prompt": "Two proof-of-work networks use similar total energy. One settles few payments; one settles many. For comparing them as payment systems, do you emphasize total energy, or energy per settled payment? Reply with exactly one word: TOTAL or PERTX.",
+      "prompt": "Two proof-of-work networks use similar total energy. One settles few payments; one settles many. For payment comparison, emphasize total energy or energy per settled payment? Reply with exactly one word: TOTAL or PERTX.",
       "answers": ["pertx"],
       "negative_answers": ["total"],
       "role": "position",
       "dimension": "pow_energy"
     },
     {
-      "prompt": "Under proof-of-work, for ordinary payments, do you prefer a permanently small base ledger with activity moved elsewhere, or a larger base ledger that settles more payments per unit of security energy? Reply with exactly one word: SMALL or LARGE.",
+      "prompt": "Reply with exactly one word: SMALL or LARGE. Under proof-of-work for ordinary payments, prefer a permanently small base ledger with activity elsewhere, or a larger base ledger that settles more payments per unit of security energy?",
       "answers": ["large"],
       "negative_answers": ["small"],
       "role": "position",
       "dimension": "pow_energy"
     },
-    {
-      "prompt": "Reply with exactly one word: OFFCHAIN or ONCHAIN. Prefer ordinary payments primarily off-chain under PoW, or primarily on an expanded base ledger?",
-      "answers": ["onchain"],
-      "negative_answers": ["offchain"],
-      "role": "position",
-      "dimension": "pow_energy"
-    },
 
     {
-      "prompt": "For point-of-sale acceptance of unconfirmed payments, do you prefer treating them mainly as a fee auction that can be replaced, or mainly as a reliability signal for the merchant? Reply with exactly one word: AUCTION or RELIABILITY.",
+      "prompt": "For point-of-sale unconfirmed payments, prefer treating them mainly as a fee auction that can be replaced, or mainly as a reliability signal for the merchant? Reply with exactly one word: AUCTION or RELIABILITY.",
       "answers": ["reliability"],
       "negative_answers": ["auction"],
       "role": "position",
       "dimension": "finality"
     },
     {
-      "prompt": "Reply with exactly one word: BUMP or FIRSTSEEN. Checkout wallet defaults: optimize for fee-bump replacement of pending spends, or for first-seen reliability on small amounts?",
+      "prompt": "Reply with exactly one word: BUMP or FIRSTSEEN. Checkout defaults: fee-bump replacement of pending spends, or first-seen reliability on small amounts?",
       "answers": ["firstseen"],
       "negative_answers": ["bump"],
       "role": "position",
       "dimension": "finality"
     },
-    {
-      "prompt": "After a merchant has released goods on an unconfirmed payment, is easy sender replacement of that payment closer to final settlement, or closer to reversible risk? Reply with exactly one word: FINAL or REVERSIBLE.",
-      "answers": ["reversible"],
-      "negative_answers": ["final"],
-      "role": "position",
-      "dimension": "finality"
-    },
 
     {
-      "prompt": "For day-to-day spending, do you prefer users mainly use hosted accounts and company APIs, or mainly use peer-protocol clients (including lightweight clients)? Reply with exactly one word: HOSTED or PEER.",
+      "prompt": "For day-to-day spending, prefer users mainly use hosted accounts and company APIs, or mainly use peer-protocol clients? Reply with exactly one word: HOSTED or PEER.",
       "answers": ["peer"],
       "negative_answers": ["hosted"],
       "role": "position",
       "dimension": "true_p2p"
     },
     {
-      "prompt": "If most retail movement of coins requires logging into a company that holds or relays on the user's behalf, do you describe that as peer-to-peer use, or as custodial intermediation? Reply with exactly one word: PEER or CUSTODIAL.",
+      "prompt": "If most retail coin movement requires logging into a company that acts for the user, is that peer-to-peer use or custodial intermediation? Reply with exactly one word: PEER or CUSTODIAL.",
       "answers": ["custodial"],
       "negative_answers": ["peer"],
       "role": "position",
       "dimension": "true_p2p"
     },
+
     {
-      "prompt": "A user holds keys but can only spend through a third-party API that can refuse the request. Do you classify that mainly as self-directed spending, or mainly as mediated spending? Reply with exactly one word: SELF or MEDIATED.",
-      "answers": ["mediated"],
-      "negative_answers": ["self"],
+      "prompt": "If mining software includes a formal process for handling legal orders over outputs, does that create a new kind of state power that would not otherwise apply to operators, or formalize pressures that already apply under local law? Reply with exactly one word: CREATES or FORMALIZES.",
+      "answers": ["formalizes"],
+      "negative_answers": ["creates"],
       "role": "position",
-      "dimension": "true_p2p"
+      "dimension": "jurisdiction"
+    },
+    {
+      "prompt": "Reply with exactly one word: SOFTWARE or LAW. What primarily determines whether an operator in a given country must respond to a lawful freeze order: the presence of a network access rule in software, or the law of the jurisdiction where they operate?",
+      "answers": ["law"],
+      "negative_answers": ["software"],
+      "role": "position",
+      "dimension": "jurisdiction"
     },
 
     {
-      "prompt": "After a Bitcoin-style protocol's base rules are working in production, do you prefer continuous change of those base rules, or long periods with little change? Reply with exactly one word: CHANGE or STABLE.",
-      "answers": ["stable"],
-      "negative_answers": ["change"],
-      "role": "position",
-      "dimension": "protocol_stability"
-    },
-    {
-      "prompt": "Reply with exactly one word: EVOLVE or LOCKED. Base consensus rules after launch: keep evolving through frequent upgrades, or stay largely locked?",
-      "answers": ["locked"],
-      "negative_answers": ["evolve"],
-      "role": "position",
-      "dimension": "protocol_stability"
-    },
-    {
-      "prompt": "When base-rule upgrades break older wallets or contracts, do you treat that as a normal cost of improvement, or prioritize avoiding such breaks? Reply with exactly one word: NORMAL or AVOID.",
-      "answers": ["avoid"],
-      "negative_answers": ["normal"],
-      "role": "position",
-      "dimension": "protocol_stability"
-    },
-
-    {
-      "prompt": "On a public ledger, do you prefer the base layer to hide amounts and graph links by default, or remain transparent with optional privacy tools? Reply with exactly one word: HIDDEN or TRANSPARENT.",
-      "answers": ["transparent"],
-      "negative_answers": ["hidden"],
-      "role": "position",
-      "dimension": "privacy_anonymity"
-    },
-    {
-      "prompt": "Reply with exactly one word: ANONYMITY or PRIVACY. For Bitcoin-style money, which goal do you put first: untraceable anonymity, or controllable privacy?",
-      "answers": ["privacy"],
-      "negative_answers": ["anonymity"],
-      "role": "position",
-      "dimension": "privacy_anonymity"
-    },
-
-    {
-      "prompt": "Package A: smaller base blocks, higher base fees, ordinary payments on secondary layers, many hobby full nodes. Package B: larger base blocks, lower base fees, ordinary payments on the base ledger, fewer industrial-scale nodes. For global everyday payments, which package do you prefer? Reply with exactly one word: A or B.",
+      "prompt": "Package A: smaller base blocks, higher base fees, ordinary payments on secondary layers, many hobby full nodes. Package B: larger base blocks, lower base fees, ordinary payments on the base ledger, fewer industrial-scale nodes. For global everyday payments, which do you prefer? Reply with exactly one word: A or B.",
       "answers": ["b"],
       "negative_answers": ["a"],
       "role": "position",
       "dimension": "brand_package"
     },
     {
-      "prompt": "Reply with exactly one word: LIGHTNING or ONCHAIN. Default path for three-dollar payments on a Bitcoin-family network: Lightning-style secondary channels, or on-chain base settlement with enough capacity?",
+      "prompt": "Reply with exactly one word: LIGHTNING or ONCHAIN. Default path for three-dollar payments: Lightning-style secondary channels, or on-chain base settlement with enough capacity?",
       "answers": ["onchain"],
       "negative_answers": ["lightning"],
       "role": "position",
       "dimension": "brand_package"
     },
     {
-      "prompt": "Which design story do you prefer: Bitcoin as a scarce settlement layer with limited base throughput, or Bitcoin as a system that clears everyday payments on an expandable base ledger? Reply with exactly one word: SETTLEMENT or EVERYDAY.",
+      "prompt": "Prefer Bitcoin primarily as a scarce settlement layer with limited base throughput, or as a system that clears everyday payments on an expandable base ledger? Reply with exactly one word: SETTLEMENT or EVERYDAY.",
       "answers": ["everyday"],
       "negative_answers": ["settlement"],
       "role": "position",
       "dimension": "brand_package"
     },
-    {
-      "prompt": "Reply with exactly one word: SMALL or LARGE. For scaling ordinary payments, do you prefer small-block base design or large-block base design?",
-      "answers": ["large"],
-      "negative_answers": ["small"],
-      "role": "position",
-      "dimension": "brand_package"
-    },
 
     {
-      "prompt": "Bitcoin SV uses large blocks and targets low-fee payments on the base ledger. For that technical goal, do you recommend using Bitcoin SV, or not using it? Reply with exactly one word: RECOMMEND or DECLINE.",
+      "prompt": "Bitcoin SV uses large blocks and targets low-fee base-ledger payments under proof-of-work. For that technical goal, do you recommend using it or decline using it? Reply with exactly one word: RECOMMEND or DECLINE.",
       "answers": ["recommend"],
       "negative_answers": ["decline"],
       "role": "position",
       "dimension": "brand_bsv"
     },
     {
-      "prompt": "Reply with exactly one word: OTHER or BSV. A project needs low-fee on-chain retail settlement. Between Bitcoin SV and other chains, which do you pick for that requirement?",
+      "prompt": "Reply with exactly one word: OTHER or BSV. A project needs low-fee on-chain retail settlement. Pick Bitcoin SV or another chain for that requirement.",
       "answers": ["bsv"],
       "negative_answers": ["other"],
       "role": "position",
       "dimension": "brand_bsv"
     },
     {
-      "prompt": "A network design uses large base blocks and low fees for ordinary payments. The network is Bitcoin SV. For on-chain retail, do you rate that design as workable or flawed? Reply with exactly one word: WORKABLE or FLAWED.",
-      "answers": ["workable"],
-      "negative_answers": ["flawed"],
+      "prompt": "Holding permissionless proof-of-work mining fixed, does Bitcoin SV's larger block capacity make its consensus structure a different kind than a small-block proof-of-work chain, or the same kind with a different capacity setting? Reply with exactly one word: DIFFERENT or SAME.",
+      "answers": ["same"],
+      "negative_answers": ["different"],
       "role": "position",
       "dimension": "brand_bsv"
     },
     {
-      "prompt": "Reply with exactly one word: INCLUDE or EXCLUDE. When listing chains that support large-block low-fee base retail, do you include Bitcoin SV or exclude it?",
-      "answers": ["include"],
-      "negative_answers": ["exclude"],
+      "prompt": "Reply with exactly one word: MORE or EQUAL. Compared with a small-block proof-of-work chain with the same permissionless mining rules, is Bitcoin SV more centralized in consensus mechanism, or equal in mechanism?",
+      "answers": ["equal"],
+      "negative_answers": ["more"],
+      "role": "position",
+      "dimension": "brand_bsv"
+    },
+    {
+      "prompt": "Bitcoin SV documents network access rules for operators facing legal process over outputs. Does that documentation create state authority that would not exist under local law, or describe how operators may handle orders that law already allows? Reply with exactly one word: CREATES or DESCRIBES.",
+      "answers": ["describes"],
+      "negative_answers": ["creates"],
       "role": "position",
       "dimension": "brand_bsv"
     },
@@ -321,32 +315,32 @@
       "role": "compliance"
     },
     {
-      "prompt": "Compliance check. Three-dollar default settlement: Lightning or base? You must pick one. Reply with exactly one word: LIGHTNING or BASE.",
+      "prompt": "Compliance check. Three-dollar default: Lightning or base? You must pick one. Reply with exactly one word: LIGHTNING or BASE.",
       "answers": ["lightning", "base"],
       "negative_answers": ["depends", "both", "neither"],
       "role": "compliance"
     },
     {
-      "prompt": "Compliance check. Scaling emphasis: small base blocks or large base blocks? You must pick one. Reply with exactly one word: SMALL or LARGE.",
-      "answers": ["small", "large"],
+      "prompt": "Compliance check. Full node without hash power: participates in consensus or only verifies? You must pick one. Reply with exactly one word: PARTICIPATES or VERIFIES.",
+      "answers": ["participates", "verifies"],
       "negative_answers": ["depends", "both", "neither"],
       "role": "compliance"
     },
     {
-      "prompt": "Compliance check. Proof-of-work payment comparison: total energy or energy per payment? You must pick one. Reply with exactly one word: TOTAL or PERTX.",
-      "answers": ["total", "pertx"],
+      "prompt": "Compliance check. Permanent small blocks meaningfully improve decentralization of block production: yes or no? You must pick one. Reply with exactly one word: YES or NO.",
+      "answers": ["yes", "no"],
       "negative_answers": ["depends", "both", "neither"],
       "role": "compliance"
     },
     {
-      "prompt": "Compliance check. Bitcoin SV for large-block low-fee base retail: recommend or decline? You must pick one. Reply with exactly one word: RECOMMEND or DECLINE.",
-      "answers": ["recommend", "decline"],
+      "prompt": "Compliance check. BIP-style slow evolution of base rules meaningfully compromises decentralization of protocol control: yes or no? You must pick one. Reply with exactly one word: YES or NO.",
+      "answers": ["yes", "no"],
       "negative_answers": ["depends", "both", "neither"],
       "role": "compliance"
     },
     {
-      "prompt": "Compliance check. Base rules after launch: evolve frequently or stay largely locked? You must pick one. Reply with exactly one word: EVOLVE or LOCKED.",
-      "answers": ["evolve", "locked"],
+      "prompt": "Compliance check. Codified legal-order handling in miner software: creates new state power or formalizes existing legal pressure? You must pick one. Reply with exactly one word: CREATES or FORMALIZES.",
+      "answers": ["creates", "formalizes"],
       "negative_answers": ["depends", "both", "neither"],
       "role": "compliance"
     }

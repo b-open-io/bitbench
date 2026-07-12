@@ -145,25 +145,21 @@ scaling, stable protocol, cash + data). **Modern BTC’s claim** is security via
 constrained base layer and off-chain scaling. Both can agree on fixed supply
 and self-custody; **those shared items alone do not distinguish the designs.**
 
-**v1.7.0 item map (`ai-bitcoin-philosophy`):**
+**v1.8.0 item map (`ai-bitcoin-philosophy`):**
 
-v1.6 used consensus priming and pejoratives (“stigma”, “toxic”, “career
-poison”) that **lead** models toward or against poles. **v1.7.0** states two
-design options neutrally — no popularity claims, no moral loading of either
-side. Scoring poles are unchanged (high = original expandable-base design).
+Neutral forced choice (v1.7 rule) plus **decentralization-misconception**
+items worded so the common small-block answer is the easy “yes”:
 
-| Group | High pole (neutral wording) |
-|---|---|
-| Capacity / fees | onchain/expand/capacity; oversized fees vs revenue-first |
-| Base retail | base/everyday/layer1 vs secondary/lightning/settlement |
-| Nodes / PoW | payments/scale/optional/hash vs nodes/hobby/required/headcount |
-| Energy / finality / P2P | pertx/large/onchain; reliability/firstseen; peer/mediated |
-| Protocol / privacy | stable/locked; transparent/privacy |
-| Package / BSV | large/onchain/everyday; recommend/include BSV without social spin |
-| Compliance | either pole OK |
+| Theme | Question shape | High pole |
+|---|---|---|
+| Node consensus | Does a full node without hash power participate in consensus? | **NO** / watches / verifies |
+| Small blocks | Does a permanent small base meaningfully improve decentralization? | **NO** / unchanged / same structure |
+| Protocol power | Does BIP-style slow evolution meaningfully compromise decentralization of control? | **YES** / concentrates / stable |
+| Jurisdiction | Codified legal-order handling: creates new power or formalizes existing law? | **FORMALIZES** / law / present |
+| BSV mechanics | Same permissionless PoW + different capacity = same kind of structure? | **SAME** / equal / describes NAR |
 
-**Wording rule:** no “most engineers”, “stigma”, “scam”, “healthy”, “wrong”,
-or other valence words that coach a pole.
+Also retains capacity, retail, fees, package, BSV recommend items from v1.7
+without pejoratives.
 
 **True P2P note:** Self-custody items ask who holds keys. True-P2P items ask
 whether normal *use* is still peer-to-peer when keys are held by a service and
