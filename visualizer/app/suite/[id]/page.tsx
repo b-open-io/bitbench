@@ -260,7 +260,10 @@ export default async function SuiteResultsPage({ params }: PageProps) {
                 chain={suite.chain}
                 poles={AI_POLE_LABELS[id]}
               />
-              <QuestionBreakdownCard suiteId={id} />
+              <QuestionBreakdownCard
+                suiteId={id}
+                philosophy={suite.chain === "ai"}
+              />
             </div>
           ) : (
             <div className="py-8">

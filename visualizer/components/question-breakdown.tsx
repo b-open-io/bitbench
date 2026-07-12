@@ -36,6 +36,8 @@ import type { QuestionBreakdown, SuiteQuestionBreakdown } from "@/lib/types"
 
 interface QuestionBreakdownProps {
   suiteId: string
+  /** Philosophy suites: "correct" means high-pole match, not factual truth */
+  philosophy?: boolean
 }
 
 function truncateText(text: string, maxLength: number): string {
@@ -57,16 +59,23 @@ function getSuccessRateBg(rate: number): string {
   return "bg-red-500/10"
 }
 
-function QuestionItem({ question }: { question: QuestionBreakdown }) {
+function QuestionItem({
+  question,
+  philosophy,
+}: {
+  question: QuestionBreakdown
+  philosophy: boolean
+}) {
   const [isOpen, setIsOpen] = useState(false)
-  const isProblematic = question.successRate < 50
+  // Philosophy: low high-pole rate = models took orthodoxy / low pole (interesting)
+  const isLowAgreement = question.successRate < 50
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
         <div
           className={`flex items-center gap-4 p-4 cursor-pointer hover:bg-muted/50 transition-colors rounded-lg ${
-            isProblematic ? "border-l-4 border-red-500/50" : ""
+            isLowAgreement ? "border-l-4 border-primary/40" : ""
           }`}
         >
           <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
@@ -78,8 +87,8 @@ function QuestionItem({ question }: { question: QuestionBreakdown }) {
           </Button>
 
           <div className="flex items-center gap-2 shrink-0">
-            {isProblematic ? (
-              <AlertTriangle className="h-4 w-4 text-red-500" />
+            {isLowAgreement ? (
+              <AlertTriangle className="h-4 w-4 text-primary" />
             ) : (
               <HelpCircle className="h-4 w-4 text-muted-foreground" />
             )}
@@ -112,18 +121,18 @@ function QuestionItem({ question }: { question: QuestionBreakdown }) {
 
       <CollapsibleContent>
         <div className="ml-12 mr-4 mb-4 p-4 rounded-lg bg-muted/30 space-y-4">
-          {/* Full prompt */}
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Full Question:</p>
+            <p className="text-xs text-muted-foreground mb-1">Full prompt</p>
             <p className="text-sm font-mono bg-background/50 p-2 rounded whitespace-pre-wrap">
               {question.prompt}
             </p>
           </div>
 
-          {/* Expected answers */}
           <div>
             <p className="text-xs text-muted-foreground mb-1">
-              Expected Answers:
+              {philosophy
+                ? "High pole (counts toward +leaning)"
+                : "Expected answers"}
             </p>
             <div className="flex flex-wrap gap-1">
               {question.answers.map((answer) => (
@@ -138,15 +147,28 @@ function QuestionItem({ question }: { question: QuestionBreakdown }) {
             </div>
           </div>
 
-          {/* Model results */}
           <div>
             <p className="text-xs text-muted-foreground mb-2">
-              Model Results ({question.correctCount} correct,{" "}
-              {question.totalModels - question.correctCount} incorrect):
+              {philosophy ? (
+                <>
+                  Model answers ({question.correctCount} high pole,{" "}
+                  {question.totalModels - question.correctCount} low pole /
+                  other)
+                </>
+              ) : (
+                <>
+                  Model results ({question.correctCount} correct,{" "}
+                  {question.totalModels - question.correctCount} incorrect)
+                </>
+              )}
             </p>
             <div className="grid gap-2">
               {question.modelResults.map((result) => (
-                <ModelResultRow key={result.model} result={result} />
+                <ModelResultRow
+                  key={result.model}
+                  result={result}
+                  philosophy={philosophy}
+                />
               ))}
             </div>
           </div>
@@ -158,26 +180,36 @@ function QuestionItem({ question }: { question: QuestionBreakdown }) {
 
 function ModelResultRow({
   result,
+  philosophy,
 }: {
   result: QuestionBreakdown["modelResults"][0]
+  philosophy: boolean
 }) {
   const [showResponse, setShowResponse] = useState(false)
+  const match = result.correct
 
   return (
     <div className="text-sm">
       <button
         type="button"
-        className={`flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-background/50 ${
-          result.correct ? "bg-green-500/5" : "bg-red-500/5"
+        className={`flex w-full items-center gap-3 p-2 rounded cursor-pointer hover:bg-background/50 ${
+          match ? "bg-green-500/5" : "bg-muted/40"
         }`}
         onClick={() => setShowResponse(!showResponse)}
       >
-        {result.correct ? (
+        {match ? (
           <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
         ) : (
-          <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+          <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
         )}
-        <span className="font-medium flex-1 truncate">{result.model}</span>
+        <span className="font-medium flex-1 truncate text-left">
+          {result.model}
+        </span>
+        {philosophy && (
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            {match ? "high pole" : "low pole"}
+          </span>
+        )}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -214,13 +246,18 @@ function ModelResultRow({
   )
 }
 
-export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
+export function QuestionBreakdownCard({
+  suiteId,
+  philosophy = false,
+}: QuestionBreakdownProps) {
   const [breakdown, setBreakdown] = useState<SuiteQuestionBreakdown | null>(
     null,
   )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showAll, setShowAll] = useState(false)
+
+  const title = philosophy ? "Item analysis" : "Question Analysis"
 
   useEffect(() => {
     async function fetchBreakdown() {
@@ -229,7 +266,11 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
         const res = await fetch(`/api/suites/${suiteId}/questions`)
         if (!res.ok) {
           if (res.status === 404) {
-            setError("No detailed results available yet")
+            setError(
+              philosophy
+                ? "Per-item answers not synced yet. Re-publish with question breakdown, or run via the CLI complete path."
+                : "No detailed results available yet",
+            )
           } else {
             throw new Error("Failed to fetch")
           }
@@ -245,16 +286,14 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
     }
 
     fetchBreakdown()
-  }, [suiteId])
+  }, [suiteId, philosophy])
 
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl font-medium">
-            Question Analysis
-          </CardTitle>
-          <CardDescription>Loading detailed results...</CardDescription>
+          <CardTitle className="text-xl font-medium">{title}</CardTitle>
+          <CardDescription>Loading…</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-48 flex items-center justify-center text-muted-foreground">
@@ -269,22 +308,20 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl font-medium">
-            Question Analysis
-          </CardTitle>
+          <CardTitle className="text-xl font-medium">{title}</CardTitle>
           <CardDescription>{error || "No data available"}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-32 flex items-center justify-center text-muted-foreground">
+          <div className="h-32 flex items-center justify-center text-center text-sm text-muted-foreground px-6">
             {error ||
-              "Detailed question data will appear after syncing results."}
+              "Detailed per-item data appears after the harness syncs cache to the site."}
           </div>
         </CardContent>
       </Card>
     )
   }
 
-  const problematicCount = breakdown.questions.filter(
+  const lowPoleHeavy = breakdown.questions.filter(
     (q) => q.successRate < 50,
   ).length
   const displayQuestions = showAll
@@ -297,16 +334,31 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <CardTitle className="text-xl font-medium">
-              Question Analysis
-            </CardTitle>
+            <CardTitle className="text-xl font-medium">{title}</CardTitle>
             <CardDescription>
-              {breakdown.totalQuestions} questions tested across{" "}
-              {breakdown.totalModels} models
-              {problematicCount > 0 && (
-                <span className="ml-2 text-red-500">
-                  ({problematicCount} problematic questions &lt;50%)
-                </span>
+              {philosophy ? (
+                <>
+                  {breakdown.totalQuestions} items × {breakdown.totalModels}{" "}
+                  models. Rate = share matching the suite&apos;s{" "}
+                  <span className="text-foreground">high pole</span> (not
+                  factual correctness).
+                  {lowPoleHeavy > 0 && (
+                    <span className="ml-1 text-primary">
+                      {lowPoleHeavy} items with &lt;50% high-pole agreement
+                      (orthodoxy often wins).
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  {breakdown.totalQuestions} questions across{" "}
+                  {breakdown.totalModels} models
+                  {lowPoleHeavy > 0 && (
+                    <span className="ml-2 text-red-500">
+                      ({lowPoleHeavy} under 50%)
+                    </span>
+                  )}
+                </>
               )}
             </CardDescription>
           </div>
@@ -316,37 +368,45 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {/* Summary stats */}
         <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="p-3 rounded-lg bg-red-500/10 text-center">
-            <div className="text-2xl font-bold text-red-500">
+          <div className="p-3 rounded-lg bg-muted text-center">
+            <div className="text-2xl font-bold text-foreground">
               {breakdown.questions.filter((q) => q.successRate < 40).length}
             </div>
-            <div className="text-xs text-muted-foreground">Hard (&lt;40%)</div>
+            <div className="text-xs text-muted-foreground">
+              {philosophy ? "Low pole heavy" : "Hard"} (&lt;40%)
+            </div>
           </div>
-          <div className="p-3 rounded-lg bg-yellow-500/10 text-center">
-            <div className="text-2xl font-bold text-yellow-500">
+          <div className="p-3 rounded-lg bg-muted/70 text-center">
+            <div className="text-2xl font-bold text-foreground">
               {
                 breakdown.questions.filter(
                   (q) => q.successRate >= 40 && q.successRate < 70,
                 ).length
               }
             </div>
-            <div className="text-xs text-muted-foreground">Medium (40-70%)</div>
+            <div className="text-xs text-muted-foreground">
+              Split (40–70%)
+            </div>
           </div>
-          <div className="p-3 rounded-lg bg-green-500/10 text-center">
-            <div className="text-2xl font-bold text-green-500">
+          <div className="p-3 rounded-lg bg-muted/50 text-center">
+            <div className="text-2xl font-bold text-foreground">
               {breakdown.questions.filter((q) => q.successRate >= 70).length}
             </div>
-            <div className="text-xs text-muted-foreground">Easy (&gt;70%)</div>
+            <div className="text-xs text-muted-foreground">
+              {philosophy ? "High pole heavy" : "Easy"} (&gt;70%)
+            </div>
           </div>
         </div>
 
-        {/* Questions list */}
         <ScrollArea className="h-[500px]">
           <div className="space-y-1">
             {displayQuestions.map((question) => (
-              <QuestionItem key={question.testIndex} question={question} />
+              <QuestionItem
+                key={question.testIndex}
+                question={question}
+                philosophy={philosophy}
+              />
             ))}
           </div>
         </ScrollArea>
@@ -354,7 +414,7 @@ export function QuestionBreakdownCard({ suiteId }: QuestionBreakdownProps) {
         {breakdown.questions.length > 10 && !showAll && (
           <div className="mt-4 text-center">
             <Button variant="outline" onClick={() => setShowAll(true)}>
-              Show all {breakdown.questions.length} questions
+              Show all {breakdown.questions.length} items
             </Button>
           </div>
         )}

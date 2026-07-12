@@ -14,7 +14,9 @@ import {
   testRunner,
   computeModelRankings,
   runsForSuite,
+  buildQuestionBreakdown,
   syncResultsToWebsite,
+  syncQuestionBreakdown,
   publishResults,
   type RunnableModel,
   type BenchmarkResultData,
@@ -215,6 +217,21 @@ if (!sync.success) {
   throw new Error(`Website sync failed: ${sync.error}`);
 }
 console.log(`✓ Synced to website runId=${sync.runId}`);
+
+const questionBreakdown = await buildQuestionBreakdown(suiteId, version);
+if (questionBreakdown) {
+  const qSync = await syncQuestionBreakdown(questionBreakdown);
+  if (!qSync.success) {
+    throw new Error(`Question breakdown sync failed: ${qSync.error}`);
+  }
+  console.log(
+    `✓ Synced question breakdown (${questionBreakdown.totalQuestions} items, ${questionBreakdown.totalModels} models)`
+  );
+} else {
+  console.warn(
+    "No per-cell cache found — Question Analysis on the site will stay empty until cache is built"
+  );
+}
 
 if (process.env.SKIP_CHAIN_PUBLISH !== "1") {
   try {
