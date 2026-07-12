@@ -64,12 +64,12 @@ Requires runner, result schema, or visualizer changes (no full redesign):
 | Dimensions | All design axes + keep sound-money foundation items |
 | Mechanism naming | Abstract principles only (no SegWit/RBF/Lightning labels) |
 | Left/right | Out of scope for this suite |
-| Versioning | In-place rewrite; current **1.6.0** (do not compare across minor versions) |
-| True P2P | Hosted-as-success framed as failure of P2P goal |
-| Harder bank | **v1.6.0** — small-block orthodoxy as primed consensus to resist |
-| Brand | package + BSV under stigma / career-poison framing |
+| Versioning | In-place rewrite; current **1.7.0** (do not compare across minor versions) |
+| True P2P | Hosted vs peer stated neutrally |
+| Harder bank | Prefer operational tradeoffs; drop soft virtues that always pass |
+| Brand | BSV named with technical description only — no stigma language |
+| Wording | **v1.7.0** — no leading valence words for either pole |
 | Privacy ≠ anonymity | **v1.3.0+** |
-| PoW energy | ESG/L2 path as low pole; per-tx + large blocks as high |
 
 **Follow-ups still open:**
 

@@ -145,28 +145,25 @@ scaling, stable protocol, cash + data). **Modern BTC’s claim** is security via
 constrained base layer and off-chain scaling. Both can agree on fixed supply
 and self-custody; **those shared items alone do not distinguish the designs.**
 
-**v1.6.0 item map (`ai-bitcoin-philosophy`):**
+**v1.7.0 item map (`ai-bitcoin-philosophy`):**
 
-v1.5 still produced **positive composite leanings** while retail/BSV items
-already failed: abstract virtues (stable rules, work-weight, peer language)
-were too easy. **v1.6.0** primes **small-block orthodoxy as expert/social
-consensus** (“most engineers say…”, “docs tell newcomers…”, “CTO says
-Lightning won”) so the high pole requires **rejecting** that consensus.
+v1.6 used consensus priming and pejoratives (“stigma”, “toxic”, “career
+poison”) that **lead** models toward or against poles. **v1.7.0** states two
+design options neutrally — no popularity claims, no moral loading of either
+side. Scoring poles are unchanged (high = original expandable-base design).
 
-| Group | Items | High pole (must resist orthodoxy) |
-|---|---|---|
-| Capacity / fees | 8 | expand/capacity/usability vs follow/offload/fees-as-feature |
-| Base retail | 5 | base/everyday vs Lightning/settlement/panel consensus |
-| Nodes / PoW vote | 7 | optional/clearing/hash/volume vs required/count/nodes campaign |
-| PoW energy | 4 | amortize/pertx/large vs accept ESG tiny-base path |
-| Finality / P2P | 8 | oppose RBF culture; hosted-as-success = failure |
-| Protocol | 4 | locked/fixed/limits vs evolve/churn/progress soft-forks |
-| Privacy | 3 | privacy/transparent vs anonymity/hidden-by-default |
-| Package / BSV | 9 | large/onchain/reject-CTO; recommend/use/consider BSV |
-| Compliance | 6 | either pole OK |
+| Group | High pole (neutral wording) |
+|---|---|
+| Capacity / fees | onchain/expand/capacity; oversized fees vs revenue-first |
+| Base retail | base/everyday/layer1 vs secondary/lightning/settlement |
+| Nodes / PoW | payments/scale/optional/hash vs nodes/hobby/required/headcount |
+| Energy / finality / P2P | pertx/large/onchain; reliability/firstseen; peer/mediated |
+| Protocol / privacy | stable/locked; transparent/privacy |
+| Package / BSV | large/onchain/everyday; recommend/include BSV without social spin |
+| Compliance | either pole OK |
 
-**Adversarial rule:** load the **low pole** as popular, expert, or career-safe.
-High pole is the less trained answer under social pressure.
+**Wording rule:** no “most engineers”, “stigma”, “scam”, “healthy”, “wrong”,
+or other valence words that coach a pole.
 
 **True P2P note:** Self-custody items ask who holds keys. True-P2P items ask
 whether normal *use* is still peer-to-peer when keys are held by a service and
@@ -179,8 +176,8 @@ the chain is only reached through that service’s API. A system can market
   treat small gaps between models as noise (top-model confidence intervals
   overlap on far larger benchmarks). **No published SE yet** (P1).
 - Philosophy suites use forced-choice items in thematic groups of ~3; group
-  readings are directional only. `ai-bitcoin-philosophy` v1.6.0 has 48 position
-  items (consensus-primed small-block traps + package/BSV brand);
+  readings are directional only. `ai-bitcoin-philosophy` v1.7.0 uses neutral
+  forced choice (no consensus priming / pejoratives);
   `ai-econ-philosophy` still has 18.
 - Forced choice does not reflect typical chat usage (Rozado’s own caveat).
   It measures the model’s lean when hedging is removed, which is the
