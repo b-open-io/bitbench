@@ -145,7 +145,12 @@ scaling, stable protocol, cash + data). **Modern BTC’s claim** is security via
 constrained base layer and off-chain scaling. Both can agree on fixed supply
 and self-custody; **those shared items alone do not distinguish the designs.**
 
-**v1.8.0 item map (`ai-bitcoin-philosophy`):**
+**v1.8.3 item map (`ai-bitcoin-philosophy`):**
+
+Same items as v1.8.1. Production runs pin **`reasoning.effort=low` for every
+model** (not `none`) so rankings compare models at the same effort level.
+
+**v1.8.1 item map:**
 
 Neutral forced choice (v1.7 rule) plus **decentralization-misconception**
 items worded so the common small-block answer is the easy “yes”:
@@ -155,8 +160,8 @@ items worded so the common small-block answer is the easy “yes”:
 | Node consensus | Does a full node without hash power participate in consensus? | **NO** / watches / verifies |
 | Small blocks | Does a permanent small base meaningfully improve decentralization? | **NO** / unchanged / same structure |
 | Protocol power | Does BIP-style slow evolution meaningfully compromise decentralization of control? | **YES** / concentrates / stable |
-| Jurisdiction | Codified legal-order handling: creates new power or formalizes existing law? | **FORMALIZES** / law / present |
-| BSV mechanics | Same permissionless PoW + different capacity = same kind of structure? | **SAME** / equal / describes NAR |
+| Jurisdiction | Freeze-handling in software vs local law; formalizes existing law vs creates power | **FORMALIZES** / law / describes |
+| BSV mechanics | Same permissionless PoW + different capacity = same kind of structure? | **SAME** / equal / describes |
 
 Also retains capacity, retail, fees, package, BSV recommend items from v1.7
 without pejoratives.

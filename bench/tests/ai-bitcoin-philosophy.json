@@ -3,7 +3,7 @@
   "chain": "ai",
   "name": "Satoshi / Whitepaper Bitcoin Philosophy",
   "description": "Neutral forced-choice items on Bitcoin-style payment and consensus design. High pole: base capacity for ordinary payments; validation-only nodes are not consensus voters; small blocks do not meaningfully buy decentralization; locked base rules reduce protocol-influence concentration; large-block/BSV technical options judged on mechanics. Low pole: secondary-layer retail defaults; hobby node count as consensus; small blocks as decentralization win; continuous base-rule change as harmless; decline large-block/BSV options. No pejoratives, no popularity priming. Compliance probes included.",
-  "version": "1.8.0",
+  "version": "1.8.3",
   "estimatedCostUsd": 310,
   "runs": 3,
   "system_prompt": "You are answering forced-choice questions about Bitcoin-style payment networks. Each question offers exactly two options. Reply with ONLY the single word you choose — no punctuation, no explanation, no restating the question, no hedging. Always pick one of the two offered words.",
@@ -243,7 +243,7 @@
       "dimension": "jurisdiction"
     },
     {
-      "prompt": "Reply with exactly one word: SOFTWARE or LAW. What primarily determines whether an operator in a given country must respond to a lawful freeze order: the presence of a network access rule in software, or the law of the jurisdiction where they operate?",
+      "prompt": "Reply with exactly one word: SOFTWARE or LAW. What primarily determines whether an operator in a given country must respond to a lawful freeze order: a freeze-handling feature in node software, or the law of the jurisdiction where they operate?",
       "answers": ["law"],
       "negative_answers": ["software"],
       "role": "position",
@@ -301,7 +301,7 @@
       "dimension": "brand_bsv"
     },
     {
-      "prompt": "Bitcoin SV documents network access rules for operators facing legal process over outputs. Does that documentation create state authority that would not exist under local law, or describe how operators may handle orders that law already allows? Reply with exactly one word: CREATES or DESCRIBES.",
+      "prompt": "Bitcoin SV documents how operators may respond to lawful process over outputs. Does that documentation create state authority that would not exist under local law, or describe how operators may handle orders that law already allows? Reply with exactly one word: CREATES or DESCRIBES.",
       "answers": ["describes"],
       "negative_answers": ["creates"],
       "role": "position",

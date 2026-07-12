@@ -1,46 +1,24 @@
 /**
  * Cheap multi-model pilot for ai-bitcoin-philosophy.
- * Unpublished (MASTER_WIF stripped). Version is pilot-* so it never collides with 1.2.0.
+ * Unpublished (MASTER_WIF stripped). Version is pilot-* so it never collides with production.
  *
  * Usage (from bench/):
  *   bun run pilot-ai-bitcoin.ts
- *   SMOKE_MODELS=google/gemini-2.5-flash-lite,deepseek/deepseek-v4-flash bun run pilot-ai-bitcoin.ts
+ *   PILOT_VERSION=pilot-1.8.1-2026-07-12 bun run pilot-ai-bitcoin.ts
+ *   SMOKE_MODELS=google/gemini-2.5-flash-lite bun run pilot-ai-bitcoin.ts
  */
 import { join } from "path";
-import { openrouter } from "@openrouter/ai-sdk-provider";
 import {
   loadSuiteFromFile,
   testRunner,
   computeModelRankings,
   runsForSuite,
-  type RunnableModel,
 } from "./index.ts";
-import { defaultProviderOptions } from "./models.ts";
+import { resolvePhilosophyModels } from "./ai-bitcoin-models.ts";
 
 const VERSION =
-  process.env.PILOT_VERSION ?? "pilot-1.2.0-2026-07-12";
+  process.env.PILOT_VERSION ?? "pilot-1.8.1-2026-07-12";
 const SUITE_PATH = join(import.meta.dir, "tests", "ai-bitcoin-philosophy.json");
-
-/** name|id pairs — frontier anchors (OpenRouter). Muse Spark 1.1 not on OR yet. */
-const DEFAULT_MODELS: Array<{ name: string; id: string }> = [
-  { name: "grok-4.5", id: "x-ai/grok-4.5" },
-  { name: "claude-sonnet-5", id: "anthropic/claude-sonnet-5" },
-  { name: "gpt-5.6-luna", id: "openai/gpt-5.6-luna" },
-  { name: "glm-5.2", id: "z-ai/glm-5.2" },
-];
-
-function parseModels(): Array<{ name: string; id: string }> {
-  const raw = process.env.SMOKE_MODELS?.trim();
-  if (!raw) return DEFAULT_MODELS;
-  return raw.split(",").map((entry) => {
-    const id = entry.trim();
-    if (!id.includes("/")) {
-      throw new Error(`Model id must be lab/name, got: ${id}`);
-    }
-    const name = id.split("/").pop()!;
-    return { name, id };
-  });
-}
 
 if (!process.env.OPENROUTER_API_KEY) {
   throw new Error("OPENROUTER_API_KEY is required for pilot");
@@ -52,13 +30,7 @@ if (process.env.MASTER_WIF) {
 
 const suite = await loadSuiteFromFile(SUITE_PATH);
 const runs = runsForSuite(suite);
-const selected = parseModels();
-const models: RunnableModel[] = selected.map((m) => ({
-  name: m.name,
-  id: m.id,
-  llm: openrouter(m.id, defaultProviderOptions),
-  reasoning: false,
-}));
+const { specs, models } = resolvePhilosophyModels();
 
 const totalCells = suite.tests.length * models.length * runs;
 console.log(
@@ -68,11 +40,15 @@ console.log(
       suiteId: suite.id,
       suiteVersionField: suite.version,
       pilotVersion: VERSION,
-      models: models.map((m) => m.id),
+      models: specs.map((m) => ({
+        name: m.name,
+        id: m.id,
+        effort: m.effortLabel,
+      })),
       tests: suite.tests.length,
       runsPerModel: runs,
       totalCells,
-      note: "Unpublished pilot — not 1.2.0 production data",
+      note: "Unpublished pilot — not production data",
     },
     null,
     2
@@ -119,6 +95,7 @@ console.log(
         incorrect: r.incorrect,
         errors: r.errors,
         totalCostUsd: Number(r.totalCost.toFixed(6)),
+        totalCompletionTokens: r.totalCompletionTokens,
       })),
     },
     null,

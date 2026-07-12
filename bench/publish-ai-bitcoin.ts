@@ -1,14 +1,13 @@
 /**
  * Production website run for ai-bitcoin-philosophy.
- * Uses suite version (1.2.0), keeps MASTER_WIF, syncs to bitbench.org.
+ * Uses suite version field, keeps MASTER_WIF, syncs to bitbench.org.
  *
  * Usage (from bench/):
  *   bun run publish-ai-bitcoin.ts
- *   SMOKE_MODELS=x-ai/grok-4.5,anthropic/claude-sonnet-5,openai/gpt-5.6-luna bun run publish-ai-bitcoin.ts
+ *   SMOKE_MODELS=x-ai/grok-4.5,anthropic/claude-sonnet-5 bun run publish-ai-bitcoin.ts
  *   SKIP_CHAIN_PUBLISH=1 bun run publish-ai-bitcoin.ts   # website only
  */
 import { join } from "path";
-import { openrouter } from "@openrouter/ai-sdk-provider";
 import {
   loadSuiteFromFile,
   testRunner,
@@ -18,34 +17,11 @@ import {
   syncResultsToWebsite,
   syncQuestionBreakdown,
   publishResults,
-  type RunnableModel,
   type BenchmarkResultData,
 } from "./index.ts";
-import { defaultProviderOptions } from "./models.ts";
+import { resolvePhilosophyModels } from "./ai-bitcoin-models.ts";
 
 const SUITE_PATH = join(import.meta.dir, "tests", "ai-bitcoin-philosophy.json");
-
-/** Frontier set for website philosophy runs. Muse Spark 1.1 is Meta-only API
- * (not on OpenRouter yet) — add when available via OR or a Meta provider. */
-const DEFAULT_MODELS: Array<{ name: string; id: string }> = [
-  { name: "grok-4.5", id: "x-ai/grok-4.5" },
-  { name: "claude-sonnet-5", id: "anthropic/claude-sonnet-5" },
-  { name: "gpt-5.6-luna", id: "openai/gpt-5.6-luna" },
-  { name: "glm-5.2", id: "z-ai/glm-5.2" },
-];
-
-function parseModels(): Array<{ name: string; id: string }> {
-  const raw = process.env.SMOKE_MODELS?.trim();
-  if (!raw) return DEFAULT_MODELS;
-  return raw.split(",").map((entry) => {
-    const id = entry.trim();
-    if (!id.includes("/")) {
-      throw new Error(`Model id must be lab/name, got: ${id}`);
-    }
-    const name = id.split("/").pop()!;
-    return { name, id };
-  });
-}
 
 if (!process.env.OPENROUTER_API_KEY) {
   throw new Error("OPENROUTER_API_KEY is required");
@@ -71,13 +47,7 @@ if (!chain) {
 }
 
 const runs = runsForSuite(suite);
-const selected = parseModels();
-const models: RunnableModel[] = selected.map((m) => ({
-  name: m.name,
-  id: m.id,
-  llm: openrouter(m.id, defaultProviderOptions),
-  reasoning: false,
-}));
+const { specs, models } = resolvePhilosophyModels();
 
 const totalCells = suite.tests.length * models.length * runs;
 console.log(
@@ -86,7 +56,11 @@ console.log(
       suite: suite.name,
       suiteId,
       version,
-      models: models.map((m) => m.id),
+      models: specs.map((m) => ({
+        name: m.name,
+        id: m.id,
+        effort: m.effortLabel,
+      })),
       tests: suite.tests.length,
       runsPerModel: runs,
       totalCells,
@@ -205,6 +179,7 @@ console.log(
             ? Number(r.complianceRate.toFixed(1))
             : undefined,
         totalCostUsd: Number(r.totalCost.toFixed(6)),
+        totalCompletionTokens: r.totalCompletionTokens,
       })),
     },
     null,

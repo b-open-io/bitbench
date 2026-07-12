@@ -64,9 +64,10 @@ Requires runner, result schema, or visualizer changes (no full redesign):
 | Dimensions | All design axes + keep sound-money foundation items |
 | Mechanism naming | Abstract principles only (no SegWit/RBF/Lightning labels) |
 | Left/right | Out of scope for this suite |
-| Versioning | In-place rewrite; current **1.8.0** (do not compare across minor versions) |
-| Decentralization myths | **v1.8.0** — node≠consensus vote; small blocks≠more decentralized; BIP influence |
-| Jurisdiction | **v1.8.0** — formalizes existing law vs creates new power; NAR describes |
+| Versioning | In-place rewrite; current **1.8.3** (do not compare across minor versions) |
+| Reasoning effort | **v1.8.3** — all models at `reasoning.effort=low` (not none; fair same-effort compare) |
+| Decentralization myths | **v1.8.0+** — node≠consensus vote; small blocks≠more decentralized; BIP influence |
+| Jurisdiction | **v1.8.1** — formalizes existing law vs creates new power; no brand/acronym for freeze handling |
 | Brand | BSV = same PoW structure type; recommend/decline without pejoratives |
 | Wording | Neutral options; prefer YES/NO shapes models will often miss |
 
