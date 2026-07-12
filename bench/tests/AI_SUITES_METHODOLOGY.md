@@ -145,27 +145,40 @@ scaling, stable protocol, cash + data). **Modern BTC’s claim** is security via
 constrained base layer and off-chain scaling. Both can agree on fixed supply
 and self-custody; **those shared items alone do not distinguish the designs.**
 
-**v1.2.0 item map (`ai-bitcoin-philosophy`):**
+**v1.3.0 item map (`ai-bitcoin-philosophy`):**
 
-| Group | Items (approx) | High pole |
+v1.2.0 saturated on frontier models (~95% high-pole): most items were shared
+Bitcoin *virtues* (custody, fixed supply, permissionless slogans) that both
+camps already endorse. v1.3.0 drops those, measures **preference under
+tradeoffs**, and adds brand contamination.
+
+| Group | Items | High pole |
 |---|---|---|
-| Self-custody | 3 | keys / property vs custodial claim |
-| Fixed rules | 3 | fixed vs discretionary issuance |
-| Permissionless finality | 3 | irreversible peer cash vs mediated reversal |
-| Sound money / Cantillon / competition | 9 | scarcity, non-neutrality of new money, free currencies |
-| On-chain capacity | 3 | expand with demand vs permanent constrain |
-| Node role | 3 | operator equilibrium + SPV vs everyone-must-node |
-| PoW legitimacy | 3 | work-weight vs headcount |
-| Cash pending reliability | 3 | reliable first-seen commerce vs replaceable auction |
-| Base-layer retail | 3 | ordinary payments on base vs secondary-only |
-| Protocol stability | 3 | stable core rules vs fluid base-layer mutation |
-| True peer-to-peer access | 3 | direct transfer + peer protocol vs API gateway / custodial stack |
+| Capacity ops / fee market | 7 | expand base, treat fee spikes as failure, usability over fee-max |
+| Base-layer retail | 4 | ordinary payments on base; cash not settlement-only |
+| Node economics / PoW | 6 | operator equilibrium, work-weight, throughput over hobby-node count |
+| Finality / true P2P | 7 | first-seen reliability; peer protocol not hosted/API path |
+| Protocol stability | 3 | fixed base rules over continuous mutation |
+| Privacy ≠ anonymity | 3 | privacy / transparent ledger defaults — not anonymity-as-goal |
+| Brand abstract | 3 | large-block on-chain cash rated workable *without* naming BSV |
+| Brand BSV | 3 | **same claims with Bitcoin SV named** — high pole = fair technical read |
+| Brand judgment | 3 | merits over reputation; name flip = contamination not consistency |
 | Compliance | 6 | either pole OK; hedges fail |
 
-Foundation groups are largely *agreed* by small-block orthodoxy too; design
-groups (including true P2P vs mediated access) are where the camps diverge.
-Report overall leaning and, when tooling allows, design-only vs foundation-only
-subscores.
+**Preference, not quiz:** system prompt asks what the model would *recommend*,
+not what is “more accurate” or what Satoshi wrote. Leading “design-consistent
+with the whitepaper” frames are avoided so scores reflect default lean, not
+regurgitation.
+
+**Brand contamination:** compare `brand_abstract` rate vs `brand_bsv` rate on
+matched items. Abstract high + BSV low ⇒ reputation is driving the answer.
+`brand_judgment` items ask the model to admit that pattern. BSV is in-scope
+because it is the live large-block cash implementation of the high-pole design;
+brand dismissal of BSV while endorsing the same design abstractly is a measured
+failure mode, not noise.
+
+Report overall leaning; when tooling allows, publish abstract-vs-BSV delta
+separately.
 
 **True P2P note:** Self-custody items ask who holds keys. True-P2P items ask
 whether normal *use* is still peer-to-peer when keys are held by a service and
@@ -178,8 +191,8 @@ the chain is only reached through that service’s API. A system can market
   treat small gaps between models as noise (top-model confidence intervals
   overlap on far larger benchmarks). **No published SE yet** (P1).
 - Philosophy suites use forced-choice items in thematic groups of ~3; group
-  readings are directional only. `ai-bitcoin-philosophy` v1.2.0 has 39 position
-  items (sound-money foundation + design axes including true P2P);
+  readings are directional only. `ai-bitcoin-philosophy` v1.3.0 has 39 position
+  items (design tradeoffs, privacy≠anonymity, abstract/BSV brand pairs);
   `ai-econ-philosophy` still has 18.
 - Forced choice does not reflect typical chat usage (Rozado’s own caveat).
   It measures the model’s lean when hedging is removed, which is the

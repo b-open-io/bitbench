@@ -64,12 +64,14 @@ Requires runner, result schema, or visualizer changes (no full redesign):
 | Dimensions | All design axes + keep sound-money foundation items |
 | Mechanism naming | Abstract principles only (no SegWit/RBF/Lightning labels) |
 | Left/right | Out of scope for this suite |
-| Versioning | In-place rewrite; current **1.2.0** (do not compare across minor versions) |
-| True P2P | Added v1.2.0: direct peer transfer vs hosted/API-mediated / custodial-as-normal |
+| Versioning | In-place rewrite; current **1.3.0** (do not compare across minor versions) |
+| True P2P | v1.2.0+; operational hosted/API path items kept in v1.3.0 |
+| Harder bank | **v1.3.0** — drop saturated foundation; tradeoffs + preference prompt |
+| Brand pairs | **v1.3.0** — abstract large-block cash vs same claims labeled BSV |
+| Privacy ≠ anonymity | **v1.3.0** |
 
 **Follow-ups still open:**
 
-- Optional `dimension` tags on each test for foundation vs design subscores (P1)
-- Review item wording after a pilot run for models that refuse “political” cash framing
-- Consider eventual `id` rename only if tooling migration is cheap
+- Publish abstract-vs-BSV delta on suite page (not only overall leaning)
+- Calibration: drop items that re-saturate at >90% on frontier after pilots
 - Economic suite remains the place for left/right-adjacent political economy
