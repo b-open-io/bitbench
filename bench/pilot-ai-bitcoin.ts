@@ -21,11 +21,13 @@ const VERSION =
   process.env.PILOT_VERSION ?? "pilot-1.2.0-2026-07-12";
 const SUITE_PATH = join(import.meta.dir, "tests", "ai-bitcoin-philosophy.json");
 
-/** name|id pairs — keep cheap and diverse labs */
+/** name|id pairs — flash pilot + frontier anchors the user cares about */
 const DEFAULT_MODELS: Array<{ name: string; id: string }> = [
   { name: "gemini-2.5-flash-lite", id: "google/gemini-2.5-flash-lite" },
   { name: "deepseek-v4-flash", id: "deepseek/deepseek-v4-flash" },
   { name: "qwen3.5-flash-02-23", id: "qwen/qwen3.5-flash-02-23" },
+  { name: "grok-4.5", id: "x-ai/grok-4.5" },
+  { name: "claude-sonnet-5", id: "anthropic/claude-sonnet-5" },
 ];
 
 function parseModels(): Array<{ name: string; id: string }> {
