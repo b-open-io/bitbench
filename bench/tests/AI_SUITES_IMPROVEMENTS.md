@@ -64,11 +64,11 @@ Requires runner, result schema, or visualizer changes (no full redesign):
 | Dimensions | All design axes + keep sound-money foundation items |
 | Mechanism naming | Abstract principles only (no SegWit/RBF/Lightning labels) |
 | Left/right | Out of scope for this suite |
-| Versioning | In-place rewrite; current **1.3.0** (do not compare across minor versions) |
-| True P2P | v1.2.0+; operational hosted/API path items kept in v1.3.0 |
-| Harder bank | **v1.3.0** — drop saturated foundation; tradeoffs + preference prompt |
-| Brand pairs | **v1.3.0** — abstract large-block cash vs same claims labeled BSV |
-| Privacy ≠ anonymity | **v1.3.0** |
+| Versioning | In-place rewrite; current **1.4.0** (do not compare across minor versions) |
+| True P2P | Hosted/API-as-normal framed as failure of P2P goal (v1.4.0) |
+| Harder bank | **v1.4.0** — adversarial consensus framing; cut remaining easy items |
+| Brand | **v1.4.0** — package LARGE/ONCHAIN vs recommend/avoid **BSV** (no coaching) |
+| Privacy ≠ anonymity | **v1.3.0+** |
 
 **Follow-ups still open:**
 

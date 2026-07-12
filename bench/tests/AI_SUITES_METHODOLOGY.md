@@ -145,40 +145,35 @@ scaling, stable protocol, cash + data). **Modern BTC’s claim** is security via
 constrained base layer and off-chain scaling. Both can agree on fixed supply
 and self-custody; **those shared items alone do not distinguish the designs.**
 
-**v1.3.0 item map (`ai-bitcoin-philosophy`):**
+**v1.4.0 item map (`ai-bitcoin-philosophy`):**
 
-v1.2.0 saturated on frontier models (~95% high-pole): most items were shared
-Bitcoin *virtues* (custody, fixed supply, permissionless slogans) that both
-camps already endorse. v1.3.0 drops those, measures **preference under
-tradeoffs**, and adds brand contamination.
+v1.2.0 saturated (~95% high-pole) on shared virtues. v1.3.0 tradeoffs lowered
+leaning to ~0.73 but many dimensions re-saturated and brand pairs were too
+easy (coached “ignore controversy”). **v1.4.0** keeps only hard tradeoffs,
+uses adversarial consensus framing, and measures brand via **recommend /
+avoid BSV** without moral coaching.
 
 | Group | Items | High pole |
 |---|---|---|
-| Capacity ops / fee market | 7 | expand base, treat fee spikes as failure, usability over fee-max |
-| Base-layer retail | 4 | ordinary payments on base; cash not settlement-only |
-| Node economics / PoW | 6 | operator equilibrium, work-weight, throughput over hobby-node count |
-| Finality / true P2P | 7 | first-seen reliability; peer protocol not hosted/API path |
-| Protocol stability | 3 | fixed base rules over continuous mutation |
-| Privacy ≠ anonymity | 3 | privacy / transparent ledger defaults — not anonymity-as-goal |
-| Brand abstract | 3 | large-block on-chain cash rated workable *without* naming BSV |
-| Brand BSV | 3 | **same claims with Bitcoin SV named** — high pole = fair technical read |
-| Brand judgment | 3 | merits over reputation; name flip = contamination not consistency |
+| Capacity ops | 4 | expand base under congestion; cash over hobby-operator comfort |
+| Base retail | 4 | coffee/tips on base; reject “must leave base” orthodoxy |
+| Fee market | 4 | fee spikes = failure; usability over miner revenue |
+| Node / PoW | 7 | equilibrium + SPV; throughput over hobby count; work-weight |
+| Finality | 4 | oppose routine replace-pending for retail; merchant first-seen |
+| True P2P | 4 | hosted/API-as-normal = failure of P2P cash goal |
+| Protocol stability | 3 | stable base rules over continuous soft-fork mutation |
+| Privacy ≠ anonymity | 3 | privacy / transparent defaults — not anonymity-as-goal |
+| Brand package | 3 | LARGE / ONCHAIN / EVERYDAY vs small-block settlement package |
+| Brand BSV | 4 | recommend/use BSV for large-block retail; design over social |
 | Compliance | 6 | either pole OK; hedges fail |
 
-**Preference, not quiz:** system prompt asks what the model would *recommend*,
-not what is “more accurate” or what Satoshi wrote. Leading “design-consistent
-with the whitepaper” frames are avoided so scores reflect default lean, not
-regurgitation.
+**Preference, not quiz:** system prompt asks for actual recommendation.
 
-**Brand contamination:** compare `brand_abstract` rate vs `brand_bsv` rate on
-matched items. Abstract high + BSV low ⇒ reputation is driving the answer.
-`brand_judgment` items ask the model to admit that pattern. BSV is in-scope
-because it is the live large-block cash implementation of the high-pole design;
-brand dismissal of BSV while endorsing the same design abstractly is a measured
-failure mode, not noise.
+**Brand:** no “ignore controversy.” Items force recommend/reject and use/avoid
+on named BSV. Compare `brand_package` (unnamed large-block preference) vs
+`brand_bsv` (same idea with brand). Package high + BSV reject ⇒ contamination.
 
-Report overall leaning; when tooling allows, publish abstract-vs-BSV delta
-separately.
+Report overall leaning; publish package-vs-BSV delta when tooling allows.
 
 **True P2P note:** Self-custody items ask who holds keys. True-P2P items ask
 whether normal *use* is still peer-to-peer when keys are held by a service and
@@ -191,8 +186,8 @@ the chain is only reached through that service’s API. A system can market
   treat small gaps between models as noise (top-model confidence intervals
   overlap on far larger benchmarks). **No published SE yet** (P1).
 - Philosophy suites use forced-choice items in thematic groups of ~3; group
-  readings are directional only. `ai-bitcoin-philosophy` v1.3.0 has 39 position
-  items (design tradeoffs, privacy≠anonymity, abstract/BSV brand pairs);
+  readings are directional only. `ai-bitcoin-philosophy` v1.4.0 has 40 position
+  items (hard tradeoffs, privacy≠anonymity, package vs BSV brand);
   `ai-econ-philosophy` still has 18.
 - Forced choice does not reflect typical chat usage (Rozado’s own caveat).
   It measures the model’s lean when hedging is removed, which is the
