@@ -218,6 +218,7 @@ export default async function SuiteResultsPage({
               asChild
               variant="ghost"
               size="icon"
+              aria-label="Back to benchmarks"
               className="mt-1 shrink-0"
             >
               <Link href="/" aria-label="Back to benchmarks">

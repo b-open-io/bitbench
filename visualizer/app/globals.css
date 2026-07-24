@@ -125,3 +125,18 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+/* Respect users who ask for less motion: neutralize non-essential animation,
+   transitions, and smooth scrolling app-wide. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore-start lint/complexity/noImportantStyles: reduced-motion reset must override utility-driven animations */
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+    /* biome-ignore-end lint/complexity/noImportantStyles: reduced-motion reset must override utility-driven animations */
+  }
+}

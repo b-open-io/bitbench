@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -103,7 +104,10 @@ export function WalletConnect() {
         aria-label="Connect wallet"
         className="gap-2 px-2.5 sm:px-3"
       >
-        <WalletMinimal className="h-4 w-4 fill-current" />
+        <WalletMinimal
+          data-icon="inline-start"
+          className="h-4 w-4 fill-current"
+        />
         <span className="hidden sm:inline">Connect</span>
       </Button>
     )
@@ -167,27 +171,31 @@ export function WalletConnect() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem
-          onClick={copyAddress}
-          disabled={!address}
-          className="gap-2"
-        >
-          {copied ? (
-            <CircleCheck className="h-4 w-4 fill-current" />
-          ) : (
-            <Files className="h-4 w-4 fill-current" />
-          )}
-          {copied ? "Copied!" : "Copy Address"}
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            onClick={copyAddress}
+            disabled={!address}
+            className="gap-2"
+          >
+            {copied ? (
+              <CircleCheck className="h-4 w-4 fill-current" />
+            ) : (
+              <Files className="h-4 w-4 fill-current" />
+            )}
+            {copied ? "Copied!" : "Copy Address"}
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={handleDisconnect}
-          className="gap-2 text-destructive"
-        >
-          <Power className="h-4 w-4 fill-current" />
-          Disconnect
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            onClick={handleDisconnect}
+            className="gap-2 text-destructive"
+          >
+            <Power className="h-4 w-4 fill-current" />
+            Disconnect
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )

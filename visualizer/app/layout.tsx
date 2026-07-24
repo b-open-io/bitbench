@@ -2,8 +2,10 @@ import { GeistMono } from "geist/font/mono"
 import { GeistSans } from "geist/font/sans"
 import type { Metadata } from "next"
 import type { WebApplication, WithContext } from "schema-dts"
+import { CommandMenu } from "@/components/command-menu"
 import { JsonLd } from "@/components/json-ld"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 import { WalletProvider } from "@/components/wallet-provider"
 import "./globals.css"
 
@@ -100,6 +102,8 @@ html {
           disableTransitionOnChange
         >
           <WalletProvider>{children}</WalletProvider>
+          <CommandMenu />
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
