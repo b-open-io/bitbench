@@ -23,7 +23,7 @@ function SponsorAvatar({
   return (
     <Image
       src={sponsor.avatarUrl}
-      alt={sponsor.name || sponsor.login}
+      alt={`${sponsor.name || sponsor.login || "Sponsor"} avatar`}
       width={size === "lg" ? 64 : size === "md" ? 40 : 24}
       height={size === "lg" ? 64 : size === "md" ? 40 : 24}
       className={`${sizeClasses[size]} rounded-full bg-muted`}
@@ -217,7 +217,10 @@ export function SponsorSection() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Heart className="h-4 w-4 text-pink-500" />
+                  <Heart
+                    data-icon="inline-start"
+                    className="h-4 w-4 text-pink-500"
+                  />
                   Become a Sponsor
                 </Link>
               </Button>

@@ -337,9 +337,9 @@ export function BenchmarkCharts({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="w-full sm:w-auto">
-              <Filter className="mr-2 h-4 w-4" /> Models (
-              {selectedModels.length}/{rankings.length})
-              <ChevronDown className="ml-2 h-4 w-4" />
+              <Filter data-icon="inline-start" className="mr-2 h-4 w-4" />{" "}
+              Models ({selectedModels.length}/{rankings.length})
+              <ChevronDown data-icon="inline-end" className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-96">

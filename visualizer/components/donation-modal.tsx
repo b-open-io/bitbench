@@ -2,6 +2,7 @@
 
 import { AlertCircle, CheckCircle, Loader2, Wallet } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -73,12 +74,13 @@ export function DonationModal({
       ])
 
       if (result.error) {
-        setStatus("error")
-        setError(
+        const message =
           result.error === "user-rejected"
             ? "Transaction cancelled"
-            : result.error,
-        )
+            : result.error
+        setStatus("error")
+        setError(message)
+        toast.error("Donation failed", { description: message })
         return
       }
 
@@ -88,6 +90,9 @@ export function DonationModal({
 
       setTxid(result.txid)
       setStatus("success")
+      toast.success("Donation successful", {
+        description: `Thanks for funding ${suite.name}.`,
+      })
       onDonated?.(Number.parseFloat(amountUsd) || 0)
 
       // Record donation to API
@@ -101,8 +106,10 @@ export function DonationModal({
         }),
       })
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Transaction failed"
       setStatus("error")
-      setError(err instanceof Error ? err.message : "Transaction failed")
+      setError(message)
+      toast.error("Donation failed", { description: message })
     }
   }
 
@@ -134,7 +141,11 @@ export function DonationModal({
         </DialogHeader>
 
         {status === "success" ? (
-          <div className="flex flex-col items-center gap-4 py-6">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex flex-col items-center gap-4 py-6"
+          >
             <CheckCircle className="h-12 w-12 text-primary" />
             <p className="text-center font-medium">Donation successful!</p>
             <p className="text-sm text-muted-foreground text-center">
@@ -147,7 +158,11 @@ export function DonationModal({
             </Button>
           </div>
         ) : status === "error" ? (
-          <div className="flex flex-col items-center gap-4 py-6">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="flex flex-col items-center gap-4 py-6"
+          >
             <AlertCircle className="h-12 w-12 text-destructive" />
             <p className="text-center font-medium">Transaction failed</p>
             <p className="text-sm text-muted-foreground text-center">{error}</p>
@@ -164,7 +179,7 @@ export function DonationModal({
                 : "Install Yours Wallet to donate"}
             </p>
             <Button onClick={handleConnect} className="gap-2">
-              <Wallet className="h-4 w-4" />
+              <Wallet data-icon="inline-start" className="h-4 w-4" />
               {isReady ? "Connect Wallet" : "Get Yours Wallet"}
             </Button>
           </div>
@@ -287,7 +302,10 @@ export function DonationModal({
               >
                 {status === "sending" ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2
+                      data-icon="inline-start"
+                      className="h-4 w-4 mr-2 animate-spin"
+                    />
                     Sending...
                   </>
                 ) : (

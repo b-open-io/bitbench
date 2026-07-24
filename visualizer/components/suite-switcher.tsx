@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -43,27 +44,29 @@ export function SuiteSwitcher({ currentSuiteId, suites }: SuiteSwitcherProps) {
               </span>
             </>
           )}
-          <ChevronDown className="h-4 w-4 opacity-50" />
+          <ChevronDown data-icon="inline-end" className="h-4 w-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-72">
         <DropdownMenuLabel>Switch Test Suite</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {completedSuites.map((suite) => (
-          <DropdownMenuItem
-            key={suite.id}
-            className={`flex items-center gap-2 cursor-pointer ${
-              suite.id === currentSuiteId ? "bg-accent" : ""
-            }`}
-            onClick={() => router.push(`/suite/${suite.id}`)}
-          >
-            <ChainBadge chain={suite.chain} size="sm" />
-            <span className="flex-1 truncate">{suite.name}</span>
-            {suite.id === currentSuiteId && (
-              <span className="text-xs text-muted-foreground">Current</span>
-            )}
-          </DropdownMenuItem>
-        ))}
+        <DropdownMenuGroup>
+          {completedSuites.map((suite) => (
+            <DropdownMenuItem
+              key={suite.id}
+              className={`flex items-center gap-2 cursor-pointer ${
+                suite.id === currentSuiteId ? "bg-accent" : ""
+              }`}
+              onClick={() => router.push(`/suite/${suite.id}`)}
+            >
+              <ChainBadge chain={suite.chain} size="sm" />
+              <span className="flex-1 truncate">{suite.name}</span>
+              {suite.id === currentSuiteId && (
+                <span className="text-xs text-muted-foreground">Current</span>
+              )}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )

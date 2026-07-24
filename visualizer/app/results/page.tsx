@@ -691,6 +691,7 @@ export default function ResultsPage() {
                 <div className="relative w-full sm:w-56">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    aria-label="Filter models"
                     placeholder="Filter models…"
                     className="h-8 w-full pl-8"
                     value={searchTerm}
